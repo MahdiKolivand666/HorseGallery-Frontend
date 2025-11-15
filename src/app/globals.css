@@ -1,15 +1,17 @@
-@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap");
+@import "swiper/css";
+@import "swiper/css/effect-fade";
+@import "swiper/css/pagination";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --primary: #315d49;
+  --primary-rgb: 49, 93, 73;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,8 +21,110 @@
   }
 }
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden !important;
+  max-width: 100vw;
+  width: 100%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Vazirmatn", Arial, Helvetica, sans-serif;
+  direction: rtl;
+  overflow-x: hidden !important;
+  max-width: 100vw;
+  width: 100%;
+  position: relative;
+}
+
+#__next {
+  overflow-x: hidden !important;
+  max-width: 100vw;
+  width: 100%;
+}
+
+/* Smooth scroll animations */
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Swiper Custom Styles */
+.hero-swiper .swiper-pagination {
+  bottom: 40px !important;
+  z-index: 20;
+}
+
+.hero-swiper .swiper-pagination-bullet {
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+.hero-swiper .swiper-pagination-bullet-active {
+  background: white;
+  width: 40px;
+  border-radius: 6px;
+}
+
+@media (max-width: 640px) {
+  .hero-swiper .swiper-pagination {
+    bottom: 20px !important;
+  }
+  .hero-swiper .swiper-pagination-bullet {
+    width: 8px;
+    height: 8px;
+  }
+  .hero-swiper .swiper-pagination-bullet-active {
+    width: 24px;
+  }
+}
+
+/* TypeAnimation Cursor Style */
+.react-type-animation-cursor {
+  color: white;
+  font-weight: 300;
+}
+
+/* Best Selling Products Swiper Styles */
+.best-selling-swiper .swiper-button-prev-custom,
+.best-selling-swiper .swiper-button-next-custom {
+  width: 40px;
+  height: 40px;
+}
+
+@media (min-width: 640px) {
+  .best-selling-swiper .swiper-button-prev-custom,
+  .best-selling-swiper .swiper-button-next-custom {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.best-selling-swiper .swiper-button-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Announcements Slider Styles */
+.announcements-slider .announcement-button-prev,
+.announcements-slider .announcement-button-next {
+  width: 24px;
+  height: 24px;
+}
+
+.announcements-slider .swiper-button-disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
 }

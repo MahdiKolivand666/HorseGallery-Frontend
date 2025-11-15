@@ -1,36 +1,173 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🐴 گالری اسب - Horse Gallery Frontend
 
-## Getting Started
+یک فروشگاه آنلاین مدرن و زیبا با Next.js 16، طراحی شده با استانداردهای بالا و معماری حرفه‌ای.
 
-First, run the development server:
+## ✨ ویژگی‌ها
+
+- ⚡️ **Next.js 16** با App Router
+- 🌍 **چندزبانه** با next-intl (فعلاً فارسی)
+- 🎨 **Tailwind CSS v4** برای استایل‌دهی
+- 🎭 **Framer Motion** برای انیمیشن‌های smooth
+- 📱 **Responsive** و موبایل‌فرست
+- 🔍 **TypeScript** برای type safety
+- 🎯 **Component-based** با ساختار استاندارد
+- ✅ **RTL Support** کامل فارسی
+
+## 🚀 شروع سریع
+
+### نصب
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### اجرا
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Development
+npm run dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# پورت پیش‌فرض: 4000
+# آدرس: http://localhost:4000
+```
 
-## Learn More
+### Build
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build
+npm run start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📁 ساختار پروژه
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/                    # صفحات Next.js
+├── components/
+│   ├── layout/            # Navbar, Footer, Sidebar
+│   ├── ui/                # Button, Card, Input (قابل استفاده مجدد)
+│   └── features/          # کامپوننت‌های مختص فیچرها
+├── hooks/                 # Custom React Hooks
+├── lib/                   # Helper functions
+├── types/                 # TypeScript types
+├── i18n.ts               # تنظیمات next-intl
+└── middleware.ts         # Middleware
 
-## Deploy on Vercel
+messages/                  # ترجمه‌ها
+└── fa.json               # فارسی
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+برای اطلاعات بیشتر [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md) را ببینید.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎨 UI Components
+
+### Button
+
+```tsx
+import { Button } from "@/components/ui";
+
+<Button variant="primary" size="lg">
+  کلیک کنید
+</Button>
+```
+
+### Card
+
+```tsx
+import { Card } from "@/components/ui";
+
+<Card hoverable>
+  محتوای کارت
+</Card>
+```
+
+### Input
+
+```tsx
+import { Input } from "@/components/ui";
+
+<Input
+  label="نام"
+  placeholder="نام خود را وارد کنید"
+/>
+```
+
+## 🌍 چندزبانه با next-intl
+
+### استفاده در کامپوننت
+
+```tsx
+"use client";
+
+import { useTranslations } from "next-intl";
+
+export default function MyComponent() {
+  const t = useTranslations("navbar");
+
+  return <h1>{t("logo")}</h1>;
+}
+```
+
+### اضافه کردن ترجمه
+
+فایل `messages/fa.json`:
+
+```json
+{
+  "navbar": {
+    "logo": "گالری اسب"
+  }
+}
+```
+
+## 🛠️ تکنولوژی‌ها
+
+- **Framework**: Next.js 16
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **Animation**: Framer Motion
+- **i18n**: next-intl
+- **Icons**: Lucide React
+- **Font**: Vazirmatn (فارسی)
+
+## 📝 اسکریپت‌ها
+
+```bash
+npm run dev        # اجرای development server (پورت 4000)
+npm run build      # ساخت برای production
+npm run start      # اجرای production server
+npm run lint       # بررسی کد با ESLint
+```
+
+## 🎯 ویژگی‌های Navbar
+
+- ✅ Scroll effect (تغییر رنگ با scroll)
+- ✅ انیمیشن smooth با Framer Motion
+- ✅ جستجوی dropdown
+- ✅ راست‌چین (RTL)
+- ✅ Responsive
+- ✅ تمام متن‌ها از next-intl
+
+## 📦 Backend Integration
+
+این فرانت‌اند برای اتصال به بکند NestJS طراحی شده است.
+
+## 🤝 مشارکت
+
+1. Fork کنید
+2. Branch جدید بسازید (`git checkout -b feature/amazing-feature`)
+3. Commit کنید (`git commit -m 'Add amazing feature'`)
+4. Push کنید (`git push origin feature/amazing-feature`)
+5. Pull Request باز کنید
+
+## 📄 لایسنس
+
+This project is licensed under the MIT License.
+
+## 👨‍💻 توسعه‌دهنده
+
+ساخته شده با ❤️ برای گالری اسب
+
+---
+
+برای سوالات و پشتیبانی، Issue باز کنید.
