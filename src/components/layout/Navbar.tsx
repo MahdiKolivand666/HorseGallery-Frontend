@@ -87,11 +87,12 @@ const Navbar = () => {
   }, [isSearchOpen, handleClickOutside]);
 
   const menuItems = [
-    { id: "suggest", href: "/suggest" },
-    { id: "gallery", href: "/gallery" },
+    { id: "home", href: "/" },
     { id: "products", href: "/products" },
+    { id: "suggest", href: "/suggest" },
+    { id: "faq", href: "/faq" },
+    { id: "blog", href: "/blog" },
     { id: "about", href: "/about" },
-    { id: "shop", href: "/shop" },
     { id: "contact", href: "/contact" },
   ];
 
@@ -105,7 +106,7 @@ const Navbar = () => {
         backdropFilter: isScrolled ? "blur(10px)" : "blur(0px)",
       }}
       transition={{ duration: 0.3 }}
-      className={`fixed top-0 left-0 right-0 z-50 w-full max-w-[100vw] overflow-x-hidden ${
+      className={`fixed top-0 left-0 right-0 z-50 w-full ${
         isScrolled ? "border-b border-white/10" : "border-b border-primary/10"
       }`}
     >

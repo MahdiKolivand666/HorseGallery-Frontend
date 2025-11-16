@@ -29,8 +29,6 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden !important;
-  max-width: 100vw;
   width: 100%;
 }
 
@@ -39,15 +37,11 @@ body {
   color: var(--foreground);
   font-family: "Vazirmatn", Arial, Helvetica, sans-serif;
   direction: rtl;
-  overflow-x: hidden !important;
-  max-width: 100vw;
   width: 100%;
   position: relative;
 }
 
 #__next {
-  overflow-x: hidden !important;
-  max-width: 100vw;
   width: 100%;
 }
 
