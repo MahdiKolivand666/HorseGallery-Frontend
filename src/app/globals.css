@@ -120,11 +120,39 @@ body {
 /* Announcements Slider Styles */
 .announcements-slider .announcement-button-prev,
 .announcements-slider .announcement-button-next {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
+}
+
+@media (min-width: 640px) {
+  .announcements-slider .announcement-button-prev,
+  .announcements-slider .announcement-button-next {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 .announcements-slider .swiper-button-disabled {
   opacity: 0.2;
+  cursor: not-allowed;
+}
+
+/* Blog Swiper Styles */
+.blog-swiper .swiper-button-prev-custom,
+.blog-swiper .swiper-button-next-custom {
+  width: 40px;
+  height: 40px;
+}
+
+@media (min-width: 640px) {
+  .blog-swiper .swiper-button-prev-custom,
+  .blog-swiper .swiper-button-next-custom {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.blog-swiper .swiper-button-disabled {
+  opacity: 0.3;
   cursor: not-allowed;
 }

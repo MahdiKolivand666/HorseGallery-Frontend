@@ -16,7 +16,6 @@ const HeroSlider = () => {
       "/images/slider/Slider-1.jpg",
       "/images/slider/Slider-2.jpg",
       "/images/slider/Slider-5.webp",
-      "/images/slider/Slider-6.webp",
     ],
     mobile: ["/images/slider/sliderT-3.jpg", "/images/slider/sliderT-4.jpg"],
   };

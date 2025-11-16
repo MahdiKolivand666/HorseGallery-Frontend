@@ -97,13 +97,13 @@ const CategoryGrid = () => {
           </h2>
         </motion.div>
 
-        {/* Categories Grid - 4 Equal Columns */}
+        {/* Categories Grid - 2 Columns Mobile, 4 Columns Desktop */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-6 overflow-visible"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 overflow-visible"
         >
           {categories.map((category) => {
             const isActive = activeCategory === category.id;
@@ -132,10 +132,7 @@ const CategoryGrid = () => {
                       }}
                       className="relative overflow-visible cursor-pointer w-full"
                     >
-                      <div
-                        className="relative overflow-hidden w-full shadow-md hover:shadow-2xl transition-shadow duration-300 rounded-sm"
-                        style={{ height: "360px" }}
-                      >
+                      <div className="relative overflow-hidden w-full shadow-md hover:shadow-2xl transition-shadow duration-300 rounded-sm aspect-square">
                         {/* Default Image */}
                         <motion.div
                           className="absolute inset-0"
@@ -162,11 +159,7 @@ const CategoryGrid = () => {
                               width={360}
                               height={360}
                               className="object-cover w-full h-full"
-                              style={{
-                                width: "360px",
-                                height: "360px",
-                              }}
-                              sizes="(max-width: 1024px) 100vw, 360px"
+                              sizes="(max-width: 1024px) 50vw, 360px"
                             />
                           </motion.div>
                         </motion.div>
@@ -198,11 +191,7 @@ const CategoryGrid = () => {
                               width={360}
                               height={360}
                               className="object-cover w-full h-full"
-                              style={{
-                                width: "360px",
-                                height: "360px",
-                              }}
-                              sizes="(max-width: 1024px) 100vw, 360px"
+                              sizes="(max-width: 1024px) 50vw, 360px"
                             />
                           </motion.div>
                         </motion.div>

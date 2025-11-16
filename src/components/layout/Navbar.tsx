@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -27,30 +27,30 @@ const Navbar = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("navbar");
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-      // Close search box when scrolling
-      if (isSearchOpen) {
-        setIsSearchOpen(false);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+  const handleScroll = useCallback(() => {
+    setIsScrolled(window.scrollY > 50);
+    // Close search box when scrolling
+    if (isSearchOpen) {
+      setIsSearchOpen(false);
+    }
   }, [isSearchOpen]);
 
-  // Close mobile menu when window is resized to desktop
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024 && isMobileMenuOpen) {
-        setIsMobileMenuOpen(false);
-      }
-    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+  // Close mobile menu when window is resized to desktop
+  const handleResize = useCallback(() => {
+    if (window.innerWidth >= 1024 && isMobileMenuOpen) {
+      setIsMobileMenuOpen(false);
+    }
   }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => window.removeEventListener("resize", handleResize);
+  }, [handleResize]);
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -62,21 +62,21 @@ const Navbar = () => {
   }, [isMobileMenuOpen]);
 
   // Close search box when clicking outside
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    // Check if click is outside search box and not on search button
+    const isSearchButton = target.closest("[data-search-button]");
+
+    if (
+      searchRef.current &&
+      !searchRef.current.contains(target) &&
+      !isSearchButton
+    ) {
+      setIsSearchOpen(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      // Check if click is outside search box and not on search button
-      const isSearchButton = target.closest("[data-search-button]");
-
-      if (
-        searchRef.current &&
-        !searchRef.current.contains(target) &&
-        !isSearchButton
-      ) {
-        setIsSearchOpen(false);
-      }
-    };
-
     if (isSearchOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
@@ -84,10 +84,10 @@ const Navbar = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isSearchOpen]);
+  }, [isSearchOpen, handleClickOutside]);
 
   const menuItems = [
-    { id: "horses", href: "/horses" },
+    { id: "suggest", href: "/suggest" },
     { id: "gallery", href: "/gallery" },
     { id: "products", href: "/products" },
     { id: "about", href: "/about" },
@@ -109,11 +109,11 @@ const Navbar = () => {
         isScrolled ? "border-b border-white/10" : "border-b border-primary/10"
       }`}
     >
-      {/* Desktop Top Bar - Announcements & Gold Price */}
-      <div className="hidden lg:block w-full max-w-[1920px] mx-auto px-8 bg-primary/30">
-        <div className="h-10 flex items-center justify-center gap-6 relative">
+      {/* Top Bar - Announcements & Gold Price */}
+      <div className="w-full max-w-[1920px] mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 bg-primary/30">
+        <div className="h-8 sm:h-9 lg:h-10 flex items-center justify-center gap-4 lg:gap-6 relative">
           {/* Center - Announcements Slider */}
-          <div className="w-[400px] overflow-hidden relative announcements-slider">
+          <div className="w-full max-w-[400px] overflow-hidden relative announcements-slider">
             <Swiper
               modules={[Autoplay, Navigation]}
               autoplay={{
@@ -127,18 +127,18 @@ const Navbar = () => {
               }}
               loop={true}
               speed={600}
-              className="h-10"
+              className="h-8 sm:h-9 lg:h-10"
             >
               {/* Announcement 1 */}
               <SwiperSlide>
                 <Link
                   href="/offers/black-friday"
-                  className="flex items-center justify-center gap-2 h-10 hover:opacity-80 transition-opacity"
+                  className="flex items-center justify-center gap-1.5 sm:gap-2 h-8 sm:h-9 lg:h-10 hover:opacity-80 transition-opacity px-2"
                 >
-                  <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded">
+                  <span className="px-1.5 sm:px-2 py-0.5 bg-red-500 text-white text-[9px] sm:text-[10px] font-bold rounded flex-shrink-0">
                     جدید
                   </span>
-                  <span className="text-xs font-medium text-white/90">
+                  <span className="text-[10px] sm:text-xs font-medium text-white/90 truncate">
                     🎉 جشنواره بلک فرایدی - تا ۵۰٪ تخفیف!
                   </span>
                 </Link>
@@ -148,12 +148,12 @@ const Navbar = () => {
               <SwiperSlide>
                 <Link
                   href="/offers/special"
-                  className="flex items-center justify-center gap-2 h-10 hover:opacity-80 transition-opacity"
+                  className="flex items-center justify-center gap-1.5 sm:gap-2 h-8 sm:h-9 lg:h-10 hover:opacity-80 transition-opacity px-2"
                 >
-                  <span className="px-2 py-0.5 bg-yellow-500 text-gray-900 text-[10px] font-bold rounded">
+                  <span className="px-1.5 sm:px-2 py-0.5 bg-yellow-500 text-gray-900 text-[9px] sm:text-[10px] font-bold rounded flex-shrink-0">
                     ویژه
                   </span>
-                  <span className="text-xs font-medium text-white/90">
+                  <span className="text-[10px] sm:text-xs font-medium text-white/90 truncate">
                     ⭐ ارسال رایگان برای خریدهای بالای ۵ میلیون تومان
                   </span>
                 </Link>
@@ -163,12 +163,12 @@ const Navbar = () => {
               <SwiperSlide>
                 <Link
                   href="/products/new"
-                  className="flex items-center justify-center gap-2 h-10 hover:opacity-80 transition-opacity"
+                  className="flex items-center justify-center gap-1.5 sm:gap-2 h-8 sm:h-9 lg:h-10 hover:opacity-80 transition-opacity px-2"
                 >
-                  <span className="px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded">
+                  <span className="px-1.5 sm:px-2 py-0.5 bg-green-500 text-white text-[9px] sm:text-[10px] font-bold rounded flex-shrink-0">
                     محصول جدید
                   </span>
-                  <span className="text-xs font-medium text-white/90">
+                  <span className="text-[10px] sm:text-xs font-medium text-white/90 truncate">
                     ✨ کالکشن پاییزه الان موجوده!
                   </span>
                 </Link>
@@ -178,12 +178,12 @@ const Navbar = () => {
               <SwiperSlide>
                 <Link
                   href="/offers/gold-discount"
-                  className="flex items-center justify-center gap-2 h-10 hover:opacity-80 transition-opacity"
+                  className="flex items-center justify-center gap-1.5 sm:gap-2 h-8 sm:h-9 lg:h-10 hover:opacity-80 transition-opacity px-2"
                 >
-                  <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded">
+                  <span className="px-1.5 sm:px-2 py-0.5 bg-orange-500 text-white text-[9px] sm:text-[10px] font-bold rounded flex-shrink-0">
                     تخفیف
                   </span>
-                  <span className="text-xs font-medium text-white/90">
+                  <span className="text-[10px] sm:text-xs font-medium text-white/90 truncate">
                     💰 تخفیف ویژه محصولات طلا - فقط امروز!
                   </span>
                 </Link>
@@ -192,21 +192,21 @@ const Navbar = () => {
 
             {/* Navigation Buttons */}
             <button
-              className="announcement-button-prev absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm p-1 rounded transition-all"
+              className="announcement-button-prev absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm p-0.5 sm:p-1 rounded transition-all"
               aria-label="Previous"
             >
-              <ChevronLeft className="w-3.5 h-3.5 text-white" />
+              <ChevronLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
             </button>
             <button
-              className="announcement-button-next absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm p-1 rounded transition-all"
+              className="announcement-button-next absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm p-0.5 sm:p-1 rounded transition-all"
               aria-label="Next"
             >
-              <ChevronRight className="w-3.5 h-3.5 text-white" />
+              <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
             </button>
           </div>
 
-          {/* Left - Gold Price (Absolute Positioned) */}
-          <div className="flex items-center gap-3 flex-shrink-0 absolute left-8 top-1/2 -translate-y-1/2">
+          {/* Left - Gold Price (Absolute Positioned - Desktop Only) */}
+          <div className="hidden lg:flex items-center gap-3 flex-shrink-0 absolute left-8 top-1/2 -translate-y-1/2">
             {/* Live Indicator */}
             <motion.div
               animate={{
@@ -224,7 +224,7 @@ const Navbar = () => {
             {/* Gold Price */}
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-white/90">
-                قیمت لحظه‌ای طلا:
+                قیمت روز طلا:
               </span>
               <span className="text-sm font-bold text-yellow-400">
                 ۲,۴۵۰,۰۰۰ تومان
