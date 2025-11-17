@@ -11,6 +11,36 @@ const NewArrivalsSection = () => {
   const [activeProduct, setActiveProduct] = useState<number | null>(null);
 
   // Sample products data (12 products = 6 rows of 2)
+  const productNames = [
+    "گوشواره جدید",
+    "دستبند جدید",
+    "انگشتر جدید",
+    "گردنبند جدید",
+    "سرویس جدید",
+    "پلاک جدید",
+    "النگو جدید",
+    "حلقه جدید",
+    "آویز جدید",
+    "زنجیر جدید",
+    "النگو نقره",
+    "انگشتر نقره",
+  ];
+
+  const productPrices = [
+    "۲,۳۰۰,۰۰۰",
+    "۳,۱۰۰,۰۰۰",
+    "۱,۹۰۰,۰۰۰",
+    "۲,۷۰۰,۰۰۰",
+    "۶,۲۰۰,۰۰۰",
+    "۱,۶۰۰,۰۰۰",
+    "۴,۱۰۰,۰۰۰",
+    "۲,۶۰۰,۰۰۰",
+    "۱,۳۰۰,۰۰۰",
+    "۳,۴۰۰,۰۰۰",
+    "۲,۱۰۰,۰۰۰",
+    "۱,۸۰۰,۰۰۰",
+  ];
+
   const products = Array.from({ length: 12 }, (_, i) => {
     const productNum = (i % 10) + 1;
     // product1-1.webp doesn't exist, use product2-2.webp for product1
@@ -18,8 +48,8 @@ const NewArrivalsSection = () => {
 
     return {
       id: i + 1,
-      name: `محصول ${i + 1}`,
-      price: "۲,۵۰۰,۰۰۰",
+      name: productNames[i],
+      price: productPrices[i],
       image: `/images/products/product${productNum}.webp`,
       hoverImage: `/images/products/product${hoverNum}-${hoverNum}.webp`,
       href: `/product/${i + 1}`,
@@ -239,6 +269,16 @@ const NewArrivalsSection = () => {
                             />
                           </div>
                         </motion.div>
+                      </div>
+
+                      {/* Product Info */}
+                      <div className="mt-2 text-center">
+                        <h3 className="text-xs font-medium text-gray-800 truncate">
+                          {product.name}
+                        </h3>
+                        <p className="text-xs text-gray-600 mt-0.5">
+                          {product.price} تومان
+                        </p>
                       </div>
                     </Link>
                   );

@@ -10,6 +10,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -24,8 +25,47 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProductsMenuOpen, setIsProductsMenuOpen] = useState(false);
+  const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const productsMenuRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("navbar");
+
+  const productCategories = [
+    {
+      id: "women",
+      title: "زنانه",
+      image: "/images/categories/categories1.webp",
+      products: [
+        { id: 1, name: "گردنبند طلا", href: "/products/women/necklace" },
+        { id: 2, name: "دستبند طلا", href: "/products/women/bracelet" },
+        { id: 3, name: "انگشتر طلا", href: "/products/women/ring" },
+        { id: 4, name: "گوشواره طلا", href: "/products/women/earring" },
+      ],
+    },
+    {
+      id: "men",
+      title: "مردانه",
+      image: "/images/categories/categories2.webp",
+      products: [
+        { id: 1, name: "انگشتر مردانه", href: "/products/men/ring" },
+        { id: 2, name: "دستبند مردانه", href: "/products/men/bracelet" },
+        { id: 3, name: "گردنبند مردانه", href: "/products/men/necklace" },
+        { id: 4, name: "ساعت مردانه", href: "/products/men/watch" },
+      ],
+    },
+    {
+      id: "kids",
+      title: "کودکانه",
+      image: "/images/categories/categories3.jpg",
+      products: [
+        { id: 1, name: "دستبند کودک", href: "/products/kids/bracelet" },
+        { id: 2, name: "گردنبند کودک", href: "/products/kids/necklace" },
+        { id: 3, name: "انگشتر کودک", href: "/products/kids/ring" },
+        { id: 4, name: "پابند کودک", href: "/products/kids/anklet" },
+      ],
+    },
+  ];
 
   const handleScroll = useCallback(() => {
     setIsScrolled(window.scrollY > 50);
@@ -52,20 +92,21 @@ const Navbar = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [handleResize]);
 
-  // Prevent body scroll when mobile menu is open
+  // Prevent body scroll when mobile menu or products menu is open
   useEffect(() => {
-    if (isMobileMenuOpen) {
+    if (isMobileMenuOpen || isProductsMenuOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuOpen, isProductsMenuOpen]);
 
-  // Close search box when clicking outside
+  // Close search box and products menu when clicking outside
   const handleClickOutside = useCallback((event: MouseEvent) => {
     const target = event.target as HTMLElement;
     // Check if click is outside search box and not on search button
     const isSearchButton = target.closest("[data-search-button]");
+    const isProductsButton = target.closest("[data-products-button]");
 
     if (
       searchRef.current &&
@@ -74,17 +115,25 @@ const Navbar = () => {
     ) {
       setIsSearchOpen(false);
     }
+
+    if (
+      productsMenuRef.current &&
+      !productsMenuRef.current.contains(target) &&
+      !isProductsButton
+    ) {
+      setIsProductsMenuOpen(false);
+    }
   }, []);
 
   useEffect(() => {
-    if (isSearchOpen) {
+    if (isSearchOpen || isProductsMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isSearchOpen, handleClickOutside]);
+  }, [isSearchOpen, isProductsMenuOpen, handleClickOutside]);
 
   const menuItems = [
     { id: "home", href: "/" },
@@ -341,23 +390,48 @@ const Navbar = () => {
 
             {/* Center - Menu Items */}
             <div className="flex items-center gap-6 flex-1 justify-center">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={`text-sm font-medium tracking-wide transition-all hover:opacity-70 relative group ${
-                    isScrolled ? "text-white" : "text-primary"
-                  }`}
-                  style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
-                >
-                  {t(`menu.${item.id}`)}
-                  <span
-                    className={`absolute bottom-[-4px] left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full ${
-                      isScrolled ? "bg-white" : "bg-primary"
+              {menuItems.map((item) =>
+                item.id === "products" ? (
+                  <button
+                    key={item.id}
+                    data-products-button
+                    onMouseEnter={() => setIsProductsMenuOpen(true)}
+                    onClick={() => setIsProductsMenuOpen(!isProductsMenuOpen)}
+                    className={`flex items-center gap-1 text-sm font-medium tracking-wide transition-all hover:opacity-70 relative group ${
+                      isScrolled ? "text-white" : "text-primary"
                     }`}
-                  />
-                </Link>
-              ))}
+                    style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
+                  >
+                    {t(`menu.${item.id}`)}
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-300 ${
+                        isProductsMenuOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                    <span
+                      className={`absolute bottom-[-4px] left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full ${
+                        isScrolled ? "bg-white" : "bg-primary"
+                      }`}
+                    />
+                  </button>
+                ) : (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className={`text-sm font-medium tracking-wide transition-all hover:opacity-70 relative group ${
+                      isScrolled ? "text-white" : "text-primary"
+                    }`}
+                    style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
+                  >
+                    {t(`menu.${item.id}`)}
+                    <span
+                      className={`absolute bottom-[-4px] left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full ${
+                        isScrolled ? "bg-white" : "bg-primary"
+                      }`}
+                    />
+                  </Link>
+                )
+              )}
             </div>
 
             {/* Right Section - Search + Auth + Icons */}
@@ -427,23 +501,93 @@ const Navbar = () => {
           >
             <div className="flex flex-col px-4 py-4 space-y-1 max-h-[calc(100vh-4rem)] overflow-y-auto">
               {/* Menu Items */}
-              {menuItems.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Link
-                    href={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block py-3 px-4 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors text-center"
-                    style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
+              {menuItems.map((item, index) =>
+                item.id === "products" ? (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
                   >
-                    {t(`menu.${item.id}`)}
-                  </Link>
-                </motion.div>
-              ))}
+                    <button
+                      onClick={() =>
+                        setIsMobileProductsOpen(!isMobileProductsOpen)
+                      }
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors"
+                      style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
+                    >
+                      {t(`menu.${item.id}`)}
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-300 ${
+                          isMobileProductsOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {/* Mobile Products Submenu */}
+                    <AnimatePresence>
+                      {isMobileProductsOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="overflow-hidden mt-1"
+                        >
+                          <div className="space-y-1 px-2 py-2">
+                            {productCategories.map((category) => (
+                              <div key={category.id} className="space-y-1">
+                                <div className="text-white/60 text-xs font-semibold px-2 py-1">
+                                  {category.title}
+                                </div>
+                                {category.products.map((product) => (
+                                  <Link
+                                    key={product.id}
+                                    href={product.href}
+                                    onClick={() => {
+                                      setIsMobileMenuOpen(false);
+                                      setIsMobileProductsOpen(false);
+                                    }}
+                                    className="block py-2 px-4 text-sm text-white/80 hover:bg-white/10 rounded-lg transition-colors"
+                                  >
+                                    {product.name}
+                                  </Link>
+                                ))}
+                                <Link
+                                  href={`/products/${category.id}`}
+                                  onClick={() => {
+                                    setIsMobileMenuOpen(false);
+                                    setIsMobileProductsOpen(false);
+                                  }}
+                                  className="block py-2 px-4 text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors underline"
+                                >
+                                  مشاهده همه {category.title}
+                                </Link>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Link
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block py-3 px-4 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors text-center"
+                      style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
+                    >
+                      {t(`menu.${item.id}`)}
+                    </Link>
+                  </motion.div>
+                )
+              )}
 
               {/* Auth Link */}
               <motion.div
@@ -498,6 +642,70 @@ const Navbar = () => {
                       : "bg-white/80 border-primary/30 text-primary placeholder:text-primary/60 focus:bg-white focus:border-primary/50"
                   }`}
                 />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Products Menu Dropdown - Desktop Only */}
+      <AnimatePresence>
+        {isProductsMenuOpen && (
+          <motion.div
+            ref={productsMenuRef}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            onMouseLeave={() => setIsProductsMenuOpen(false)}
+            className="hidden lg:block overflow-hidden border-t backdrop-blur-md bg-primary/95 border-white/10"
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+                {productCategories.map((category) => (
+                  <div key={category.id} className="flex flex-col gap-4">
+                    {/* Category Image */}
+                    <div className="relative w-full h-48 overflow-hidden group">
+                      <Image
+                        src={category.image}
+                        alt={category.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 33vw, 400px"
+                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                      <div className="absolute bottom-0 right-0 left-0 p-4">
+                        <h3 className="text-xl font-bold text-white">
+                          {category.title}
+                        </h3>
+                      </div>
+                    </div>
+
+                    {/* Products List */}
+                    <ul className="space-y-2">
+                      {category.products.map((product) => (
+                        <li key={product.id}>
+                          <Link
+                            href={product.href}
+                            onClick={() => setIsProductsMenuOpen(false)}
+                            className="block py-2 px-3 rounded-lg transition-all hover:translate-x-1 text-white/90 hover:bg-white/10 hover:text-white text-sm"
+                          >
+                            {product.name}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* View All Link */}
+                    <Link
+                      href={`/products/${category.id}`}
+                      onClick={() => setIsProductsMenuOpen(false)}
+                      className="inline-block text-sm font-medium transition-all hover:opacity-70 underline text-white/80 hover:text-white"
+                    >
+                      مشاهده همه {category.title}
+                    </Link>
+                  </div>
+                ))}
               </div>
             </div>
           </motion.div>
