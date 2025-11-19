@@ -189,14 +189,14 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
             className="fixed top-0 right-0 h-full w-[85%] max-w-md bg-white shadow-2xl z-[9999] overflow-hidden flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
-              <h2 className="text-lg font-normal text-gray-900">فیلترها</h2>
+            <div className="flex items-center justify-between py-2 px-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+              <h2 className="text-base font-normal text-gray-900">فیلترها</h2>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
                 aria-label="بستن"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 text-gray-500" />
               </button>
             </div>
 
@@ -620,7 +620,11 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
                     type="checkbox"
                     checked={inStock}
                     onChange={(e) => setInStock(e.target.checked)}
-                    className="toggle toggle-sm toggle-primary"
+                    className={`toggle toggle-sm ${inStock ? 'toggle-primary' : ''}`}
+                    style={!inStock ? {
+                      backgroundColor: '#d1d5db',
+                      borderColor: '#d1d5db'
+                    } : undefined}
                   />
                 </label>
               </div>
@@ -635,7 +639,11 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
                     type="checkbox"
                     checked={onSale}
                     onChange={(e) => setOnSale(e.target.checked)}
-                    className="toggle toggle-sm toggle-primary"
+                    className={`toggle toggle-sm ${onSale ? 'toggle-primary' : ''}`}
+                    style={!onSale ? {
+                      backgroundColor: '#d1d5db',
+                      borderColor: '#d1d5db'
+                    } : undefined}
                   />
                 </label>
               </div>
@@ -650,7 +658,11 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
                     type="checkbox"
                     checked={lowCommission}
                     onChange={(e) => setLowCommission(e.target.checked)}
-                    className="toggle toggle-sm toggle-primary"
+                    className={`toggle toggle-sm ${lowCommission ? 'toggle-primary' : ''}`}
+                    style={!lowCommission ? {
+                      backgroundColor: '#d1d5db',
+                      borderColor: '#d1d5db'
+                    } : undefined}
                   />
                 </label>
               </div>

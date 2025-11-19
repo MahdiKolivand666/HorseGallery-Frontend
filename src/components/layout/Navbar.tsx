@@ -150,18 +150,21 @@ const Navbar = () => {
     <motion.nav
       initial={{ y: 0 }}
       animate={{
-        backgroundColor: isScrolled || isNavHovered
-          ? "rgba(49, 93, 73, 0.95)"
-          : "rgba(49, 93, 73, 0.15)",
+        backgroundColor:
+          isScrolled || isNavHovered
+            ? "rgba(49, 93, 73, 0.95)"
+            : "rgba(49, 93, 73, 0.15)",
         backdropFilter: isScrolled || isNavHovered ? "blur(10px)" : "blur(0px)",
       }}
       transition={{ duration: 0.3 }}
       className={`fixed top-0 left-0 right-0 z-50 w-full ${
-        isScrolled || isNavHovered ? "border-b border-white/10" : "border-b border-primary/10"
+        isScrolled || isNavHovered
+          ? "border-b border-white/10"
+          : "border-b border-primary/10"
       }`}
     >
       {/* Top Bar - Announcements & Gold Price */}
-      <div 
+      <div
         className="w-full max-w-[1920px] mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 bg-primary/30"
         onMouseEnter={() => setIsNavHovered(true)}
         onMouseLeave={() => setIsNavHovered(false)}
@@ -380,7 +383,7 @@ const Navbar = () => {
         <div className="max-w-[1920px] mx-auto px-8">
           <div className="flex items-center justify-between h-16 gap-6">
             {/* Left Section - Logo + Filter Button */}
-            <div 
+            <div
               className="flex items-center gap-3 flex-shrink-0"
               onMouseEnter={() => setIsNavHovered(true)}
               onMouseLeave={() => setIsNavHovered(false)}
@@ -400,7 +403,7 @@ const Navbar = () => {
             </div>
 
             {/* Center - Menu Items */}
-            <div 
+            <div
               className="flex items-center gap-6 flex-1 justify-center"
               onMouseEnter={() => setIsNavHovered(true)}
               onMouseLeave={() => setIsNavHovered(false)}
@@ -450,7 +453,7 @@ const Navbar = () => {
             </div>
 
             {/* Right Section - Search + Auth + Icons */}
-            <div 
+            <div
               className="flex items-center gap-5 flex-shrink-0"
               onMouseEnter={() => setIsNavHovered(true)}
               onMouseLeave={() => setIsNavHovered(false)}
@@ -680,51 +683,54 @@ const Navbar = () => {
             className="hidden lg:block overflow-hidden border-t backdrop-blur-md bg-primary/95 border-white/10"
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-                {productCategories.map((category) => (
-                  <div key={category.id} className="flex flex-col gap-4">
-                    {/* Category Image */}
-                    <div className="relative w-full h-48 overflow-hidden group">
-                      <Image
-                        src={category.image}
-                        alt={category.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 33vw, 400px"
-                        className="object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                      <div className="absolute bottom-0 right-0 left-0 p-4">
-                        <h3 className="text-xl font-bold text-white">
-                          {category.title}
-                        </h3>
-                      </div>
+              <div className="grid grid-cols-2 gap-8 lg:gap-12">
+                {/* Right Side - Categories */}
+                <div className="grid grid-cols-3 gap-6">
+                  {productCategories.map((category) => (
+                    <div key={category.id} className="flex flex-col gap-3">
+                      {/* Category Title */}
+                      <h3 className="text-lg font-bold text-white border-b border-white/20 pb-2">
+                        {category.title}
+                      </h3>
+
+                      {/* Products List */}
+                      <ul className="space-y-2">
+                        {category.products.map((product) => (
+                          <li key={product.id}>
+                            <Link
+                              href={product.href}
+                              onClick={() => setIsProductsMenuOpen(false)}
+                              className="block py-1.5 px-2 transition-all hover:translate-x-1 text-white/90 hover:bg-white/10 hover:text-white text-sm"
+                            >
+                              {product.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {/* View All Link */}
+                      <Link
+                        href={`/products/${category.id}`}
+                        onClick={() => setIsProductsMenuOpen(false)}
+                        className="inline-block text-xs font-medium transition-all hover:opacity-70 underline text-white/80 hover:text-white mt-2"
+                      >
+                        مشاهده همه
+                      </Link>
                     </div>
+                  ))}
+                </div>
 
-                    {/* Products List */}
-                    <ul className="space-y-2">
-                      {category.products.map((product) => (
-                        <li key={product.id}>
-                          <Link
-                            href={product.href}
-                            onClick={() => setIsProductsMenuOpen(false)}
-                            className="block py-2 px-3 rounded-lg transition-all hover:translate-x-1 text-white/90 hover:bg-white/10 hover:text-white text-sm"
-                          >
-                            {product.name}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-
-                    {/* View All Link */}
-                    <Link
-                      href={`/products/${category.id}`}
-                      onClick={() => setIsProductsMenuOpen(false)}
-                      className="inline-block text-sm font-medium transition-all hover:opacity-70 underline text-white/80 hover:text-white"
-                    >
-                      مشاهده همه {category.title}
-                    </Link>
-                  </div>
-                ))}
+                {/* Left Side - Large Image */}
+                <div className="relative w-full h-full min-h-[400px] overflow-hidden group">
+                  <Image
+                    src="/images/aboutUs/bridal.webp"
+                    alt="محصولات فروشگاه"
+                    fill
+                    sizes="(max-width: 1024px) 50vw, 600px"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
+                </div>
               </div>
             </div>
           </motion.div>

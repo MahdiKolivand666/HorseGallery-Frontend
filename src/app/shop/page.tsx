@@ -31,12 +31,18 @@ const ShopPage = () => {
   // محصولات fake برای نمایش (60 محصول برای تست pagination)
   const allProducts = Array.from({ length: 60 }, (_, i) => {
     const productNum = (i % 10) + 1;
+    // برای محصول 1، از عکس product8-8.webp به عنوان hover استفاده می‌کنیم
+    const hoverImagePath =
+      productNum === 1
+        ? `/images/products/product8-8.webp`
+        : `/images/products/product${productNum}-${productNum}.webp`;
+
     return {
       id: i + 1,
       name: `محصول شماره ${i + 1}`,
       price: `${((i + 1) * 150000).toLocaleString("fa-IR")} تومان`,
       image: `/images/products/product${productNum}.webp`,
-      hoverImage: `/images/products/product${productNum}-${productNum}.webp`,
+      hoverImage: hoverImagePath,
     };
   });
 
@@ -99,11 +105,11 @@ const ShopPage = () => {
         {/* Products Grid */}
         <main className="flex-1 px-4 sm:px-6 pt-[5px] pb-6 lg:pb-8">
           {/* Sort By & Mobile Filter Button */}
-          <div className="flex items-center justify-end gap-4 my-[1.25rem]">
+          <div className="flex items-center justify-between gap-4 my-[1.25rem]">
             {/* Mobile Filter Button */}
             <button
               onClick={() => setIsFilterDrawerOpen(true)}
-              className="lg:hidden flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              className="lg:hidden flex items-center gap-2 px-4 py-2 bg-primary text-white hover:bg-primary/90 transition-colors"
             >
               <SlidersHorizontal className="w-4 h-4" />
               <span className="text-sm">فیلترها</span>
