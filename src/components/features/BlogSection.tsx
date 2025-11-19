@@ -83,9 +83,9 @@ const BlogSection = () => {
           }}
           className="text-right py-8 sm:py-5 mb-4 sm:mb-6 lg:mb-8"
         >
-          <h2 className="text-sm sm:text-base md:text-lg font-medium text-gray-700">
-            داستان‌های Horse Gallery
-          </h2>
+                <h2 className="text-sm sm:text-base md:text-lg font-medium text-gray-700">
+                  داستان‌های گالری اسب
+                </h2>
         </motion.div>
 
         {/* Mobile/Tablet Slider (hidden on desktop) */}
@@ -108,8 +108,8 @@ const BlogSection = () => {
                   <Link href={post.href}>
                     <div className="flex flex-row-reverse gap-4">
                       {/* Image - Left Side (Vertical) */}
-                      <div className="w-2/5 flex-shrink-0">
-                        <div className="relative w-full h-full min-h-[280px] overflow-hidden">
+                      <div className="w-1/2 flex-shrink-0">
+                        <div className="relative w-full h-full min-h-[300px] overflow-hidden">
                           <Image
                             src={post.image}
                             alt={post.title}
@@ -121,7 +121,7 @@ const BlogSection = () => {
                       </div>
 
                       {/* Content - Right Side */}
-                      <div className="w-3/5 flex flex-col justify-between text-right py-2">
+                      <div className="w-1/2 flex flex-col justify-between text-right py-2">
                         <div>
                           {/* Title */}
                           <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-4 group-hover:text-primary transition-colors line-clamp-2">
@@ -181,20 +181,20 @@ const BlogSection = () => {
               <Link href={post.href}>
                 <div className="flex flex-row-reverse gap-4">
                   {/* Image - Left Side (Vertical) */}
-                  <div className="w-2/5 flex-shrink-0">
-                    <div className="relative w-full h-full min-h-[280px] overflow-hidden">
+                  <div className="w-1/2 flex-shrink-0">
+                    <div className="relative w-full h-full min-h-[320px] overflow-hidden">
                       <Image
                         src={post.image}
                         alt={post.title}
                         fill
                         className="object-cover group-hover:scale-110 transition-transform duration-500"
-                        sizes="(max-width: 640px) 40vw, 20vw"
+                        sizes="(max-width: 640px) 50vw, 25vw"
                       />
                     </div>
                   </div>
 
                   {/* Content - Right Side */}
-                  <div className="w-3/5 flex flex-col justify-between text-right py-2">
+                  <div className="w-1/2 flex flex-col justify-between text-right py-2">
                     <div>
                       {/* Title */}
                       <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-4 group-hover:text-primary transition-colors line-clamp-2">

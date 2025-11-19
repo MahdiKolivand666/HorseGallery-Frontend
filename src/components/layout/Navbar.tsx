@@ -27,6 +27,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProductsMenuOpen, setIsProductsMenuOpen] = useState(false);
   const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(false);
+  const [isNavHovered, setIsNavHovered] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const productsMenuRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("navbar");
@@ -137,7 +138,7 @@ const Navbar = () => {
 
   const menuItems = [
     { id: "home", href: "/" },
-    { id: "products", href: "/products" },
+    { id: "shop", href: "/shop" },
     { id: "suggest", href: "/suggest" },
     { id: "faq", href: "/faq" },
     { id: "blog", href: "/blog" },
@@ -149,18 +150,22 @@ const Navbar = () => {
     <motion.nav
       initial={{ y: 0 }}
       animate={{
-        backgroundColor: isScrolled
+        backgroundColor: isScrolled || isNavHovered
           ? "rgba(49, 93, 73, 0.95)"
           : "rgba(49, 93, 73, 0.15)",
-        backdropFilter: isScrolled ? "blur(10px)" : "blur(0px)",
+        backdropFilter: isScrolled || isNavHovered ? "blur(10px)" : "blur(0px)",
       }}
       transition={{ duration: 0.3 }}
       className={`fixed top-0 left-0 right-0 z-50 w-full ${
-        isScrolled ? "border-b border-white/10" : "border-b border-primary/10"
+        isScrolled || isNavHovered ? "border-b border-white/10" : "border-b border-primary/10"
       }`}
     >
       {/* Top Bar - Announcements & Gold Price */}
-      <div className="w-full max-w-[1920px] mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 bg-primary/30">
+      <div 
+        className="w-full max-w-[1920px] mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 bg-primary/30"
+        onMouseEnter={() => setIsNavHovered(true)}
+        onMouseLeave={() => setIsNavHovered(false)}
+      >
         <div className="h-8 sm:h-9 lg:h-10 flex items-center justify-center gap-4 lg:gap-6 relative">
           {/* Center - Announcements Slider */}
           <div className="w-full max-w-[400px] overflow-hidden relative announcements-slider">
@@ -374,31 +379,41 @@ const Navbar = () => {
       <div className="hidden lg:block border-t border-primary/10">
         <div className="max-w-[1920px] mx-auto px-8">
           <div className="flex items-center justify-between h-16 gap-6">
-            {/* Left Section - Logo */}
-            <Link href="/" className="flex-shrink-0">
-              <motion.div whileHover={{ scale: 1.05 }} className="relative">
-                <Image
-                  src="/images/logo/logo.png"
-                  alt="Horse Gallery Logo"
-                  width={100}
-                  height={100}
-                  className="w-20 h-20 lg:w-24 lg:h-24 object-contain drop-shadow-lg"
-                  priority
-                />
-              </motion.div>
-            </Link>
+            {/* Left Section - Logo + Filter Button */}
+            <div 
+              className="flex items-center gap-3 flex-shrink-0"
+              onMouseEnter={() => setIsNavHovered(true)}
+              onMouseLeave={() => setIsNavHovered(false)}
+            >
+              <Link href="/" className="flex-shrink-0">
+                <motion.div whileHover={{ scale: 1.05 }} className="relative">
+                  <Image
+                    src="/images/logo/logo.png"
+                    alt="Horse Gallery Logo"
+                    width={100}
+                    height={100}
+                    className="w-20 h-20 lg:w-24 lg:h-24 object-contain drop-shadow-lg"
+                    priority
+                  />
+                </motion.div>
+              </Link>
+            </div>
 
             {/* Center - Menu Items */}
-            <div className="flex items-center gap-6 flex-1 justify-center">
+            <div 
+              className="flex items-center gap-6 flex-1 justify-center"
+              onMouseEnter={() => setIsNavHovered(true)}
+              onMouseLeave={() => setIsNavHovered(false)}
+            >
               {menuItems.map((item) =>
-                item.id === "products" ? (
+                item.id === "shop" ? (
                   <button
                     key={item.id}
                     data-products-button
                     onMouseEnter={() => setIsProductsMenuOpen(true)}
                     onClick={() => setIsProductsMenuOpen(!isProductsMenuOpen)}
                     className={`flex items-center gap-1 text-sm font-medium tracking-wide transition-all hover:opacity-70 relative group ${
-                      isScrolled ? "text-white" : "text-primary"
+                      isScrolled || isNavHovered ? "text-white" : "text-primary"
                     }`}
                     style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
                   >
@@ -410,7 +425,7 @@ const Navbar = () => {
                     />
                     <span
                       className={`absolute bottom-[-4px] left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full ${
-                        isScrolled ? "bg-white" : "bg-primary"
+                        isScrolled || isNavHovered ? "bg-white" : "bg-primary"
                       }`}
                     />
                   </button>
@@ -419,14 +434,14 @@ const Navbar = () => {
                     key={item.id}
                     href={item.href}
                     className={`text-sm font-medium tracking-wide transition-all hover:opacity-70 relative group ${
-                      isScrolled ? "text-white" : "text-primary"
+                      isScrolled || isNavHovered ? "text-white" : "text-primary"
                     }`}
                     style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
                   >
                     {t(`menu.${item.id}`)}
                     <span
                       className={`absolute bottom-[-4px] left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full ${
-                        isScrolled ? "bg-white" : "bg-primary"
+                        isScrolled || isNavHovered ? "bg-white" : "bg-primary"
                       }`}
                     />
                   </Link>
@@ -435,7 +450,11 @@ const Navbar = () => {
             </div>
 
             {/* Right Section - Search + Auth + Icons */}
-            <div className="flex items-center gap-5 flex-shrink-0">
+            <div 
+              className="flex items-center gap-5 flex-shrink-0"
+              onMouseEnter={() => setIsNavHovered(true)}
+              onMouseLeave={() => setIsNavHovered(false)}
+            >
               {/* Search Button */}
               <motion.button
                 data-search-button
@@ -443,7 +462,7 @@ const Navbar = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
                 className={`transition-colors ${
-                  isScrolled ? "text-white" : "text-primary"
+                  isScrolled || isNavHovered ? "text-white" : "text-primary"
                 }`}
                 aria-label="Search"
               >
@@ -454,7 +473,7 @@ const Navbar = () => {
               <Link
                 href="/auth"
                 className={`text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
-                  isScrolled ? "text-white" : "text-primary"
+                  isScrolled || isNavHovered ? "text-white" : "text-primary"
                 }`}
                 style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
               >
@@ -466,7 +485,7 @@ const Navbar = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={`transition-colors ${
-                  isScrolled ? "text-white" : "text-primary"
+                  isScrolled || isNavHovered ? "text-white" : "text-primary"
                 }`}
                 aria-label={t("favorites")}
               >
@@ -478,7 +497,7 @@ const Navbar = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={`transition-colors ${
-                  isScrolled ? "text-white" : "text-primary"
+                  isScrolled || isNavHovered ? "text-white" : "text-primary"
                 }`}
                 aria-label={t("cart")}
               >
@@ -502,7 +521,7 @@ const Navbar = () => {
             <div className="flex flex-col px-4 py-4 space-y-1 max-h-[calc(100vh-4rem)] overflow-y-auto">
               {/* Menu Items */}
               {menuItems.map((item, index) =>
-                item.id === "products" ? (
+                item.id === "shop" ? (
                   <motion.div
                     key={item.id}
                     initial={{ opacity: 0, y: -10 }}

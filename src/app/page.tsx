@@ -65,6 +65,9 @@ export default function Home() {
       {/* About Us Section */}
       <AboutUsSection />
 
+      {/* Features Bar */}
+      <FeaturesBar />
+
       {/* Blog Section */}
       <BlogSection />
 

@@ -5,7 +5,7 @@ import Image from "next/image";
 
 const AboutUsSection = () => {
   return (
-    <section className="w-full bg-gray-50 py-12 sm:py-16 lg:py-20">
+    <section className="w-full bg-gray-50 pt-12 sm:pt-16 lg:pt-20 pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Right Side - Text Content */}
@@ -17,8 +17,8 @@ const AboutUsSection = () => {
             className="order-2 lg:order-1 text-right"
           >
             {/* Title */}
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-              درباره Horse Gallery
+            <h2 className="text-sm sm:text-base md:text-lg font-medium text-gray-700 mb-6">
+              درباره گالری اسب
             </h2>
 
             {/* Description */}
@@ -30,9 +30,9 @@ const AboutUsSection = () => {
               </p>
               <p className="text-base sm:text-lg">
                 ما با استفاده از بهترین مواد اولیه و دقت بالا در کار، محصولاتی
-                منحصر به فرد و با کیفیت بالا را به مشتریان خود ارائه می‌دهیم.
-                هر قطعه جواهرات در گالری اسب، داستانی از هنر و زیبایی است که با
-                عشق و مهارت خلق شده است.
+                منحصر به فرد و با کیفیت بالا را به مشتریان خود ارائه می‌دهیم. هر
+                قطعه جواهرات در گالری اسب، داستانی از هنر و زیبایی است که با عشق
+                و مهارت خلق شده است.
               </p>
               <p className="text-base sm:text-lg">
                 فروشگاه ما در قلب تهران واقع شده و آماده ارائه بهترین خدمات به
@@ -40,6 +40,25 @@ const AboutUsSection = () => {
                 به‌یادماندنی از خرید جواهرات را برای شما فراهم کند.
               </p>
             </div>
+
+            {/* Logo Image */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="mt-8 w-full bg-gray-50"
+            >
+              <div className="relative w-full h-64 sm:h-80 lg:h-96">
+                <Image
+                  src="/images/Logo/logo.png"
+                  alt="Horse Gallery Logo"
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              </div>
+            </motion.div>
           </motion.div>
 
           {/* Left Side - Image */}
@@ -67,4 +86,3 @@ const AboutUsSection = () => {
 };
 
 export default AboutUsSection;
-

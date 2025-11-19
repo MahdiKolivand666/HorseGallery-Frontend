@@ -166,13 +166,13 @@ const BlogPage = () => {
           <nav className="flex items-center gap-2 text-sm">
             <Link
               href="/"
-              className="flex items-center gap-1 text-gray-600 hover:text-primary transition-colors"
+              className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
             >
               <Home className="w-4 h-4" />
               <span>خانه</span>
             </Link>
-            <ChevronLeft className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-900 font-medium">بلاگ</span>
+            <ChevronLeft className="w-4 h-4 text-primary" />
+            <span className="text-primary font-medium">بلاگ</span>
           </nav>
         </div>
       </div>
@@ -252,56 +252,115 @@ const BlogPage = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex items-center justify-center gap-2"
-          >
-            {/* Previous Button */}
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className={`p-2 border transition-all ${
-                currentPage === 1
-                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-
-            {/* Page Numbers */}
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => handlePageChange(page)}
-                className={`min-w-[40px] h-10 px-3 border transition-all ${
-                  currentPage === page
-                    ? "bg-primary text-white border-primary"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-
-            {/* Next Button */}
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className={`p-2 border transition-all ${
-                currentPage === totalPages
-                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          </motion.div>
+          <div className="mt-8 flex justify-center">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
         )}
       </div>
     </div>
+  );
+};
+
+// Pagination Component
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
+const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
+  const getPageNumbers = () => {
+    const pages = [];
+    const showPages = 5; // تعداد صفحات نمایش داده شده
+
+    if (totalPages <= showPages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= showPages; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - showPages + 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  return (
+    <nav className="flex items-center gap-1 sm:gap-2" dir="ltr">
+      {/* Previous Button */}
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`p-2 rounded-lg border transition-colors ${
+          currentPage === 1
+            ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+            : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+        }`}
+        aria-label="صفحه قبل"
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+
+      {/* Page Numbers */}
+      <div className="flex items-center gap-1">
+        {getPageNumbers().map((page, index) => (
+          typeof page === 'number' ? (
+            <button
+              key={index}
+              onClick={() => onPageChange(page)}
+              className={`min-w-[36px] h-9 px-3 rounded-lg border font-medium text-sm transition-colors ${
+                currentPage === page
+                  ? 'bg-primary text-white border-primary'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              {page.toLocaleString('fa-IR')}
+            </button>
+          ) : (
+            <span key={index} className="px-2 text-gray-400">
+              ...
+            </span>
+          )
+        ))}
+      </div>
+
+      {/* Next Button */}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`p-2 rounded-lg border transition-colors ${
+          currentPage === totalPages
+            ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+            : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+        }`}
+        aria-label="صفحه بعد"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </button>
+    </nav>
   );
 };
 
