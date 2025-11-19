@@ -1,146 +1,151 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
-import { ChevronLeft, Home, Award, Users, Target, Heart } from "lucide-react";
 
 const AboutPage = () => {
-  const features = [
-    {
-      icon: Award,
-      title: "کیفیت برتر",
-      description: "ارائه محصولات با بالاترین کیفیت و اصالت",
-    },
-    {
-      icon: Users,
-      title: "تیم حرفه‌ای",
-      description: "متخصصان مجرب در خدمت شما",
-    },
-    {
-      icon: Target,
-      title: "تعهد به مشتری",
-      description: "رضایت شما اولویت ماست",
-    },
-    {
-      icon: Heart,
-      title: "عشق به هنر",
-      description: "علاقه‌مندی به زیبایی و هنر",
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-white pt-24 sm:pt-28">
-      {/* Breadcrumb */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-          <nav className="flex items-center gap-2 text-sm">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
-            >
-              <Home className="w-4 h-4" />
-              <span>خانه</span>
-            </Link>
-            <ChevronLeft className="w-4 h-4 text-primary" />
-            <span className="text-primary font-medium">درباره ما</span>
-          </nav>
+    <div className="min-h-screen bg-white">
+      {/* Full Width Video at Top */}
+      <div className="relative w-full h-[60vh] sm:h-[70vh] lg:h-[80vh] overflow-hidden">
+        <video
+          src="/video/aboutUsClip.mp4"
+          className="w-full h-full object-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+      </div>
+
+      {/* Title Below Video */}
+      <div className="bg-white py-8 sm:py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 text-center">
+            درباره گالری اسب
+          </h1>
         </div>
       </div>
 
-      {/* Page Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-12 sm:pb-16 lg:pb-24">
-        {/* Page Title */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6 sm:mb-8 text-right"
-        >
-          <h1 className="text-sm sm:text-base md:text-lg font-medium text-gray-700">
-            درباره ما
-          </h1>
-        </motion.div>
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Right Side - Content */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="order-1 lg:order-1"
-          >
-            {/* About Text */}
-            <div className="mb-6 text-right">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
-                داستان Horse Gallery
-              </h2>
-              <div className="space-y-3 text-sm sm:text-base text-gray-600 leading-relaxed">
-                <p>
-                  گالری اسب با بیش از یک دهه تجربه در زمینه طراحی و تولید جواهرات،
-                  یکی از معتبرترین برندهای ایرانی در این حوزه است. ما با ترکیب هنر
-                  سنتی ایرانی و طراحی مدرن، محصولاتی منحصر به فرد و با کیفیت بالا
-                  ارائه می‌دهیم.
-                </p>
-                <p>
-                  هدف ما در گالری اسب، فراهم کردن بهترین تجربه خرید برای مشتریان
-                  عزیز است. از انتخاب بهترین مواد اولیه گرفته تا ارائه خدمات پس از
-                  فروش، در تمام مراحل کیفیت را در اولویت قرار می‌دهیم.
-                </p>
-                <p>
-                  تیم ما متشکل از طراحان حرفه‌ای، جواهرسازان ماهر و مشاوران
-                  متخصص است که همواره آماده‌اند تا شما را در انتخاب بهترین
-                  محصول راهنمایی کنند.
-                </p>
-              </div>
-            </div>
-
-            {/* Features Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {features.map((feature, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-                  className="bg-primary p-4 text-right hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0">
-                      <feature.icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-white mb-1">
-                        {feature.title}
-                      </h3>
-                      <p className="text-xs text-white/90">
-                        {feature.description}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Left Side - Video */}
+      {/* Section 1: Image Right + Text Left */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          {/* Text Left */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="order-2 lg:order-2"
+            className="order-2 lg:order-1"
           >
-            <div className="relative w-full h-[400px] sm:h-[450px] lg:h-[500px] overflow-hidden shadow-lg">
-              <video
-                src="/video/aboutUsClip.mp4"
-                className="w-full h-full object-cover"
-                autoPlay
-                loop
-                muted
-                playsInline
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 text-right">
+              داستان ما
+            </h2>
+            <div className="space-y-4 text-sm sm:text-base text-gray-600 leading-relaxed text-right">
+              <p>
+                گالری اسب با بیش از یک دهه تجربه درخشان در زمینه طراحی و تولید
+                جواهرات و زیورآلات، یکی از معتبرترین و شناخته‌شده‌ترین برندهای
+                ایرانی در این حوزه به شمار می‌رود. ما با ترکیب هنرمندانه هنر
+                سنتی و اصیل ایرانی با طراحی مدرن و به‌روز جهانی، محصولاتی منحصر
+                به فرد، زیبا و با کیفیت بی‌نظیر ارائه می‌دهیم که هر کدام داستانی
+                ویژه و منحصر به فرد را روایت می‌کنند.
+              </p>
+              <p>
+                هدف اصلی و رسالت ما در گالری اسب، فراهم کردن بهترین و کامل‌ترین
+                تجربه خرید برای مشتریان عزیز و ارجمند است. از لحظه انتخاب بهترین
+                و مرغوب‌ترین مواد اولیه گرفته تا طراحی دقیق، ساخت حرفه‌ای و
+                ارائه خدمات جامع پس از فروش، در تمام مراحل فرآیند تولید و
+                خدمات‌رسانی، کیفیت و رضایت شما را در بالاترین اولویت خود قرار
+                داده‌ایم.
+              </p>
+              <p>
+                تیم متخصص و با تجربه ما متشکل از طراحان حرفه‌ای و خلاق،
+                جواهرسازان ماهر و استادکار، و مشاوران دلسوز و متعهد است که با
+                دانش روز و مهارت بالا، همواره آماده‌اند تا شما را در انتخاب
+                بهترین محصول متناسب با سلیقه و نیاز شما راهنمایی کنند. ما
+                معتقدیم که هر قطعه جواهر نه تنها یک زینت است، بلکه نماد عشق،
+                خاطرات و لحظات ارزشمند زندگی شماست.
+              </p>
+              <p>
+                در گالری اسب، ما به ارزش‌های اصالت، صداقت، نوآوری و مشتری‌مداری
+                پایبند هستیم و همواره تلاش می‌کنیم تا با ارائه محصولات بی‌نظیر و
+                خدمات برتر، اعتماد و رضایت شما را جلب کنیم. هر روز با انگیزه و
+                اشتیاق، به دنبال خلق زیبایی‌های جدید و ماندگار هستیم که بتوانند
+                لحظات خاص زندگی شما را زیباتر و به یادماندنی‌تر کنند.
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Image Right */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            className="order-1 lg:order-2"
+          >
+            <div className="relative w-full h-[400px] sm:h-[500px] overflow-hidden shadow-lg">
+              <Image
+                src="/images/aboutUs/Main_Photos1.webp"
+                alt="گالری اسب"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
               />
             </div>
           </motion.div>
+        </div>
+      </div>
+
+      {/* Section 2: Text Right + Image Left */}
+      <div className="bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Image Left */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="order-1 lg:order-1"
+            >
+              <div className="relative w-full h-[400px] sm:h-[500px] overflow-hidden shadow-lg">
+                <Image
+                  src="/images/aboutUs/bridal.webp"
+                  alt="تیم گالری اسب"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              </div>
+            </motion.div>
+
+            {/* Text Right */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="order-2 lg:order-2"
+            >
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 text-right">
+                تیم ما
+              </h2>
+              <div className="space-y-4 text-sm sm:text-base text-gray-600 leading-relaxed text-right">
+                <p>
+                  تیم متخصص و حرفه‌ای گالری اسب متشکل از افرادی با تجربه، مهارت
+                  و اشتیاق فراوان در زمینه طراحی، ساخت و فروش جواهرات است.
+                  طراحان خلاق و با ذوق ما با دانش عمیق از هنر و فرهنگ ایرانی و
+                  آشنایی کامل با آخرین ترندهای جهانی، هر روز در تلاش هستند تا
+                  طرح‌هایی نو، منحصر به فرد و جذاب خلق کنند که هم هویت فرهنگی ما
+                  را منعکس کند و هم با سلیقه مدرن و روز شما همخوانی داشته باشد.
+                </p>
+                <p>
+                  جواهرسازان ماهر و استادکار ما با سال‌ها تجربه در کار با فلزات
+                  گرانبها و سنگ‌های قیمتی، هر قطعه را با دقت، ظرافت و عشق به هنر
+                  می‌سازند. آنها با استفاده از تکنیک‌های سنتی و مدرن، محصولاتی
+                  با کیفیت بی‌نظیر و جزئیات دقیق تولید می‌کنند که نه تنها زیبا،
+                  بلکه بادوام و ماندگار نیز هستند.
+                </p>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </div>
     </div>
@@ -148,4 +153,3 @@ const AboutPage = () => {
 };
 
 export default AboutPage;
-

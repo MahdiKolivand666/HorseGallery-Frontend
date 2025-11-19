@@ -38,10 +38,18 @@ const Navbar = () => {
       title: "زنانه",
       image: "/images/categories/categories1.webp",
       products: [
-        { id: 1, name: "گردنبند طلا", href: "/products/women/necklace" },
-        { id: 2, name: "دستبند طلا", href: "/products/women/bracelet" },
-        { id: 3, name: "انگشتر طلا", href: "/products/women/ring" },
-        { id: 4, name: "گوشواره طلا", href: "/products/women/earring" },
+        { id: 1, name: "گردنبند", href: "/products/women/necklace" },
+        { id: 2, name: "دستبند", href: "/products/women/bracelet" },
+        {
+          id: 3,
+          name: "دستبند چرم و طلا",
+          href: "/products/women/leather-gold-bracelet",
+        },
+        { id: 4, name: "گوشواره", href: "/products/women/earring" },
+        { id: 5, name: "انگشتر", href: "/products/women/ring" },
+        { id: 6, name: "آویز گردنبند", href: "/products/women/pendant" },
+        { id: 7, name: "پیرسینگ", href: "/products/women/piercing" },
+        { id: 8, name: "پابند", href: "/products/women/anklet" },
       ],
     },
     {
@@ -49,10 +57,13 @@ const Navbar = () => {
       title: "مردانه",
       image: "/images/categories/categories2.webp",
       products: [
-        { id: 1, name: "انگشتر مردانه", href: "/products/men/ring" },
-        { id: 2, name: "دستبند مردانه", href: "/products/men/bracelet" },
-        { id: 3, name: "گردنبند مردانه", href: "/products/men/necklace" },
-        { id: 4, name: "ساعت مردانه", href: "/products/men/watch" },
+        { id: 1, name: "گردنبند مردانه", href: "/products/men/necklace" },
+        {
+          id: 2,
+          name: "دستبند چرم و طلا",
+          href: "/products/men/leather-gold-bracelet",
+        },
+        { id: 3, name: "دستبند مردانه", href: "/products/men/bracelet" },
       ],
     },
     {
@@ -60,10 +71,14 @@ const Navbar = () => {
       title: "کودکانه",
       image: "/images/categories/categories3.jpg",
       products: [
-        { id: 1, name: "دستبند کودک", href: "/products/kids/bracelet" },
-        { id: 2, name: "گردنبند کودک", href: "/products/kids/necklace" },
-        { id: 3, name: "انگشتر کودک", href: "/products/kids/ring" },
-        { id: 4, name: "پابند کودک", href: "/products/kids/anklet" },
+        { id: 1, name: "گوشواره", href: "/products/kids/earring" },
+        { id: 2, name: "دستبند", href: "/products/kids/bracelet" },
+        { id: 3, name: "آویز گردنبند", href: "/products/kids/pendant" },
+        {
+          id: 4,
+          name: "دستبند چرم و طلا",
+          href: "/products/kids/leather-gold-bracelet",
+        },
       ],
     },
   ];
@@ -138,7 +153,7 @@ const Navbar = () => {
 
   const menuItems = [
     { id: "home", href: "/" },
-    { id: "shop", href: "/shop" },
+    { id: "shop", href: "/products/women" },
     { id: "suggest", href: "/suggest" },
     { id: "faq", href: "/faq" },
     { id: "blog", href: "/blog" },
@@ -583,7 +598,7 @@ const Navbar = () => {
                                   }}
                                   className="block py-2 px-4 text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors underline"
                                 >
-                                  مشاهده همه {category.title}
+                                  مشاهده محصولات {category.title}
                                 </Link>
                               </div>
                             ))}
@@ -714,7 +729,7 @@ const Navbar = () => {
                         onClick={() => setIsProductsMenuOpen(false)}
                         className="inline-block text-xs font-medium transition-all hover:opacity-70 underline text-white/80 hover:text-white mt-2"
                       >
-                        مشاهده همه
+                        مشاهده محصولات {category.title}
                       </Link>
                     </div>
                   ))}

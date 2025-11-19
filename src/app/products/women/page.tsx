@@ -22,7 +22,7 @@ interface Product {
   hoverImage: string;
 }
 
-const ShopPage = () => {
+const WomenProductsPage = () => {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("newest");
@@ -66,14 +66,14 @@ const ShopPage = () => {
       <div className="relative w-full h-64 sm:h-80 lg:h-96 mt-0">
         <Image
           src="/images/headerwallp/RTS.webp"
-          alt="فروشگاه"
+          alt="محصولات زنانه"
           fill
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-end justify-start p-6 sm:p-8 lg:p-12">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white drop-shadow-lg">
-            فروشگاه
+            محصولات زنانه
           </h1>
         </div>
       </div>
@@ -90,7 +90,7 @@ const ShopPage = () => {
               <span>خانه</span>
             </Link>
             <ChevronLeft className="w-4 h-4 text-primary" />
-            <span className="text-primary font-medium">فروشگاه</span>
+            <span className="text-primary font-medium">محصولات زنانه</span>
           </nav>
         </div>
       </div>
@@ -105,7 +105,7 @@ const ShopPage = () => {
         {/* Products Grid */}
         <main className="flex-1 px-4 sm:px-6 pt-[5px] pb-6 lg:pb-8">
           {/* Sort By & Mobile Filter Button */}
-          <div className="flex items-center justify-between gap-4 my-[1.25rem]">
+          <div className="flex items-center justify-between lg:justify-end gap-4 my-[1.25rem]">
             {/* Mobile Filter Button */}
             <button
               onClick={() => setIsFilterDrawerOpen(true)}
@@ -313,4 +313,5 @@ const Pagination = ({
   );
 };
 
-export default ShopPage;
+export default WomenProductsPage;
+

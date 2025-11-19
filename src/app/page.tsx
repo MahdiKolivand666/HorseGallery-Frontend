@@ -11,6 +11,7 @@ import GiftSection from "@/components/features/GiftSection";
 import NewArrivalsSection from "@/components/features/NewArrivalsSection";
 import FAQSection from "@/components/features/FAQSection";
 import FeaturesBar from "@/components/features/FeaturesBar";
+import ImageCards from "@/components/features/ImageCards";
 
 export default function Home() {
   return (
@@ -23,6 +24,9 @@ export default function Home() {
 
       {/* Features Bar */}
       <FeaturesBar />
+
+      {/* Image Cards */}
+      <ImageCards />
 
       {/* Best Selling Products */}
       <BestSellingProducts />
