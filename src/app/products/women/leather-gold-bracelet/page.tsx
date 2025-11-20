@@ -152,6 +152,39 @@ const WomenLeatherGoldBraceletPage = () => {
         </main>
       </div>
 
+      {/* Divider */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent origin-center"
+          />
+        </div>
+      </div>
+
+      {/* Description Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="bg-white rounded-lg p-6 sm:p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 text-right">
+            درباره دستبند چرم و طلا زنانه
+          </h2>
+          <div className="space-y-4 text-gray-700 text-right leading-relaxed">
+            <p>
+              دستبندهای چرم و طلای زنانه گالری اسب، ترکیبی منحصر به فرد از سنت و مدرنیته هستند. این محصولات با استفاده از چرم طبیعی و طلای اصل، زیبایی و دوام را با هم ارائه می‌دهند.
+            </p>
+            <p>
+              طراحی‌های خاص این مجموعه، برای بانوانی که به دنبال سبک متفاوت و جذاب هستند، انتخابی عالی محسوب می‌شود. هر دستبند با دقت و ظرافت ساخته شده است.
+            </p>
+            <p>
+              تمامی محصولات دارای گارانتی اصالت بوده و با بسته‌بندی مخصوص ارائه می‌شوند. برای انتخاب بهترین طرح، می‌توانید از مشاوران ما راهنمایی بگیرید.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <FilterDrawer
         isOpen={isFilterDrawerOpen}
         onClose={() => setIsFilterDrawerOpen(false)}

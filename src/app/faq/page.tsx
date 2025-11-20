@@ -101,9 +101,12 @@ const FAQPage = () => {
             className="w-1/2"
           >
             <div className="sticky top-[104px] overflow-hidden">
-              <div className="relative w-full" style={{ height: 'calc(100vh - 104px)' }}>
+              <div
+                className="relative w-full"
+                style={{ height: "calc(100vh - 104px)" }}
+              >
                 <Image
-                  src="/images/aboutUs/human.webp"
+                  src="/images/card/card1.webp"
                   alt="FAQ Image"
                   fill
                   className="object-cover"
@@ -222,4 +225,3 @@ const FAQPage = () => {
 };
 
 export default FAQPage;
-

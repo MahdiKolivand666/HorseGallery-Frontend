@@ -152,6 +152,39 @@ const WomenEarringPage = () => {
         </main>
       </div>
 
+      {/* Divider */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent origin-center"
+          />
+        </div>
+      </div>
+
+      {/* Description Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="bg-white rounded-lg p-6 sm:p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 text-right">
+            درباره گوشواره زنانه
+          </h2>
+          <div className="space-y-4 text-gray-700 text-right leading-relaxed">
+            <p>
+              گوشواره‌های زنانه گالری اسب با طراحی‌های متنوع و زیبا، برای هر سلیقه و مناسبتی مناسب هستند. این محصولات با استفاده از بهترین مواد اولیه و با دقت بالا ساخته شده‌اند.
+            </p>
+            <p>
+              مجموعه گوشواره‌های ما شامل طرح‌های کلاسیک، مدرن، آویزی و میخی از جنس طلا، نقره و سنگ‌های قیمتی است که هر کدام زیبایی خاصی دارند.
+            </p>
+            <p>
+              برای انتخاب گوشواره مناسب با فرم صورت و سلیقه شما، می‌توانید از مشاوران متخصص ما کمک بگیرید. تمامی محصولات دارای گارانتی اصالت هستند.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <FilterDrawer
         isOpen={isFilterDrawerOpen}
         onClose={() => setIsFilterDrawerOpen(false)}

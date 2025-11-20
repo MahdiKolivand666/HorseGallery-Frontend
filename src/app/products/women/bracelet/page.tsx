@@ -152,6 +152,39 @@ const WomenBraceletPage = () => {
         </main>
       </div>
 
+      {/* Divider */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent origin-center"
+          />
+        </div>
+      </div>
+
+      {/* Description Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="bg-white rounded-lg p-6 sm:p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 text-right">
+            درباره دستبند زنانه
+          </h2>
+          <div className="space-y-4 text-gray-700 text-right leading-relaxed">
+            <p>
+              دستبندهای زنانه گالری اسب با تنوع بالا و کیفیت عالی، برای هر سلیقه و مناسبتی طراحی شده‌اند. این محصولات از بهترین مواد اولیه ساخته شده و دارای گارانتی اصالت هستند.
+            </p>
+            <p>
+              مجموعه دستبندهای ما شامل انواع دستبندهای طلا، نقره، و دستبندهای تزئینی با سنگ‌های رنگی و قیمتی است که هر کدام با دقت و مهارت بالا ساخته شده‌اند.
+            </p>
+            <p>
+              برای انتخاب دستبند مناسب با سلیقه و نیاز خود، می‌توانید از راهنمایی‌های مشاوران ما استفاده کنید. تمامی محصولات با بسته‌بندی مخصوص و گارانتی اصالت ارائه می‌شوند.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <FilterDrawer
         isOpen={isFilterDrawerOpen}
         onClose={() => setIsFilterDrawerOpen(false)}

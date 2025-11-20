@@ -152,6 +152,39 @@ const WomenNecklacePage = () => {
         </main>
       </div>
 
+      {/* Divider */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent origin-center"
+          />
+        </div>
+      </div>
+
+      {/* Description Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="bg-white rounded-lg p-6 sm:p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 text-right">
+            درباره گردنبند زنانه
+          </h2>
+          <div className="space-y-4 text-gray-700 text-right leading-relaxed">
+            <p>
+              گردنبندهای زنانه گالری اسب با طراحی‌های متنوع و زیبا، برای بانوان با سلیقه‌های مختلف ارائه می‌شوند. این محصولات با استفاده از بهترین مواد اولیه و با دقت بالا ساخته شده‌اند.
+            </p>
+            <p>
+              مجموعه گردنبندهای ما شامل طرح‌های کلاسیک، مدرن و سنتی از جنس طلا، نقره و سنگ‌های قیمتی است که هر کدام با ظرافت خاصی طراحی و تولید شده‌اند.
+            </p>
+            <p>
+              تمامی محصولات ما دارای گارانتی اصالت بوده و با بسته‌بندی مخصوص به دست شما می‌رسند. برای انتخاب بهترین گردنبند متناسب با سلیقه شما، می‌توانید از مشاوران ما کمک بگیرید.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <FilterDrawer
         isOpen={isFilterDrawerOpen}
         onClose={() => setIsFilterDrawerOpen(false)}

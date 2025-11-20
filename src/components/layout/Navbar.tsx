@@ -17,6 +17,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation } from "swiper/modules";
+import AuthModal from "@/components/auth/AuthModal";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -28,6 +29,7 @@ const Navbar = () => {
   const [isProductsMenuOpen, setIsProductsMenuOpen] = useState(false);
   const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(false);
   const [isNavHovered, setIsNavHovered] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const productsMenuRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("navbar");
@@ -344,15 +346,15 @@ const Navbar = () => {
 
           {/* Right Section - User Actions */}
           <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 flex-shrink-0 z-10 max-w-[30%] justify-end">
-            <Link
-              href="/auth"
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
               className={`hidden md:block text-xs sm:text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
                 isScrolled ? "text-white" : "text-primary"
               }`}
               style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)" }}
             >
               {t("auth.label")}
-            </Link>
+            </button>
 
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -488,15 +490,15 @@ const Navbar = () => {
               </motion.button>
 
               {/* Auth Link */}
-              <Link
-                href="/auth"
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
                 className={`text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
                   isScrolled || isNavHovered ? "text-white" : "text-primary"
                 }`}
                 style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
               >
                 {t("auth.label")}
-              </Link>
+              </button>
 
               {/* Favorites */}
               <motion.button
@@ -751,6 +753,12 @@ const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </motion.nav>
   );
 };
