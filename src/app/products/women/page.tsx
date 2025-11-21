@@ -171,42 +171,44 @@ const ProductCard = ({ product }: { product: Product }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      className="bg-white overflow-hidden shadow-sm hover:shadow-md transition-all"
-    >
-      <div
-        className="relative aspect-[3/4] overflow-hidden cursor-pointer bg-gray-100"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+    <Link href={`/women/gold-necklace-${product.id.toString().padStart(3, '0')}`}>
+      <motion.div
+        whileHover={{ y: -4 }}
+        className="bg-white overflow-hidden shadow-sm hover:shadow-md transition-all"
       >
-        <Image
-          src={product.image}
-          alt={product.name}
-          fill
-          className={`object-cover transition-opacity duration-300 ${
-            isHovered ? "opacity-0" : "opacity-100"
-          }`}
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-        />
-        <Image
-          src={product.hoverImage}
-          alt={product.name}
-          fill
-          className={`object-cover transition-opacity duration-300 ${
-            isHovered ? "opacity-100" : "opacity-0"
-          }`}
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-        />
-      </div>
+        <div
+          className="relative aspect-[3/4] overflow-hidden cursor-pointer bg-gray-100"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className={`object-cover transition-opacity duration-300 ${
+              isHovered ? "opacity-0" : "opacity-100"
+            }`}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          />
+          <Image
+            src={product.hoverImage}
+            alt={product.name}
+            fill
+            className={`object-cover transition-opacity duration-300 ${
+              isHovered ? "opacity-100" : "opacity-0"
+            }`}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          />
+        </div>
 
-      <div className="p-3 sm:p-4 text-center">
-        <h3 className="text-sm font-medium text-gray-800 truncate mb-1">
-          {product.name}
-        </h3>
-        <p className="text-xs text-gray-600">{product.price}</p>
-      </div>
-    </motion.div>
+        <div className="p-3 sm:p-4 text-center">
+          <h3 className="text-sm font-medium text-gray-800 truncate mb-1">
+            {product.name}
+          </h3>
+          <p className="text-xs text-gray-600">{product.price}</p>
+        </div>
+      </motion.div>
+    </Link>
   );
 };
 
