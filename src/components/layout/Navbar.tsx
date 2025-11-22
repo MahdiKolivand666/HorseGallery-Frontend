@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation } from "swiper/modules";
 import AuthModal from "@/components/auth/AuthModal";
+import CartDrawer from "@/components/cart/CartDrawer";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -30,6 +31,7 @@ const Navbar = () => {
   const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(false);
   const [isNavHovered, setIsNavHovered] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const productsMenuRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("navbar");
@@ -370,6 +372,7 @@ const Navbar = () => {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => setIsCartOpen(true)}
               className={`transition-colors ${
                 isScrolled ? "text-white" : "text-primary"
               }`}
@@ -516,6 +519,7 @@ const Navbar = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => setIsCartOpen(true)}
                 className={`transition-colors ${
                   isScrolled || isNavHovered ? "text-white" : "text-primary"
                 }`}
@@ -758,6 +762,12 @@ const Navbar = () => {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+      />
+
+      {/* Cart Drawer */}
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
       />
     </motion.nav>
   );
