@@ -15,6 +15,7 @@ import {
 import { motion } from "framer-motion";
 import PhotoSwipeLightbox from "photoswipe/lightbox";
 import "photoswipe/style.css";
+import { useCart } from "@/contexts/CartContext";
 
 // Mock data - در پروژه واقعی از API دریافت می‌شه
 const getProductData = (slug: string, category: string) => {
@@ -116,6 +117,7 @@ const ProductDetailPage = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState(productData.sizes[1]);
   const [isFavorite, setIsFavorite] = useState(false);
+  const { addToCart } = useCart();
 
   // Initialize PhotoSwipe
   useEffect(() => {
@@ -141,8 +143,19 @@ const ProductDetailPage = () => {
   }, []);
 
   const handleAddToCart = () => {
-    console.log("Added to cart:", { size: selectedSize });
-    // اینجا لاجیک افزودن به سبد خرید
+    addToCart({
+      id: parseInt(productData.id),
+      name: productData.name,
+      image: productData.images[0],
+      price: productData.price,
+      quantity: 1,
+      code: productData.code,
+      weight: productData.specifications.weight,
+      size: selectedSize,
+      slug: productData.slug,
+      category: productData.categorySlug,
+      discount: 0,
+    });
   };
 
   const handleNextImage = () => {

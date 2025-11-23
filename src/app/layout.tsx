@@ -6,6 +6,7 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/ui/ScrollToTop";
+import CartProviderWrapper from "@/components/providers/CartProviderWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,10 +36,12 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <NextIntlClientProvider messages={messages}>
-          <Navbar />
-          <main className="min-h-screen">{children}</main>
-          <Footer />
-          <ScrollToTop />
+          <CartProviderWrapper>
+            <Navbar />
+            <main className="min-h-screen">{children}</main>
+            <Footer />
+            <ScrollToTop />
+          </CartProviderWrapper>
         </NextIntlClientProvider>
       </body>
     </html>

@@ -22,6 +22,7 @@ import CartDrawer from "@/components/cart/CartDrawer";
 
 import "swiper/css";
 import "swiper/css/navigation";
+import { useCart } from "@/contexts/CartContext";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -31,10 +32,10 @@ const Navbar = () => {
   const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(false);
   const [isNavHovered, setIsNavHovered] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const productsMenuRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("navbar");
+  const { isCartOpen, openCart, closeCart, cartItems } = useCart();
 
   const productCategories = [
     {
@@ -173,7 +174,7 @@ const Navbar = () => {
           isScrolled || isNavHovered
             ? "rgba(49, 93, 73, 0.95)"
             : "rgba(49, 93, 73, 0.15)",
-        backdropFilter: isScrolled || isNavHovered ? "blur(10px)" : "blur(0px)",
+        backdropFilter: "blur(5px)",
       }}
       transition={{ duration: 0.3 }}
       className={`fixed top-0 left-0 right-0 z-50 w-full ${
@@ -322,7 +323,7 @@ const Navbar = () => {
                 alt="Horse Gallery Logo"
                 width={100}
                 height={100}
-                className="w-16 h-16 xs:w-20 xs:h-20 sm:w-24 sm:h-24 object-contain drop-shadow-lg"
+                className="w-16 h-16 xs:w-20 xs:h-20 sm:w-24 sm:h-24 object-contain"
                 priority
               />
             </motion.div>
@@ -340,9 +341,9 @@ const Navbar = () => {
             aria-label="Menu"
           >
             {isMobileMenuOpen ? (
-              <X className="w-5 h-5 xs:w-6 xs:h-6 drop-shadow-md" />
+              <X className="w-5 h-5 xs:w-6 xs:h-6" />
             ) : (
-              <Menu className="w-5 h-5 xs:w-6 xs:h-6 drop-shadow-md" />
+              <Menu className="w-5 h-5 xs:w-6 xs:h-6" />
             )}
           </button>
 
@@ -353,7 +354,6 @@ const Navbar = () => {
               className={`hidden md:block text-xs sm:text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
                 isScrolled ? "text-white" : "text-primary"
               }`}
-              style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)" }}
             >
               {t("auth.label")}
             </button>
@@ -366,19 +366,19 @@ const Navbar = () => {
               }`}
               aria-label={t("favorites")}
             >
-              <Heart className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 drop-shadow-md" />
+              <Heart className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
             </motion.button>
 
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setIsCartOpen(true)}
+              onClick={openCart}
               className={`transition-colors ${
                 isScrolled ? "text-white" : "text-primary"
               }`}
               aria-label={t("cart")}
             >
-              <ShoppingBag className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 drop-shadow-md" />
+              <ShoppingBag className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
             </motion.button>
 
             {/* Search Button (Mobile/Tablet) */}
@@ -392,7 +392,7 @@ const Navbar = () => {
               }`}
               aria-label="Search"
             >
-              <Search className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 drop-shadow-md" />
+              <Search className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
             </motion.button>
           </div>
         </div>
@@ -415,7 +415,7 @@ const Navbar = () => {
                     alt="Horse Gallery Logo"
                     width={100}
                     height={100}
-                    className="w-20 h-20 lg:w-24 lg:h-24 object-contain drop-shadow-lg"
+                    className="w-20 h-20 lg:w-24 lg:h-24 object-contain"
                     priority
                   />
                 </motion.div>
@@ -438,7 +438,6 @@ const Navbar = () => {
                     className={`flex items-center gap-1 text-sm font-medium tracking-wide transition-all hover:opacity-70 relative group ${
                       isScrolled || isNavHovered ? "text-white" : "text-primary"
                     }`}
-                    style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
                   >
                     {t(`menu.${item.id}`)}
                     <ChevronDown
@@ -459,7 +458,6 @@ const Navbar = () => {
                     className={`text-sm font-medium tracking-wide transition-all hover:opacity-70 relative group ${
                       isScrolled || isNavHovered ? "text-white" : "text-primary"
                     }`}
-                    style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
                   >
                     {t(`menu.${item.id}`)}
                     <span
@@ -489,7 +487,7 @@ const Navbar = () => {
                 }`}
                 aria-label="Search"
               >
-                <Search className="w-5 h-5 drop-shadow-md" />
+                <Search className="w-5 h-5" />
               </motion.button>
 
               {/* Auth Link */}
@@ -498,7 +496,6 @@ const Navbar = () => {
                 className={`text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
                   isScrolled || isNavHovered ? "text-white" : "text-primary"
                 }`}
-                style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
               >
                 {t("auth.label")}
               </button>
@@ -512,20 +509,20 @@ const Navbar = () => {
                 }`}
                 aria-label={t("favorites")}
               >
-                <Heart className="w-5 h-5 drop-shadow-md" />
+                <Heart className="w-5 h-5" />
               </motion.button>
 
               {/* Cart */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setIsCartOpen(true)}
+                onClick={openCart}
                 className={`transition-colors ${
                   isScrolled || isNavHovered ? "text-white" : "text-primary"
                 }`}
                 aria-label={t("cart")}
               >
-                <ShoppingBag className="w-5 h-5 drop-shadow-md" />
+                <ShoppingBag className="w-5 h-5" />
               </motion.button>
             </div>
           </div>
@@ -557,7 +554,6 @@ const Navbar = () => {
                         setIsMobileProductsOpen(!isMobileProductsOpen)
                       }
                       className="w-full flex items-center justify-center gap-2 py-3 px-4 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors"
-                      style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
                     >
                       {t(`menu.${item.id}`)}
                       <ChevronDown
@@ -624,7 +620,6 @@ const Navbar = () => {
                       href={item.href}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="block py-3 px-4 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors text-center"
-                      style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
                     >
                       {t(`menu.${item.id}`)}
                     </Link>
@@ -765,10 +760,7 @@ const Navbar = () => {
       />
 
       {/* Cart Drawer */}
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-      />
+      <CartDrawer isOpen={isCartOpen} onClose={closeCart} />
     </motion.nav>
   );
 };

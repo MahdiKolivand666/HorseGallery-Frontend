@@ -114,7 +114,7 @@ export default function CheckoutPage() {
         {/* Back to Home Link */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-6 group"
+          className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-3 group"
         >
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           <span className="text-sm">بازگشت به صفحه اصلی</span>
@@ -248,7 +248,7 @@ export default function CheckoutPage() {
                     <Clock className="w-3.5 h-3.5" />
                     <p className="text-[11px]">
                       برای تکمیل خرید خود{" "}
-                      <span className="font-bold font-mono text-xs mx-1">
+                      <span className="font-bold font-mono text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded">
                         {formatTime(timeLeft)}
                       </span>{" "}
                       زمان دارید!
@@ -259,60 +259,46 @@ export default function CheckoutPage() {
                 {/* Price Details */}
                 <div className="space-y-3">
                   {/* Subtotal */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between text-sm">
                     <div className="flex items-baseline gap-2">
                       <span className="text-white">مجموع مبلغ کالاهای سبد</span>
-                      <span className="text-sm text-white/80">
+                      <span className="text-xs text-white/80">
                         ({totalItems.toLocaleString("fa-IR")} کالا)
                       </span>
                     </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-bold text-white">
-                        {subtotal.toLocaleString("fa-IR")}
-                      </span>
-                      <span className="text-xs text-white/80">تومان</span>
-                    </div>
+                    <span className="font-medium text-white">
+                      {subtotal.toLocaleString("fa-IR")} تومان
+                    </span>
                   </div>
 
                   {/* Discount */}
                   {totalDiscount > 0 && (
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between text-sm">
                       <span className="text-white">مجموع تخفیف محصولات</span>
-                      <div className="flex items-baseline gap-1 text-red-400">
-                        <span className="font-bold">
-                          {totalDiscount.toLocaleString("fa-IR")}
-                        </span>
-                        <span className="text-xs">تومان</span>
-                      </div>
+                      <span className="font-medium text-yellow-300">
+                        {totalDiscount.toLocaleString("fa-IR")} تومان
+                      </span>
                     </div>
                   )}
 
                   {/* Wallet */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between text-sm">
                     <span className="text-white">کیف پول</span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-bold text-white">
-                        {walletAmount.toLocaleString("fa-IR")}
-                      </span>
-                      <span className="text-xs text-white/80">تومان</span>
-                    </div>
+                    <span className="font-medium text-white">
+                      {walletAmount.toLocaleString("fa-IR")} تومان
+                    </span>
                   </div>
 
                   {/* Shipping */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between text-sm">
                     <span className="text-white">هزینه ارسال</span>
-                    <div className="flex items-baseline gap-1">
-                      {shippingCost === 0 ? (
-                        <span className="font-bold text-white">رایگان</span>
-                      ) : (
-                        <>
-                          <span className="font-bold text-white">
-                            {shippingCost.toLocaleString("fa-IR")}
-                          </span>
-                          <span className="text-xs text-white/80">تومان</span>
-                        </>
-                      )}
-                    </div>
+                    {shippingCost === 0 ? (
+                      <span className="font-medium text-white">رایگان</span>
+                    ) : (
+                      <span className="font-medium text-white">
+                        {shippingCost.toLocaleString("fa-IR")} تومان
+                      </span>
+                    )}
                   </div>
 
                   {/* Divider */}
@@ -322,21 +308,18 @@ export default function CheckoutPage() {
 
                   {/* Final Total */}
                   <div className="flex items-center justify-between pt-2">
-                    <span className="text-lg font-bold text-white">
-                      مبلغ نهایی
+                    <span className="text-base font-bold text-white">
+                      مبلغ نهایی:
                     </span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold text-white">
-                        {finalTotal.toLocaleString("fa-IR")}
-                      </span>
-                      <span className="text-sm text-white/80">تومان</span>
-                    </div>
+                    <span className="text-xl font-bold text-white">
+                      {finalTotal.toLocaleString("fa-IR")} تومان
+                    </span>
                   </div>
 
                   {/* Continue Button */}
                   <button
                     onClick={() => setActiveTab("shipping")}
-                    className="w-full bg-white hover:bg-white/90 text-primary py-3 font-medium transition-colors mt-3"
+                    className="w-full bg-white hover:bg-white/90 text-primary py-2 text-sm font-medium transition-colors mt-3"
                   >
                     ادامه خرید
                   </button>
@@ -395,7 +378,7 @@ export default function CheckoutPage() {
                     <Clock className="w-3.5 h-3.5" />
                     <p className="text-[11px]">
                       برای تکمیل خرید خود{" "}
-                      <span className="font-bold font-mono text-xs mx-1">
+                      <span className="font-bold font-mono text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded">
                         {formatTime(timeLeft)}
                       </span>{" "}
                       زمان دارید!
@@ -408,15 +391,15 @@ export default function CheckoutPage() {
                   {cartItems.map((item, index) => (
                     <div key={item.id}>
                       <div className="text-white space-y-0.5">
-                        <p className="font-bold text-xs line-clamp-1">
+                        <p className="font-medium text-sm line-clamp-1">
                           {item.name}
                         </p>
-                        <p className="text-[10px] text-white/80">{item.code}</p>
-                        <p className="text-[10px] text-white/80">
+                        <p className="text-xs text-white/80">{item.code}</p>
+                        <p className="text-xs text-white/80">
                           وزن: {item.weight}
                         </p>
                         {item.size && (
-                          <p className="text-[10px] text-white/80">
+                          <p className="text-xs text-white/80">
                             سایز: {item.size}
                           </p>
                         )}
@@ -440,68 +423,46 @@ export default function CheckoutPage() {
                 {/* Price Details */}
                 <div className="space-y-2">
                   {/* Subtotal */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between text-sm">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-xs text-white">
-                        مجموع مبلغ کالاهای سبد
-                      </span>
-                      <span className="text-[10px] text-white/80">
+                      <span className="text-white">مجموع مبلغ کالاهای سبد</span>
+                      <span className="text-xs text-white/80">
                         ({totalItems.toLocaleString("fa-IR")} کالا)
                       </span>
                     </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-bold text-sm text-white">
-                        {subtotal.toLocaleString("fa-IR")}
-                      </span>
-                      <span className="text-[10px] text-white/80">تومان</span>
-                    </div>
+                    <span className="font-medium text-white">
+                      {subtotal.toLocaleString("fa-IR")} تومان
+                    </span>
                   </div>
 
                   {/* Discount */}
                   {totalDiscount > 0 && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-white">
-                        مجموع تخفیف محصولات
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white">مجموع تخفیف محصولات</span>
+                      <span className="font-medium text-yellow-300">
+                        {totalDiscount.toLocaleString("fa-IR")} تومان
                       </span>
-                      <div className="flex items-baseline gap-1 text-red-400">
-                        <span className="font-bold text-sm">
-                          {totalDiscount.toLocaleString("fa-IR")}
-                        </span>
-                        <span className="text-[10px]">تومان</span>
-                      </div>
                     </div>
                   )}
 
                   {/* Wallet */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-white">کیف پول</span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-bold text-sm text-white">
-                        {walletAmount.toLocaleString("fa-IR")}
-                      </span>
-                      <span className="text-[10px] text-white/80">تومان</span>
-                    </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-white">کیف پول</span>
+                    <span className="font-medium text-white">
+                      {walletAmount.toLocaleString("fa-IR")} تومان
+                    </span>
                   </div>
 
                   {/* Shipping */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-white">هزینه ارسال</span>
-                    <div className="flex items-baseline gap-1">
-                      {shippingCost === 0 ? (
-                        <span className="font-bold text-sm text-white">
-                          رایگان
-                        </span>
-                      ) : (
-                        <>
-                          <span className="font-bold text-sm text-white">
-                            {shippingCost.toLocaleString("fa-IR")}
-                          </span>
-                          <span className="text-[10px] text-white/80">
-                            تومان
-                          </span>
-                        </>
-                      )}
-                    </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-white">هزینه ارسال</span>
+                    {shippingCost === 0 ? (
+                      <span className="font-medium text-white">رایگان</span>
+                    ) : (
+                      <span className="font-medium text-white">
+                        {shippingCost.toLocaleString("fa-IR")} تومان
+                      </span>
+                    )}
                   </div>
 
                   {/* Divider */}
@@ -511,15 +472,12 @@ export default function CheckoutPage() {
 
                   {/* Final Total */}
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-sm font-bold text-white">
-                      مبلغ نهایی
+                    <span className="text-base font-bold text-white">
+                      مبلغ نهایی:
                     </span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-lg font-bold text-white">
-                        {finalTotal.toLocaleString("fa-IR")}
-                      </span>
-                      <span className="text-[10px] text-white/80">تومان</span>
-                    </div>
+                    <span className="text-xl font-bold text-white">
+                      {finalTotal.toLocaleString("fa-IR")} تومان
+                    </span>
                   </div>
 
                   {/* Continue Button */}
@@ -535,9 +493,194 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {/* Payment Tab - Placeholder */}
+        {/* Payment Tab */}
         {activeTab === "payment" && (
-          <div className="text-center text-gray-500 py-12">محتوای پرداخت</div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Payment Form - Left Side */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Payment Gateway Selection */}
+              <div className="bg-white p-6 border border-gray-200">
+                <h3 className="text-base font-bold text-gray-900 mb-4">
+                  انتخاب درگاه پرداخت
+                </h3>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 p-4 border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer">
+                    <input
+                      type="radio"
+                      name="payment-gateway"
+                      value="zarinpal"
+                      defaultChecked
+                      className="w-4 h-4 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm text-gray-900">
+                      درگاه پرداخت زرین‌پال
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-3 p-4 border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer">
+                    <input
+                      type="radio"
+                      name="payment-gateway"
+                      value="mellat"
+                      className="w-4 h-4 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm text-gray-900">
+                      درگاه پرداخت بانک ملت
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-3 p-4 border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer">
+                    <input
+                      type="radio"
+                      name="payment-gateway"
+                      value="saman"
+                      className="w-4 h-4 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm text-gray-900">
+                      درگاه پرداخت بانک سامان
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Discount Code */}
+              <div className="bg-white p-6 border border-gray-200">
+                <h3 className="text-base font-bold text-gray-900 mb-4">
+                  کد تخفیف
+                </h3>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    placeholder="کد تخفیف خود را وارد کنید"
+                    className="flex-1 px-4 py-2.5 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
+                  />
+                  <button className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium transition-colors whitespace-nowrap">
+                    اعمال کد
+                  </button>
+                </div>
+              </div>
+
+              {/* Wallet */}
+              <div className="bg-white p-6 border border-gray-200">
+                <h3 className="text-base font-bold text-gray-900 mb-4">
+                  کیف پول
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200">
+                    <span className="text-sm text-gray-700">
+                      موجودی کیف پول:
+                    </span>
+                    <span className="text-base font-bold text-primary">
+                      {(2500000).toLocaleString("fa-IR")} تومان
+                    </span>
+                  </div>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-primary focus:ring-primary border-gray-300"
+                    />
+                    <span className="text-sm text-gray-900">
+                      استفاده از موجودی کیف پول
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Order Summary - Right Side */}
+            <div className="lg:col-span-1">
+              <div className="bg-primary text-white p-5 shadow-lg">
+                {/* Timer */}
+                <div className="mb-4 py-1.5 px-3 border border-white/30 text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-white">
+                    <Clock className="w-3.5 h-3.5" />
+                    <p className="text-[11px]">
+                      برای تکمیل خرید خود{" "}
+                      <span className="font-bold font-mono text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded">
+                        {formatTime(timeLeft)}
+                      </span>{" "}
+                      زمان دارید!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Product Summary */}
+                <div className="space-y-3 mb-4">
+                  {cartItems.map((item, index) => (
+                    <div key={item.id}>
+                      <div className="py-2">
+                        <p className="text-sm font-medium mb-1">{item.name}</p>
+                        <div className="space-y-0.5 text-xs">
+                          <p className="text-white/80">{item.code}</p>
+                          <p className="text-white/80">وزن: {item.weight}</p>
+                          <p className="text-white/80">سایز: {item.size}</p>
+                        </div>
+                      </div>
+                      {index < cartItems.length - 1 && (
+                        <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Divider */}
+                <div className="h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent mb-4" />
+
+                {/* Price Summary */}
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>مبلغ کل:</span>
+                    <span className="font-medium">
+                      {subtotal.toLocaleString("fa-IR")} تومان
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>تخفیف محصولات:</span>
+                    <span className="font-medium text-yellow-300">
+                      {totalDiscount.toLocaleString("fa-IR")} تومان
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>کیف پول:</span>
+                    <span className="font-medium">
+                      {walletAmount.toLocaleString("fa-IR")} تومان
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>هزینه ارسال:</span>
+                    <span className="font-medium">
+                      {shippingCost.toLocaleString("fa-IR")} تومان
+                    </span>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent mb-4" />
+
+                {/* Final Amount */}
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-base font-bold">مبلغ نهایی:</span>
+                  <span className="text-xl font-bold">
+                    {finalTotal.toLocaleString("fa-IR")} تومان
+                  </span>
+                </div>
+
+                {/* Terms Checkbox */}
+                <label className="flex items-start gap-3 mb-4 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 mt-0.5 text-primary focus:ring-primary border-gray-300 bg-white"
+                  />
+                  <span className="text-sm text-white">
+                    با قوانین و مقررات سایت موافق هستم
+                  </span>
+                </label>
+
+                {/* Action Button */}
+                <button className="w-full py-2 bg-white text-primary hover:bg-gray-100 text-sm font-medium transition-colors">
+                  پرداخت آنلاین
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 

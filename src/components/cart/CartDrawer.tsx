@@ -5,19 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { X, ShoppingBag, Trash2, AlertCircle } from "lucide-react";
 import { createPortal } from "react-dom";
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-  code: string;
-  weight: string;
-  size?: string;
-  slug: string;
-  category: string;
-}
+import { useCart } from "@/contexts/CartContext";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -27,33 +15,7 @@ interface CartDrawerProps {
 const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    // Mock data - در پروژه واقعی از state management استفاده می‌شود
-    {
-      id: "1",
-      name: "گردنبند طلای زنانه",
-      price: 45000000,
-      image: "/images/products/product1.webp",
-      quantity: 1,
-      code: "GN-001",
-      weight: "۱۲.۵ گرم",
-      size: "45 سانتی‌متر",
-      slug: "gold-necklace-001",
-      category: "women",
-    },
-    {
-      id: "2",
-      name: "دستبند طلای مردانه",
-      price: 38000000,
-      image: "/images/products/product2.webp",
-      quantity: 2,
-      code: "GB-002",
-      weight: "۸.۳ گرم",
-      size: "20 سانتی‌متر",
-      slug: "gold-bracelet-002",
-      category: "men",
-    },
-  ]);
+  const { cartItems, removeFromCart } = useCart();
 
   useEffect(() => {
     // Client-side only mounting to prevent hydration mismatch
@@ -91,8 +53,8 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       .padStart(2, "0")}`;
   };
 
-  const removeItem = (id: string) => {
-    setCartItems((items) => items.filter((item) => item.id !== id));
+  const removeItem = (id: number) => {
+    removeFromCart(id);
   };
 
   const totalPrice = cartItems.reduce(
@@ -171,13 +133,20 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto px-4 pb-4 bg-white">
           {cartItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <ShoppingBag className="w-16 h-16 text-gray-300 mb-4" />
-              <p className="text-gray-600 mb-2">سبد خرید شما خالی است</p>
+            <div className="flex flex-col items-center justify-center h-full text-center py-12">
+              <div className="bg-gray-100 rounded-full p-6 mb-4">
+                <ShoppingBag className="w-16 h-16 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                سبد خرید شما خالی است
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                برای مشاهده محصولات و افزودن به سبد خرید، به فروشگاه بروید
+              </p>
               <Link
                 href="/products/women"
                 onClick={onClose}
-                className="text-primary hover:text-primary/80 text-sm"
+                className="px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-medium"
               >
                 مشاهده محصولات
               </Link>
@@ -207,14 +176,25 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
 
                       {/* Details */}
                       <div className="flex-1">
-                        <Link
-                          href={`/${item.category}/${item.slug}`}
-                          onClick={onClose}
-                          className="text-sm font-semibold text-gray-900 hover:text-primary line-clamp-1 block"
-                        >
-                          {item.name}
-                        </Link>
-                        <p className="text-xs text-gray-500 mt-0.5 mb-2">
+                        {/* Title and Delete Button */}
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <Link
+                            href={`/${item.category}/${item.slug}`}
+                            onClick={onClose}
+                            className="text-sm font-semibold text-gray-900 hover:text-primary line-clamp-1 flex-1"
+                          >
+                            {item.name}
+                          </Link>
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            className="text-red-600 hover:text-red-700 transition-colors flex-shrink-0"
+                            aria-label="حذف محصول"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+
+                        <p className="text-xs text-gray-500 mb-2">
                           {item.code}
                         </p>
                         <p className="text-xs text-gray-600 mb-1">
@@ -230,15 +210,8 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                       </div>
                     </div>
 
-                    {/* Footer - Price and Delete */}
-                    <div className="flex items-center justify-between border-t border-gray-200">
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>حذف</span>
-                      </button>
+                    {/* Footer - Price */}
+                    <div className="flex items-center justify-end pt-2">
                       <div className="flex items-baseline gap-1">
                         <span className="text-xs text-gray-500">قیمت:</span>
                         <span className="text-base font-bold text-gray-900">
