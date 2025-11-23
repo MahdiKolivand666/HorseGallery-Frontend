@@ -3,7 +3,18 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Trash2, Clock, ArrowRight, MapPin, User, Info } from "lucide-react";
+import {
+  Trash2,
+  Clock,
+  ArrowRight,
+  MapPin,
+  User,
+  Info,
+  CreditCard,
+  Tag,
+  Wallet,
+  Truck,
+} from "lucide-react";
 
 interface CartItem {
   id: number;
@@ -25,6 +36,7 @@ export default function CheckoutPage() {
   );
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [selectedGateway, setSelectedGateway] = useState("saman");
 
   // Mock cart data
   const [cartItems] = useState<CartItem[]>([
@@ -335,11 +347,14 @@ export default function CheckoutPage() {
             {/* Shipping Form - Left Side */}
             <div className="lg:col-span-2 space-y-6">
               {/* Address Section */}
-              <div className="bg-white p-6 shadow-sm">
+              <div className="bg-gray-50 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-bold text-gray-900">
-                    آدرس تحویل
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-primary" />
+                    <h3 className="text-base font-bold text-gray-900">
+                      آدرس تحویل
+                    </h3>
+                  </div>
                   <button
                     onClick={() => setIsAddressModalOpen(true)}
                     className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 text-sm font-medium transition-colors"
@@ -359,10 +374,13 @@ export default function CheckoutPage() {
               </div>
 
               {/* Shipping Method Section */}
-              <div className="bg-white p-6 shadow-sm">
-                <h3 className="text-base font-bold text-gray-900 mb-4">
-                  نحوه ارسال
-                </h3>
+              <div className="bg-gray-50 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Truck className="w-5 h-5 text-primary" />
+                  <h3 className="text-base font-bold text-gray-900">
+                    نحوه ارسال
+                  </h3>
+                </div>
                 <p className="text-gray-500 text-center py-8 text-sm">
                   انتخاب نحوه ارسال
                 </p>
@@ -499,88 +517,152 @@ export default function CheckoutPage() {
             {/* Payment Form - Left Side */}
             <div className="lg:col-span-2 space-y-4">
               {/* Payment Gateway Selection */}
-              <div className="bg-white p-6 border border-gray-200">
-                <h3 className="text-base font-bold text-gray-900 mb-4">
-                  انتخاب درگاه پرداخت
-                </h3>
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 p-4 border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer">
-                    <input
-                      type="radio"
-                      name="payment-gateway"
-                      value="zarinpal"
-                      defaultChecked
-                      className="w-4 h-4 text-primary focus:ring-primary"
-                    />
-                    <span className="text-sm text-gray-900">
-                      درگاه پرداخت زرین‌پال
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer">
-                    <input
-                      type="radio"
-                      name="payment-gateway"
-                      value="mellat"
-                      className="w-4 h-4 text-primary focus:ring-primary"
-                    />
-                    <span className="text-sm text-gray-900">
-                      درگاه پرداخت بانک ملت
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border border-gray-200 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer">
+              <div className="bg-gray-50 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                  <h3 className="text-base font-bold text-gray-900">
+                    انتخاب درگاه پرداخت
+                  </h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div
+                    onClick={() => setSelectedGateway("saman")}
+                    className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 ${
+                      selectedGateway === "saman"
+                        ? "border-primary"
+                        : "border-transparent"
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="payment-gateway"
                       value="saman"
-                      className="w-4 h-4 text-primary focus:ring-primary"
+                      checked={selectedGateway === "saman"}
+                      onChange={() => setSelectedGateway("saman")}
+                      className="w-4 h-4 text-primary focus:ring-primary bg-white checked:bg-primary"
                     />
+                    <div className="relative w-8 h-8 flex-shrink-0">
+                      <Image
+                        src="/images/logo/saman.png"
+                        alt="بانک سامان"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
                     <span className="text-sm text-gray-900">
                       درگاه پرداخت بانک سامان
                     </span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Discount Code */}
-              <div className="bg-white p-6 border border-gray-200">
-                <h3 className="text-base font-bold text-gray-900 mb-4">
-                  کد تخفیف
-                </h3>
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    placeholder="کد تخفیف خود را وارد کنید"
-                    className="flex-1 px-4 py-2.5 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
-                  />
-                  <button className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium transition-colors whitespace-nowrap">
-                    اعمال کد
-                  </button>
-                </div>
-              </div>
-
-              {/* Wallet */}
-              <div className="bg-white p-6 border border-gray-200">
-                <h3 className="text-base font-bold text-gray-900 mb-4">
-                  کیف پول
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200">
-                    <span className="text-sm text-gray-700">
-                      موجودی کیف پول:
-                    </span>
-                    <span className="text-base font-bold text-primary">
-                      {(2500000).toLocaleString("fa-IR")} تومان
+                  </div>
+                  <div
+                    onClick={() => setSelectedGateway("mellat")}
+                    className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 ${
+                      selectedGateway === "mellat"
+                        ? "border-primary"
+                        : "border-transparent"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment-gateway"
+                      value="mellat"
+                      checked={selectedGateway === "mellat"}
+                      onChange={() => setSelectedGateway("mellat")}
+                      className="w-4 h-4 text-primary focus:ring-primary bg-white checked:bg-primary"
+                    />
+                    <div className="relative w-8 h-8 flex-shrink-0">
+                      <Image
+                        src="/images/logo/mellatbank.png"
+                        alt="بانک ملت"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                    <span className="text-sm text-gray-900">
+                      درگاه پرداخت بانک ملت
                     </span>
                   </div>
-                  <label className="flex items-center gap-3 cursor-pointer">
+                  <div
+                    onClick={() => setSelectedGateway("zarinpal")}
+                    className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 ${
+                      selectedGateway === "zarinpal"
+                        ? "border-primary"
+                        : "border-transparent"
+                    }`}
+                  >
                     <input
-                      type="checkbox"
-                      className="w-4 h-4 text-primary focus:ring-primary border-gray-300"
+                      type="radio"
+                      name="payment-gateway"
+                      value="zarinpal"
+                      checked={selectedGateway === "zarinpal"}
+                      onChange={() => setSelectedGateway("zarinpal")}
+                      className="w-4 h-4 text-primary focus:ring-primary bg-white checked:bg-primary"
                     />
+                    <div className="relative w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                      <span className="text-yellow-500 font-bold text-lg">
+                        Z
+                      </span>
+                    </div>
                     <span className="text-sm text-gray-900">
-                      استفاده از موجودی کیف پول
+                      درگاه پرداخت زرین‌پال
                     </span>
-                  </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="w-full px-4">
+                <div className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+              </div>
+
+              {/* Discount Code & Wallet - Side by Side */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+                {/* Discount Code */}
+                <div className="bg-gray-50 p-6 h-full flex flex-col">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Tag className="w-5 h-5 text-primary" />
+                    <h3 className="text-base font-bold text-gray-900">
+                      کد تخفیف
+                    </h3>
+                  </div>
+                  <div className="flex gap-3 flex-1 items-start">
+                    <input
+                      type="text"
+                      placeholder="کد تخفیف خود را وارد کنید"
+                      className="flex-1 px-4 py-2.5 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
+                    />
+                    <button className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium transition-colors whitespace-nowrap">
+                      اعمال کد
+                    </button>
+                  </div>
+                </div>
+
+                {/* Wallet */}
+                <div className="bg-gray-50 p-6 h-full flex flex-col">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Wallet className="w-5 h-5 text-primary" />
+                    <h3 className="text-base font-bold text-gray-900">
+                      کیف پول
+                    </h3>
+                  </div>
+                  <div className="space-y-4 flex-1">
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200">
+                      <span className="text-sm text-gray-700">
+                        موجودی کیف پول:
+                      </span>
+                      <span className="text-base font-bold text-primary">
+                        {(2500000).toLocaleString("fa-IR")} تومان
+                      </span>
+                    </div>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 text-primary focus:ring-primary border-gray-300"
+                      />
+                      <span className="text-sm text-gray-900">
+                        استفاده از موجودی کیف پول
+                      </span>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>

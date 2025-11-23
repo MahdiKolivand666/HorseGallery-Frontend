@@ -35,7 +35,7 @@ const Navbar = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const productsMenuRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("navbar");
-  const { isCartOpen, openCart, closeCart, cartItems } = useCart();
+  const { isCartOpen, openCart, closeCart } = useCart();
 
   const productCategories = [
     {
@@ -174,7 +174,7 @@ const Navbar = () => {
           isScrolled || isNavHovered
             ? "rgba(49, 93, 73, 0.95)"
             : "rgba(49, 93, 73, 0.15)",
-        backdropFilter: "blur(5px)",
+        backdropFilter: "blur(10px)",
       }}
       transition={{ duration: 0.3 }}
       className={`fixed top-0 left-0 right-0 z-50 w-full ${
@@ -638,7 +638,6 @@ const Navbar = () => {
                   href="/auth"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="block py-3 px-4 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors text-center"
-                  style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.4)" }}
                 >
                   {t("auth.label")}
                 </Link>
