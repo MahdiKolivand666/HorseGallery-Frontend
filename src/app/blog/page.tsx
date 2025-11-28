@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Home } from "lucide-react";
+import { getBlogs } from "@/lib/api/blog";
 
 interface BlogPost {
-  id: number;
+  _id: string;
   title: string;
   excerpt: string;
   content: string;
@@ -16,141 +17,87 @@ interface BlogPost {
   author: string;
   category: string;
   slug: string;
+  publishedAt?: string;
+  createdAt: string;
 }
 
 const BlogPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 6; // 3 rows × 2 posts
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const blogPosts: BlogPost[] = [
-    {
-      id: 1,
-      title: "تاریخچه طلا و جواهرات در ایران",
-      excerpt:
-        "طلا و جواهرات از دیرباز در فرهنگ و تمدن ایران جایگاه ویژه‌ای داشته‌اند. از دوران هخامنشیان تا به امروز، هنر جواهرسازی ایرانی همواره در جهان زبانزد بوده است. در این مقاله به بررسی تاریخچه غنی جواهرات ایرانی می‌پردازیم و نقش آن را در فرهنگ و هنر این سرزمین کهن بررسی می‌کنیم.",
-      content: "محتوای کامل مقاله...",
-      image: "/images/blogs/Blog_Square.webp",
-      date: "۱۵ آذر ۱۴۰۳",
-      author: "مریم احمدی",
-      category: "تاریخچه",
-      slug: "history-of-gold-jewelry",
-    },
-    {
-      id: 2,
-      title: "راهنمای انتخاب جواهرات مناسب",
-      excerpt:
-        "انتخاب جواهرات مناسب می‌تواند چالش‌برانگیز باشد. در این مقاله راهنمای کاملی برای انتخاب جواهرات مناسب با توجه به سلیقه، سبک زندگی و بودجه شما ارائه می‌دهیم. همچنین نکات مهم در نگهداری و مراقبت از جواهرات را بررسی می‌کنیم تا بتوانید از زیبایی آن‌ها برای سال‌های طولانی لذت ببرید.",
-      content: "محتوای کامل مقاله...",
-      image: "/images/blogs/Facetune_06-05-2024-10-01-19.webp",
-      date: "۱۲ آذر ۱۴۰۳",
-      author: "سارا کریمی",
-      category: "راهنما",
-      slug: "jewelry-selection-guide",
-    },
-    {
-      id: 3,
-      title: "هنر دست‌ساز بودن جواهرات",
-      excerpt:
-        "جواهرات دست‌ساز دارای ارزش و زیبایی منحصر به فردی هستند که در تولیدات انبوه یافت نمی‌شود. در این مقاله به بررسی فرآیند ساخت جواهرات دست‌ساز می‌پردازیم و اهمیت هنر و مهارت استادکاران را در خلق آثار هنری بی‌نظیر بررسی می‌کنیم. همچنین تفاوت‌های جواهرات دست‌ساز با تولیدات صنعتی را بررسی می‌کنیم.",
-      content: "محتوای کامل مقاله...",
-      image: "/images/blogs/nautilus.webp",
-      date: "۱۰ آذر ۱۴۰۳",
-      author: "علی محمدی",
-      category: "هنر",
-      slug: "handmade-jewelry-art",
-    },
-    {
-      id: 4,
-      title: "نحوه نگهداری و تمیز کردن طلا",
-      excerpt:
-        "طلا و جواهرات شما نیاز به مراقبت و نگهداری صحیح دارند تا درخشش و زیبایی خود را حفظ کنند. در این مقاله به شما آموزش می‌دهیم چگونه از جواهرات خود مراقبت کنید و با روش‌های صحیح تمیز کردن، عمر و درخشندگی آن‌ها را حفظ نمایید. همچنین نکات مهم نگهداری را بررسی می‌کنیم.",
-      content: "محتوای کامل مقاله...",
-      image: "/images/blogs/horoscopesArtboard_1_copy_19.webp",
-      date: "۸ آذر ۱۴۰۳",
-      author: "فاطمه رضایی",
-      category: "مراقبت",
-      slug: "gold-care-tips",
-    },
-    {
-      id: 5,
-      title: "ترندهای جواهرات در سال ۲۰۲۵",
-      excerpt:
-        "مد و ترندهای جواهرات همیشه در حال تغییر هستند. در این مقاله با جدیدترین ترندهای جواهرات در سال ۲۰۲۵ آشنا شوید و از آخرین مدهای روز مطلع باشید. از طراحی‌های مینیمال گرفته تا استفاده از سنگ‌های قیمتی رنگی، همه آنچه باید درباره مد امسال بدانید را بررسی می‌کنیم.",
-      content: "محتوای کامل مقاله...",
-      image:
-        "/images/blogs/Blog_Square_faa559f7-3684-4f89-bd02-32198ab6d259.webp",
-      date: "۵ آذر ۱۴۰۳",
-      author: "نیلوفر حسینی",
-      category: "مد و فشن",
-      slug: "jewelry-trends-2025",
-    },
-    {
-      id: 6,
-      title: "راهنمای خرید هدیه جواهرات",
-      excerpt:
-        "خرید هدیه جواهرات می‌تواند کار دشواری باشد. این راهنما به شما کمک می‌کند تا بهترین هدیه جواهرات را برای عزیزانتان انتخاب کنید و لحظات خاصی را خلق کنید. از انتخاب مناسب برای مناسبت‌های مختلف گرفته تا نکات مهم در بودجه‌بندی، همه چیز را در این مقاله می‌آموزید.",
-      content: "محتوای کامل مقاله...",
-      image:
-        "/images/blogs/horoscopesArtboard_1_copy_19_4b0ec817-d556-48f0-95df-5a0b892f9e8f.webp",
-      date: "۳ آذر ۱۴۰۳",
-      author: "رضا اکبری",
-      category: "راهنما",
-      slug: "gift-jewelry-guide",
-    },
-    {
-      id: 7,
-      title: "تفاوت طلای ۱۸ عیار با ۲۴ عیار",
-      excerpt:
-        "درک تفاوت بین عیارهای مختلف طلا برای خرید آگاهانه ضروری است. در این مقاله به بررسی کامل تفاوت‌های طلای ۱۸ عیار و ۲۴ عیار می‌پردازیم و ویژگی‌های هر کدام را بررسی می‌کنیم. همچنین نکات مهم در انتخاب عیار مناسب برای استفاده‌های مختلف را به شما آموزش می‌دهیم.",
-      content: "محتوای کامل مقاله...",
-      image: "/images/blogs/Blog_Square.webp",
-      date: "۱ آذر ۱۴۰۳",
-      author: "مهدی صادقی",
-      category: "آموزشی",
-      slug: "gold-karat-difference",
-    },
-    {
-      id: 8,
-      title: "جواهرات مناسب برای مراسم عروسی",
-      excerpt:
-        "انتخاب جواهرات مناسب برای مراسم عروسی یکی از مهم‌ترین تصمیمات عروس و داماد است. این راهنما به شما کمک می‌کند تا بهترین انتخاب را داشته باشید و در مهم‌ترین روز زندگی‌تان درخشان‌تر از همیشه باشید. از انتخاب ست کامل گرفته تا هماهنگی با لباس عروس، همه نکات را بررسی می‌کنیم.",
-      content: "محتوای کامل مقاله...",
-      image: "/images/blogs/Facetune_06-05-2024-10-01-19.webp",
-      date: "۲۸ آبان ۱۴۰۳",
-      author: "زهرا نوری",
-      category: "مراسم",
-      slug: "wedding-jewelry",
-    },
-    {
-      id: 9,
-      title: "سرمایه‌گذاری در طلا و جواهرات",
-      excerpt:
-        "طلا همیشه یکی از بهترین گزینه‌های سرمایه‌گذاری بوده است. در این مقاله به بررسی نکات مهم سرمایه‌گذاری در طلا و جواهرات می‌پردازیم و بهترین استراتژی‌ها برای سرمایه‌گذاری موفق را به شما آموزش می‌دهیم. همچنین ریسک‌ها و فرصت‌های این بازار را بررسی می‌کنیم.",
-      content: "محتوای کامل مقاله...",
-      image: "/images/blogs/nautilus.webp",
-      date: "۲۵ آبان ۱۴۰۳",
-      author: "امیر حسینی",
-      category: "اقتصادی",
-      slug: "gold-investment",
-    },
-    {
-      id: 10,
-      title: "آشنایی با انواع سنگ‌های قیمتی",
-      excerpt:
-        "سنگ‌های قیمتی زیبایی خاصی به جواهرات می‌بخشند. در این مقاله با انواع مختلف سنگ‌های قیمتی و ویژگی‌های آن‌ها آشنا می‌شوید و یاد می‌گیرید چگونه سنگ اصل را از تقلبی تشخیص دهید. همچنین درباره ارزش و کاربرد هر یک از سنگ‌های قیمتی اطلاعات کاملی به دست می‌آورید.",
-      content: "محتوای کامل مقاله...",
-      image: "/images/blogs/horoscopesArtboard_1_copy_19.webp",
-      date: "۲۲ آبان ۱۴۰۳",
-      author: "لیلا احمدی",
-      category: "آموزشی",
-      slug: "gemstones-types",
-    },
-  ];
+  useEffect(() => {
+    const abortController = new AbortController();
+    let isMounted = true;
+
+    const fetchBlogs = async () => {
+      try {
+        setLoading(true);
+        const { posts } = await getBlogs({ page: currentPage, limit: postsPerPage });
+        
+        if (isMounted) {
+          const formattedPosts = posts.map((post: any) => ({
+            _id: post._id,
+            title: post.title,
+            excerpt: post.excerpt,
+            content: post.content || "",
+            image: post.image || "/images/blogs/Blog_Square.webp",
+            date: new Date(post.publishedAt || post.createdAt).toLocaleDateString("fa-IR"),
+            author: `${post.author?.firstName || ""} ${post.author?.lastName || ""}`.trim() || "نویسنده",
+            category: post.category?.name || "عمومی",
+            slug: post.slug,
+            publishedAt: post.publishedAt,
+            createdAt: post.createdAt,
+          }));
+          setBlogPosts(formattedPosts);
+        }
+      } catch (error) {
+        if (!abortController.signal.aborted) {
+          console.error("Error fetching blogs:", error);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchBlogs();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
+  }, [currentPage]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-[100px] pb-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-gray-600">در حال بارگذاری...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!blogPosts || blogPosts.length === 0) {
+    return (
+      <div className="min-h-screen pt-[100px] pb-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-20">
+            <p className="text-gray-600">هیچ مقاله‌ای یافت نشد.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Calculate pagination
-  const indexOfLastPost = currentPage * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = blogPosts.slice(indexOfFirstPost, indexOfLastPost);
+  const currentPosts = blogPosts;
   const totalPages = Math.ceil(blogPosts.length / postsPerPage);
 
   const handlePageChange = (pageNumber: number) => {
@@ -195,7 +142,7 @@ const BlogPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8">
           {currentPosts.map((post, index) => (
             <motion.article
-              key={post.id}
+              key={post._id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}

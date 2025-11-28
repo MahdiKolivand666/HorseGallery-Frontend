@@ -12,35 +12,28 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import "swiper/css";
 import "swiper/css/navigation";
 
-interface BlogPost {
-  id: string;
+interface Blog {
+  _id: string;
   title: string;
-  description: string;
+  excerpt: string;
   image: string;
-  href: string;
+  slug: string;
 }
 
-const BlogSection = () => {
+interface Props {
+  posts: Blog[];
+}
+
+const BlogSection = ({ posts }: Props) => {
   const [swiperInstance, setSwiperInstance] = useState<SwiperType | null>(null);
 
-  const blogPosts: BlogPost[] = [
-    {
-      id: "blog1",
-      title: "تاریخچه طلا و جواهرات در ایران",
-      description:
-        "طلا و جواهرات از دیرباز در فرهنگ و تمدن ایران جایگاه ویژه‌ای داشته‌اند. از دوران هخامنشیان تا به امروز، هنر جواهرسازی ایرانی همواره در جهان زبانزد بوده است. در این مقاله به بررسی تاریخچه غنی جواهرات ایرانی می‌پردازیم و نقش آن را در فرهنگ و هنر این سرزمین بررسی می‌کنیم.",
-      image: "/images/blogs/Blog_Square.webp",
-      href: "/blog/history-of-gold-jewelry",
-    },
-    {
-      id: "blog2",
-      title: "راهنمای انتخاب جواهرات مناسب",
-      description:
-        "انتخاب جواهرات مناسب می‌تواند چالش‌برانگیز باشد. در این مقاله راهنمای کاملی برای انتخاب جواهرات مناسب با توجه به سلیقه، سبک زندگی و بودجه شما ارائه می‌دهیم. همچنین نکات مهم در نگهداری و مراقبت از جواهرات را بررسی می‌کنیم تا بتوانید از زیبایی آن‌ها برای سال‌های طولانی لذت ببرید.",
-      image: "/images/blogs/Facetune_06-05-2024-10-01-19.webp",
-      href: "/blog/jewelry-selection-guide",
-    },
-  ];
+  // اگر بلاگی نبود، چیزی نشون نده
+  if (!posts || posts.length === 0) {
+    return null;
+  }
+
+  // محدود به 2 پست
+  const blogPosts = posts.slice(0, 2);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -83,9 +76,9 @@ const BlogSection = () => {
           }}
           className="text-right py-8 sm:py-5 mb-4 sm:mb-6 lg:mb-8"
         >
-                <h2 className="text-sm sm:text-base md:text-lg font-medium text-gray-700">
-                  داستان‌های گالری اسب
-                </h2>
+          <h2 className="text-sm sm:text-base md:text-lg font-medium text-gray-700">
+            داستان‌های گالری اسب
+          </h2>
         </motion.div>
 
         {/* Mobile/Tablet Slider (hidden on desktop) */}
@@ -103,15 +96,15 @@ const BlogSection = () => {
             className="blog-swiper"
           >
             {blogPosts.map((post) => (
-              <SwiperSlide key={post.id}>
+              <SwiperSlide key={post._id}>
                 <article className="group bg-white overflow-hidden hover:shadow-lg transition-all duration-300">
-                  <Link href={post.href}>
+                  <Link href={`/blog/${post.slug}`}>
                     <div className="flex flex-row-reverse gap-4">
                       {/* Image - Left Side (Vertical) */}
                       <div className="w-1/2 flex-shrink-0">
                         <div className="relative w-full h-full min-h-[300px] overflow-hidden">
                           <Image
-                            src={post.image}
+                            src={post.image || "/images/blogs/Blog_Square.webp"}
                             alt={post.title}
                             fill
                             className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -130,7 +123,7 @@ const BlogSection = () => {
 
                           {/* Description */}
                           <p className="text-xs text-gray-600 leading-relaxed line-clamp-6">
-                            {post.description}
+                            {post.excerpt}
                           </p>
                         </div>
 
@@ -174,17 +167,17 @@ const BlogSection = () => {
         >
           {blogPosts.map((post) => (
             <motion.article
-              key={post.id}
+              key={post._id}
               variants={itemVariants}
               className="group bg-white overflow-hidden hover:shadow-lg transition-all duration-300"
             >
-              <Link href={post.href}>
+              <Link href={`/blog/${post.slug}`}>
                 <div className="flex flex-row-reverse gap-4">
                   {/* Image - Left Side (Vertical) */}
                   <div className="w-1/2 flex-shrink-0">
                     <div className="relative w-full h-full min-h-[320px] overflow-hidden">
                       <Image
-                        src={post.image}
+                        src={post.image || "/images/blogs/Blog_Square.webp"}
                         alt={post.title}
                         fill
                         className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -203,7 +196,7 @@ const BlogSection = () => {
 
                       {/* Description */}
                       <p className="text-xs text-gray-600 leading-relaxed line-clamp-6">
-                        {post.description}
+                        {post.excerpt}
                       </p>
                     </div>
 

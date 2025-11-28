@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { X, Info } from "lucide-react";
 import Link from "next/link";
+import { X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -12,20 +13,26 @@ interface AuthModalProps {
 
 const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [step, setStep] = useState<"phone" | "register">("phone");
+  const [step, setStep] = useState<"phone" | "otp">("phone");
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [mounted, setMounted] = useState(false);
 
-  // Form fields for registration
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [nationalCode, setNationalCode] = useState("");
-  const [email, setEmail] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
+  useEffect(() => {
+    // Client-side only mounting to prevent hydration mismatch
+    Promise.resolve().then(() => setMounted(true));
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
+      // Reset form when closing
+      setTimeout(() => {
+        setStep("phone");
+        setPhoneNumber("");
+        setOtp(["", "", "", "", "", ""]);
+      }, 300);
     }
 
     return () => {
@@ -35,229 +42,194 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
   const handlePhoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // انتقال به مرحله ثبت‌نام
-    setStep("register");
+    if (phoneNumber.length === 11) {
+      setStep("otp");
+    }
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length <= 1 && /^\d*$/.test(value)) {
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
+
+      // Auto focus next input
+      if (value && index < 5) {
+        const nextInput = document.getElementById(`otp-${index + 1}`);
+        nextInput?.focus();
+      }
+    }
+  };
+
+  const handleOtpKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      prevInput?.focus();
+    }
+  };
+
+  const handleOtpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // اینجا لاجیک ثبت‌نام نهایی قرار می‌گیره
-    console.log("Registration data:", {
-      phoneNumber,
-      firstName,
-      lastName,
-      nationalCode,
-      email,
-      verificationCode,
-    });
+    const otpCode = otp.join("");
+    if (otpCode.length === 6) {
+      // Handle OTP verification
+      // TODO: Connect to backend API
+      onClose();
+    }
   };
 
-  const handleResendCode = () => {
-    // اینجا لاجیک ارسال مجدد کد
-    console.log("Resending code...");
-  };
-
-  if (!isOpen || typeof window === "undefined") return null;
+  if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/20" onClick={onClose} />
-
-      {/* Modal Content */}
-      <div
-        className={`relative w-full mx-4 bg-white shadow-2xl transition-all ${
-          step === "phone" ? "max-w-lg" : "max-w-lg"
-        }`}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4">
-          <h3 className="text-base font-normal text-gray-900">
-            {step === "phone" ? "ورود / ثبت‌نام" : "عضویت در هورس گالری"}
-          </h3>
-          <button
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-black/50 z-[9998]"
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 transition-colors"
+          />
+
+          {/* Modal */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.3 }}
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white shadow-2xl z-[9999] max-h-[90vh] overflow-y-auto"
           >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="px-6 py-8">
-          {step === "phone" ? (
-            // Phone Step
-            <form onSubmit={handlePhoneSubmit} className="space-y-6">
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="phone"
-                  className="w-28 text-xs text-gray-900 font-medium text-right"
-                >
-                  شماره تلفن همراه
-                </label>
-                <div className="flex-1">
-                  <input
-                    type="tel"
-                    id="phone"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="لطفاً تلفن همراه خود را وارد کنید"
-                    className="w-full px-4 py-2 border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-center text-gray-900 placeholder:text-gray-400 text-sm"
-                    dir="rtl"
-                  />
-                </div>
-              </div>
-
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {step === "phone" ? "ورود / ثبت‌نام" : "تأیید شماره موبایل"}
+              </h2>
               <button
-                type="submit"
-                className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-2 transition-colors text-sm"
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="بستن"
               >
-                ورود / ثبت‌نام
+                <X className="w-5 h-5 text-gray-500" />
               </button>
-            </form>
-          ) : (
-            // Registration Step
-            <form onSubmit={handleRegisterSubmit} className="space-y-4">
-              {/* First Name */}
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="firstName"
-                  className="w-28 text-xs text-gray-900 font-medium text-right"
-                >
-                  نام
-                </label>
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="نام خود را وارد کنید"
-                    className="w-full px-4 py-2 border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-center text-gray-900 placeholder:text-gray-400 text-sm"
-                    dir="rtl"
-                  />
-                </div>
-              </div>
+            </div>
 
-              {/* Last Name */}
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="lastName"
-                  className="w-28 text-xs text-gray-900 font-medium text-right"
-                >
-                  نام خانوادگی
-                </label>
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="نام خانوادگی خود را وارد کنید"
-                    className="w-full px-4 py-2 border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-center text-gray-900 placeholder:text-gray-400 text-sm"
-                    dir="rtl"
-                  />
-                </div>
-              </div>
+            {/* Content */}
+            <div className="p-6">
+              {step === "phone" ? (
+                <form onSubmit={handlePhoneSubmit} className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="phone"
+                      className="block text-sm font-medium text-gray-700 mb-2 text-right"
+                    >
+                      شماره موبایل
+                    </label>
+                    <input
+                      id="phone"
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        if (value.length <= 11) {
+                          setPhoneNumber(value);
+                        }
+                      }}
+                      placeholder="09123456789"
+                      className="w-full px-4 py-3 border border-gray-300 focus:border-primary focus:outline-none text-center text-lg tracking-wider"
+                      dir="ltr"
+                      maxLength={11}
+                      autoFocus
+                    />
+                    <p className="mt-2 text-xs text-gray-500 text-right">
+                      کد تأیید به این شماره ارسال می‌شود
+                    </p>
+                  </div>
 
-              {/* National Code */}
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="nationalCode"
-                  className="w-28 text-xs text-gray-900 font-medium text-right"
-                >
-                  کد ملی
-                </label>
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    id="nationalCode"
-                    value={nationalCode}
-                    onChange={(e) => setNationalCode(e.target.value)}
-                    placeholder="ثبت کد ملی برای احراز هویت و امنیت خرید"
-                    className="w-full px-4 py-2 border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-center text-gray-900 placeholder:text-gray-400 text-sm"
-                    dir="rtl"
-                  />
-                </div>
-              </div>
+                  <button
+                    type="submit"
+                    disabled={phoneNumber.length !== 11}
+                    className="w-full bg-primary hover:bg-primary/90 text-white py-3 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    دریافت کد تأیید
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleOtpSubmit} className="space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-600 text-center mb-4">
+                      کد ارسال شده به شماره{" "}
+                      <span className="font-semibold text-gray-900" dir="ltr">
+                        {phoneNumber}
+                      </span>{" "}
+                      را وارد کنید
+                    </p>
 
-              {/* Email */}
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="email"
-                  className="w-28 text-xs text-gray-900 font-medium text-right"
-                >
-                  آدرس ایمیل
-                </label>
-                <div className="flex-1">
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ثبت ایمیل معتبر جهت دریافت ۱۰,۰۰۰ تومان اعتبار"
-                    className="w-full px-4 py-2 border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-center text-gray-900 placeholder:text-gray-400 text-sm"
-                    dir="rtl"
-                  />
-                </div>
-              </div>
+                    <div className="flex gap-2 justify-center mb-4" dir="ltr">
+                      {otp.map((digit, index) => (
+                        <input
+                          key={index}
+                          id={`otp-${index}`}
+                          type="text"
+                          inputMode="numeric"
+                          value={digit}
+                          onChange={(e) =>
+                            handleOtpChange(index, e.target.value)
+                          }
+                          onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                          className="w-12 h-12 text-center text-lg font-semibold border-2 border-gray-300 focus:border-primary focus:outline-none"
+                          maxLength={1}
+                          autoFocus={index === 0}
+                        />
+                      ))}
+                    </div>
 
-              {/* Verification Code */}
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="verificationCode"
-                  className="w-28 text-xs text-gray-900 font-medium text-right"
-                >
-                  کد تایید
-                </label>
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    id="verificationCode"
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value)}
-                    placeholder="کد تایید را وارد کنید"
-                    className="w-full px-4 py-2 border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-center text-gray-900 placeholder:text-gray-400 text-sm"
-                    dir="rtl"
-                  />
-                </div>
-              </div>
+                    <button
+                      type="button"
+                      onClick={() => setStep("phone")}
+                      className="text-sm text-primary hover:text-primary/80 transition-colors block mx-auto"
+                    >
+                      ویرایش شماره موبایل
+                    </button>
+                  </div>
 
-              {/* Buttons */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={handleResendCode}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 transition-colors text-sm"
-                >
-                  ارسال مجدد کد
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-2 transition-colors text-sm"
-                >
-                  ثبت‌نام
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
+                  <button
+                    type="submit"
+                    disabled={otp.join("").length !== 6}
+                    className="w-full bg-primary hover:bg-primary/90 text-white py-3 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    تأیید و ورود
+                  </button>
 
-        {/* Footer - Only show in phone step */}
-        {step === "phone" && (
-          <div className="px-6 py-4 flex items-center justify-start gap-2">
-            <Info className="w-4 h-4 text-gray-400" />
-            <Link
-              href="/auth/guide"
-              onClick={onClose}
-              className="text-xs text-primary hover:text-primary/80 transition-colors font-medium"
-            >
-              راهنمای ثبت‌نام و خرید
-            </Link>
-          </div>
-        )}
-      </div>
-    </div>,
+                  <button
+                    type="button"
+                    className="w-full text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    ارسال مجدد کد (۰۲:۰۰)
+                  </button>
+                </form>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-6">
+              <p className="text-xs text-gray-500 text-center leading-relaxed">
+                با ورود و ثبت‌نام در سایت، شما{" "}
+                <Link href="/terms" className="text-primary hover:underline">
+                  قوانین و مقررات
+                </Link>{" "}
+                استفاده از خدمات را می‌پذیرید.
+              </p>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
     document.body
   );
 };

@@ -53,8 +53,8 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       .padStart(2, "0")}`;
   };
 
-  const removeItem = (id: number) => {
-    removeFromCart(id);
+  const removeItem = (_id: string) => {
+    removeFromCart(_id);
   };
 
   const totalPrice = cartItems.reduce(
@@ -156,7 +156,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               <div className="space-y-4">
                 {cartItems.map((item) => (
                   <div
-                    key={item.id}
+                    key={item._id}
                     className="p-3 bg-gray-50 hover:bg-gray-100 transition-colors"
                   >
                     <div className="flex gap-3">
@@ -186,7 +186,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                             {item.name}
                           </Link>
                           <button
-                            onClick={() => removeItem(item.id)}
+                            onClick={() => removeItem(item._id)}
                             className="text-red-600 hover:text-red-700 transition-colors flex-shrink-0"
                             aria-label="حذف محصول"
                           >

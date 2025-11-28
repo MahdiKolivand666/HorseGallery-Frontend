@@ -5,56 +5,31 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-const GiftSection = () => {
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  images: string[];
+  slug: string;
+  category: {
+    slug: string;
+  };
+}
+
+interface Props {
+  products: Product[];
+}
+
+const GiftSection = ({ products: apiProducts }: Props) => {
   const sectionRef = useRef<HTMLElement>(null);
   const [imageStyle, setImageStyle] = useState<React.CSSProperties>({});
-  const [activeProduct, setActiveProduct] = useState<number | null>(null);
+  const [activeProduct, setActiveProduct] = useState<string | null>(null);
 
-  // Sample products data (12 products = 6 rows of 2)
-  const productNames = [
-    "گردنبند طلا",
-    "دستبند طلا",
-    "انگشتر طلا",
-    "گوشواره طلا",
-    "سرویس طلا",
-    "پلاک طلا",
-    "النگو طلا",
-    "حلقه طلا",
-    "آویز طلا",
-    "زنجیر طلا",
-    "گردنبند نقره",
-    "دستبند نقره",
-  ];
-
-  const productPrices = [
-    "۲,۵۰۰,۰۰۰",
-    "۳,۲۰۰,۰۰۰",
-    "۱,۸۰۰,۰۰۰",
-    "۲,۱۰۰,۰۰۰",
-    "۶,۵۰۰,۰۰۰",
-    "۱,۵۰۰,۰۰۰",
-    "۴,۲۰۰,۰۰۰",
-    "۲,۸۰۰,۰۰۰",
-    "۱,۲۰۰,۰۰۰",
-    "۳,۵۰۰,۰۰۰",
-    "۲,۰۰۰,۰۰۰",
-    "۲,۹۰۰,۰۰۰",
-  ];
-
-  const products = Array.from({ length: 12 }, (_, i) => {
-    const productNum = (i % 10) + 1;
-    // product1-1.webp doesn't exist, use product2-2.webp for product1
-    const hoverNum = productNum === 1 ? 2 : productNum;
-
-    return {
-      id: i + 1,
-      name: productNames[i],
-      price: productPrices[i],
-      image: `/images/products/product${productNum}.webp`,
-      hoverImage: `/images/products/product${hoverNum}-${hoverNum}.webp`,
-      href: `/product/${i + 1}`,
-    };
-  });
+  // محدود به 12 محصول
+  const products =
+    !apiProducts || apiProducts.length === 0
+      ? []
+      : apiProducts.slice(0, 12);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -102,6 +77,11 @@ const GiftSection = () => {
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // اگر محصولی نبود، چیزی نشون نده
+  if (products.length === 0) {
+    return null;
+  }
 
   return (
     <section ref={sectionRef} className="w-full bg-white relative">
@@ -173,19 +153,22 @@ const GiftSection = () => {
               {/* Products Grid - 2 columns on mobile/tablet, 2 columns on desktop */}
               <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6 mb-6">
                 {products.map((product) => {
-                  const isActive = activeProduct === product.id;
+                  const isActive = activeProduct === product._id;
+                  const productImage = product.images[0] || "/images/products/product1.webp";
+                  const productHoverImage = product.images[1] || product.images[0] || "/images/products/product1-1.webp";
+                  const productHref = `/${product.category.slug}/${product.slug}`;
 
                   return (
                     <Link
-                      key={product.id}
-                      href={product.href}
+                      key={product._id}
+                      href={productHref}
                       className="group"
                     >
                       <div
                         className="relative"
                         onClick={(e) => {
                           e.preventDefault();
-                          setActiveProduct(isActive ? null : product.id);
+                          setActiveProduct(isActive ? null : product._id);
                         }}
                       >
                         <motion.div
@@ -220,7 +203,7 @@ const GiftSection = () => {
                                 transition={{ duration: 0.4 }}
                               >
                                 <Image
-                                  src={product.image}
+                                  src={productImage}
                                   alt={product.name}
                                   fill
                                   className="object-cover w-full h-full"
@@ -251,7 +234,7 @@ const GiftSection = () => {
                                 transition={{ duration: 0.4 }}
                               >
                                 <Image
-                                  src={product.hoverImage}
+                                  src={productHoverImage}
                                   alt={product.name}
                                   fill
                                   className="object-cover w-full h-full"
@@ -277,7 +260,7 @@ const GiftSection = () => {
                           {product.name}
                         </h3>
                         <p className="text-xs text-gray-600 mt-0.5">
-                          {product.price} تومان
+                          {product.price.toLocaleString("fa-IR")} تومان
                         </p>
                       </div>
                     </Link>

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import HeroSlider from "@/components/features/HeroSlider";
 import CategoryGrid from "@/components/features/CategoryGrid";
 import BestSellingProducts from "@/components/features/BestSellingProducts";
@@ -12,8 +12,95 @@ import NewArrivalsSection from "@/components/features/NewArrivalsSection";
 import FAQSection from "@/components/features/FAQSection";
 import FeaturesBar from "@/components/features/FeaturesBar";
 import ImageCards from "@/components/features/ImageCards";
+import Divider from "@/components/ui/Divider";
+import { getProducts } from "@/lib/api/products";
+import { getBlogs } from "@/lib/api/blog";
+import { getFAQs } from "@/lib/api/faq";
+
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  images: string[];
+  slug: string;
+  category: {
+    slug: string;
+  };
+}
+
+interface BlogPost {
+  _id: string;
+  title: string;
+  excerpt: string;
+  image: string;
+  slug: string;
+}
+
+interface FAQ {
+  _id: string;
+  question: string;
+  answer: string;
+  order: number;
+}
 
 export default function Home() {
+  const [bestSellingProducts, setBestSellingProducts] = useState<Product[]>([]);
+  const [giftProducts, setGiftProducts] = useState<Product[]>([]);
+  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        // گرفتن محصولات پرفروش
+        const bestSelling = await getProducts({ isBestSelling: true, limit: 10 });
+        if (isMounted) setBestSellingProducts(bestSelling);
+        
+        // گرفتن محصولات هدیه
+        const gifts = await getProducts({ isGift: true, limit: 12 });
+        if (isMounted) setGiftProducts(gifts);
+        
+        // گرفتن محصولات جدید
+        const newProducts = await getProducts({ isNewArrival: true, limit: 12 });
+        if (isMounted) setNewArrivals(newProducts);
+        
+        // گرفتن بلاگ ها
+        const { posts } = await getBlogs({ isFeatured: true, limit: 2 });
+        if (isMounted) setBlogPosts(posts);
+        
+        // گرفتن سوالات متداول
+        const faqData = await getFAQs();
+        if (isMounted) setFaqs(faqData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">در حال بارگذاری...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="bg-white w-full">
       {/* Hero Slider */}
@@ -29,42 +116,22 @@ export default function Home() {
       <ImageCards />
 
       {/* Best Selling Products */}
-      <BestSellingProducts />
+      <BestSellingProducts products={bestSellingProducts} />
 
       {/* Divider */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ scaleX: 0 }}
-            whileInView={{ scaleX: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent origin-center"
-          />
-        </div>
-      </div>
+      <Divider />
 
       {/* Video Section */}
       <VideoSection />
 
       {/* Divider */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ scaleX: 0 }}
-            whileInView={{ scaleX: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent origin-center"
-          />
-        </div>
-      </div>
+      <Divider />
 
       {/* Gift Section */}
-      <GiftSection />
+      <GiftSection products={giftProducts} />
 
       {/* New Arrivals Section */}
-      <NewArrivalsSection />
+      <NewArrivalsSection products={newArrivals} />
 
       {/* About Us Section */}
       <AboutUsSection />
@@ -73,10 +140,10 @@ export default function Home() {
       <FeaturesBar />
 
       {/* Blog Section */}
-      <BlogSection />
+      <BlogSection posts={blogPosts} />
 
       {/* FAQ Section */}
-      <FAQSection />
+      <FAQSection faqs={faqs} />
     </div>
   );
 }

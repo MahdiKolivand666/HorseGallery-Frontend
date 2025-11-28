@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 interface CartItem {
-  id: number;
+  _id: string;
   name: string;
   image: string;
   price: number;
@@ -41,7 +41,7 @@ export default function CheckoutPage() {
   // Mock cart data
   const [cartItems] = useState<CartItem[]>([
     {
-      id: 1,
+      _id: "mock-product-1",
       name: "گردنبند طلای زنانه",
       image: "/images/products/product1.webp",
       price: 45000000,
@@ -54,7 +54,7 @@ export default function CheckoutPage() {
       discount: 2000000,
     },
     {
-      id: 2,
+      _id: "mock-product-2",
       name: "دستبند طلای مردانه",
       image: "/images/products/product2.webp",
       price: 28000000,
@@ -115,9 +115,9 @@ export default function CheckoutPage() {
   const finalTotal = subtotal - totalDiscount - walletAmount + shippingCost;
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleRemoveItem = (id: number) => {
+  const handleRemoveItem = (_id: string) => {
     // Handle remove item logic
-    console.log("Remove item:", id);
+    console.log("Remove item:", _id);
   };
 
   return (
@@ -181,7 +181,7 @@ export default function CheckoutPage() {
             {/* Cart Items - Left Side */}
             <div className="lg:col-span-2">
               {cartItems.map((item, index) => (
-                <div key={item.id}>
+                <div key={item._id}>
                   <div className="p-4 flex gap-4">
                     {/* Product Image */}
                     <Link
@@ -207,7 +207,7 @@ export default function CheckoutPage() {
                           {item.name}
                         </Link>
                         <button
-                          onClick={() => handleRemoveItem(item.id)}
+                          onClick={() => handleRemoveItem(item._id)}
                           className="p-1 text-red-500 hover:bg-red-50 transition-colors flex-shrink-0 mr-2"
                           aria-label="حذف"
                         >
@@ -407,7 +407,7 @@ export default function CheckoutPage() {
                 {/* Products Summary */}
                 <div className="mb-3 space-y-2">
                   {cartItems.map((item, index) => (
-                    <div key={item.id}>
+                    <div key={item._id}>
                       <div className="text-white space-y-0.5">
                         <p className="font-medium text-sm line-clamp-1">
                           {item.name}
@@ -687,7 +687,7 @@ export default function CheckoutPage() {
                 {/* Product Summary */}
                 <div className="space-y-3 mb-4">
                   {cartItems.map((item, index) => (
-                    <div key={item.id}>
+                    <div key={item._id}>
                       <div className="py-2">
                         <p className="text-sm font-medium mb-1">{item.name}</p>
                         <div className="space-y-0.5 text-xs">

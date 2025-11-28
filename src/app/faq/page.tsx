@@ -1,74 +1,64 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronDown, Home } from "lucide-react";
+import { getFAQs } from "@/lib/api/faq";
 
-interface FAQItem {
-  id: string;
+interface FAQ {
+  _id: string;
   question: string;
   answer: string;
 }
 
 const FAQPage = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [faqItems, setFaqItems] = useState<FAQ[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const faqItems: FAQItem[] = [
-    {
-      id: "1",
-      question: "چگونه می‌توانم سفارش خود را ثبت کنم؟",
-      answer:
-        "برای ثبت سفارش، کافی است محصول مورد نظر خود را انتخاب کرده و به سبد خرید اضافه کنید. سپس با وارد کردن اطلاعات تماس و آدرس، سفارش خود را نهایی کنید. پس از پرداخت آنلاین، سفارش شما ثبت خواهد شد.",
-    },
-    {
-      id: "2",
-      question: "زمان تحویل سفارش چقدر است؟",
-      answer:
-        "زمان تحویل سفارش بستگی به محل سکونت شما دارد. برای تهران و شهرستان‌های اطراف، زمان تحویل ۲ تا ۳ روز کاری و برای سایر شهرستان‌ها ۳ تا ۵ روز کاری است. در صورت نیاز به ارسال فوری، گزینه ارسال اکسپرس را انتخاب کنید.",
-    },
-    {
-      id: "3",
-      question: "آیا امکان مرجوع کردن محصول وجود دارد؟",
-      answer:
-        "بله، شما می‌توانید تا ۷ روز پس از دریافت محصول، در صورت عدم رضایت و سالم بودن محصول، آن را مرجوع کنید. هزینه ارسال مرجوعی به عهده مشتری است مگر در مواردی که محصول دارای عیب و نقص باشد.",
-    },
-    {
-      id: "4",
-      question: "محصولات شما دارای گارانتی هستند؟",
-      answer:
-        "تمامی محصولات ما دارای گارانتی اصالت و ضمانت بازگشت وجه هستند. همچنین محصولات طلا و جواهرات دارای گارانتی ۱۸ ماهه کارگاهی می‌باشند که شامل تعمیرات و خدمات پس از فروش است.",
-    },
-    {
-      id: "5",
-      question: "روش‌های پرداخت چیست؟",
-      answer:
-        "ما سه روش پرداخت ارائه می‌دهیم: پرداخت آنلاین از طریق درگاه بانکی، پرداخت در محل هنگام تحویل سفارش (فقط برای تهران)، و پرداخت اقساطی با همکاری بانک‌های معتبر کشور.",
-    },
-    {
-      id: "6",
-      question: "آیا محصولات سفارشی می‌پذیرید؟",
-      answer:
-        "بله، ما امکان طراحی و ساخت محصولات سفارشی را بر اساس سلیقه و نیاز شما فراهم کرده‌ایم. کافی است از طریق بخش تماس با ما، درخواست خود را ارسال کنید تا کارشناسان ما با شما تماس بگیرند.",
-    },
-    {
-      id: "7",
-      question: "چگونه از اصل بودن محصولات مطمئن شوم؟",
-      answer:
-        "تمامی محصولات ما دارای مهر و برگه گارانتی اصالت هستند. همچنین شما می‌توانید با مراجعه به فروشگاه‌های فیزیکی ما، از نزدیک محصولات را بررسی و خریداری کنید.",
-    },
-    {
-      id: "8",
-      question: "هزینه ارسال چقدر است؟",
-      answer:
-        "هزینه ارسال بستگی به وزن محصول و مقصد دارد. برای سفارش‌های بالای ۵ میلیون تومان، ارسال به صورت رایگان انجام می‌شود. هزینه دقیق ارسال در مرحله نهایی کردن سفارش به شما نمایش داده می‌شود.",
-    },
-  ];
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchFAQs = async () => {
+      try {
+        setLoading(true);
+        const faqs = await getFAQs();
+
+        if (isMounted) {
+          setFaqItems(faqs);
+        }
+      } catch (error) {
+        console.error("Error fetching FAQs:", error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchFAQs();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white pt-24 sm:pt-28 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">در حال بارگذاری سوالات...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white pt-24 sm:pt-28">
@@ -106,7 +96,7 @@ const FAQPage = () => {
                 style={{ height: "calc(100vh - 104px)" }}
               >
                 <Image
-                  src="/images/card/card1.webp"
+                  src="/images/aboutUs/logan2.webp"
                   alt="FAQ Image"
                   fill
                   className="object-cover"
@@ -128,7 +118,7 @@ const FAQPage = () => {
                 <div className="space-y-3">
                   {faqItems.map((item, index) => (
                     <motion.div
-                      key={item.id}
+                      key={item._id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: 0.1 * index }}
@@ -178,7 +168,7 @@ const FAQPage = () => {
           <div className="space-y-3">
             {faqItems.map((item, index) => (
               <motion.div
-                key={item.id}
+                key={item._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 * index }}

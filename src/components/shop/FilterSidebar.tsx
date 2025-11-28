@@ -1,14 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SlidersHorizontal, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 
-const FilterSidebar = () => {
+export interface FilterState {
+  selectedCategories: string[];
+  priceRange: [number, number];
+  selectedColors: string[];
+  selectedKarats: string[];
+  selectedBrands: string[];
+  selectedBranches: string[];
+  selectedWages: string[];
+  selectedSizes: string[];
+  selectedCoatings: string[];
+  weightRange: [number, number];
+  lowCommission: boolean;
+  inStock: boolean;
+  onSale: boolean;
+  sortBy?: string;
+}
+
+interface FilterSidebarProps {
+  onFilterChange?: (filters: FilterState) => void;
+  initialFilters?: Partial<FilterState>;
+  onClearAll?: () => void;
+}
+
+const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSidebarProps) => {
   // Filter states
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState([0, 900000000]);
+  const [priceInputs, setPriceInputs] = useState({ min: "0", max: "900000000" });
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedKarats, setSelectedKarats] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -17,9 +41,112 @@ const FilterSidebar = () => {
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedCoatings, setSelectedCoatings] = useState<string[]>([]);
   const [weightRange, setWeightRange] = useState([0, 100]);
+  const [weightInputs, setWeightInputs] = useState({ min: "0", max: "100" });
   const [lowCommission, setLowCommission] = useState(false);
   const [inStock, setInStock] = useState(false);
   const [onSale, setOnSale] = useState(false);
+
+  // Initialize filters from props (فقط یکبار در mount)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (initialFilters) {
+      if (initialFilters.selectedCategories) setSelectedCategories(initialFilters.selectedCategories);
+      if (initialFilters.priceRange) {
+        setPriceRange(initialFilters.priceRange);
+        setPriceInputs({
+          min: initialFilters.priceRange[0].toString(),
+          max: initialFilters.priceRange[1].toString(),
+        });
+      }
+      if (initialFilters.selectedColors) setSelectedColors(initialFilters.selectedColors);
+      if (initialFilters.selectedKarats) setSelectedKarats(initialFilters.selectedKarats);
+      if (initialFilters.selectedBrands) setSelectedBrands(initialFilters.selectedBrands);
+      if (initialFilters.selectedBranches) setSelectedBranches(initialFilters.selectedBranches);
+      if (initialFilters.selectedWages) setSelectedWages(initialFilters.selectedWages);
+      if (initialFilters.selectedSizes) setSelectedSizes(initialFilters.selectedSizes);
+      if (initialFilters.selectedCoatings) setSelectedCoatings(initialFilters.selectedCoatings);
+      if (initialFilters.weightRange) {
+        setWeightRange(initialFilters.weightRange);
+        setWeightInputs({
+          min: initialFilters.weightRange[0].toString(),
+          max: initialFilters.weightRange[1].toString(),
+        });
+      }
+      if (initialFilters.lowCommission !== undefined) setLowCommission(initialFilters.lowCommission);
+      if (initialFilters.inStock !== undefined) setInStock(initialFilters.inStock);
+      if (initialFilters.onSale !== undefined) setOnSale(initialFilters.onSale);
+    }
+  }, []); // فقط یکبار در mount اجرا بشه
+
+  // Notify parent component when filters change (with debounce to avoid infinite loop)
+  useEffect(() => {
+    if (!onFilterChange) return;
+
+    // Debounce: فقط بعد از 500ms که کاربر دست از تغییر برداشت، notify کن
+    const timeoutId = setTimeout(() => {
+      onFilterChange({
+        selectedCategories,
+        priceRange: priceRange as [number, number],
+        selectedColors,
+        selectedKarats,
+        selectedBrands,
+        selectedBranches,
+        selectedWages,
+        selectedSizes,
+        selectedCoatings,
+        weightRange: weightRange as [number, number],
+        lowCommission,
+        inStock,
+        onSale,
+      });
+    }, 500);
+
+    // Cleanup: اگه قبل از 500ms دوباره تغییر کرد، timeout قبلی رو cancel کن
+    return () => clearTimeout(timeoutId);
+  }, [
+    selectedCategories,
+    priceRange,
+    selectedColors,
+    selectedKarats,
+    selectedBrands,
+    selectedBranches,
+    selectedWages,
+    selectedSizes,
+    selectedCoatings,
+    weightRange,
+    lowCommission,
+    inStock,
+    onSale,
+    // IMPORTANT: onFilterChange رو از dependency ها حذف کردیم
+  ]);
+
+  // Convert to Persian digits
+  const toPersianDigits = (str: string): string => {
+    return str.replace(/[0-9]/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(d)]);
+  };
+
+  // Format number with Persian digits and thousand separators
+  const formatPersianNumber = (num: string): string => {
+    if (!num) return "";
+    // Convert Persian to English first
+    const english = num.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+    // Remove non-digits
+    const digits = english.replace(/\D/g, "");
+    if (!digits) return "";
+    // Add thousand separators
+    const formatted = parseInt(digits).toLocaleString("en-US");
+    // Convert to Persian digits
+    return toPersianDigits(formatted);
+  };
+
+  // Get display value for input - always formatted with Persian digits and commas
+  const getPriceDisplayValue = (value: string): string => {
+    return formatPersianNumber(value);
+  };
+
+  const getWeightDisplayValue = (value: string): string => {
+    return formatPersianNumber(value);
+  };
 
   // Accordion states
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -126,6 +253,7 @@ const FilterSidebar = () => {
   };
 
   const clearAllFilters = () => {
+    // Clear all states
     setSelectedCategories([]);
     setSelectedColors([]);
     setSelectedKarats([]);
@@ -135,28 +263,58 @@ const FilterSidebar = () => {
     setSelectedSizes([]);
     setSelectedCoatings([]);
     setPriceRange([0, 900000000]);
+    setPriceInputs({ min: "0", max: "900000000" });
     setWeightRange([0, 100]);
+    setWeightInputs({ min: "0", max: "100" });
     setLowCommission(false);
     setInStock(false);
     setOnSale(false);
+
+    // Immediately notify parent (بدون debounce)
+    if (onFilterChange) {
+      onFilterChange({
+        selectedCategories: [],
+        priceRange: [0, 900000000],
+        selectedColors: [],
+        selectedKarats: [],
+        selectedBrands: [],
+        selectedBranches: [],
+        selectedWages: [],
+        selectedSizes: [],
+        selectedCoatings: [],
+        weightRange: [0, 100],
+        lowCommission: false,
+        inStock: false,
+        onSale: false,
+        sortBy: "",
+      });
+    }
+
+    // Reset sortBy and other states in parent
+    if (onClearAll) {
+      onClearAll();
+    }
   };
 
   const applyFilters = () => {
-    console.log({
-      categories: selectedCategories,
-      priceRange,
-      weightRange,
-      colors: selectedColors,
-      karats: selectedKarats,
-      brands: selectedBrands,
-      branches: selectedBranches,
-      wages: selectedWages,
-      sizes: selectedSizes,
-      coatings: selectedCoatings,
-      lowCommission,
-      inStock,
-      onSale,
-    });
+    // Immediately apply filters (بدون debounce)
+    if (onFilterChange) {
+      onFilterChange({
+        selectedCategories,
+        priceRange: priceRange as [number, number],
+        selectedColors,
+        selectedKarats,
+        selectedBrands,
+        selectedBranches,
+        selectedWages,
+        selectedSizes,
+        selectedCoatings,
+        weightRange: weightRange as [number, number],
+        lowCommission,
+        inStock,
+        onSale,
+      });
+    }
   };
 
   return (
@@ -207,9 +365,14 @@ const FilterSidebar = () => {
                 max={900000000}
                 step={1000000}
                 value={priceRange}
-                onValueChange={(value) =>
-                  setPriceRange(value as [number, number])
-                }
+                onValueChange={(value) => {
+                  const range = value as [number, number];
+                  setPriceRange(range);
+                  setPriceInputs({
+                    min: range[0].toString(),
+                    max: range[1].toString(),
+                  });
+                }}
                 className="w-full"
                 inverted
               />
@@ -221,16 +384,20 @@ const FilterSidebar = () => {
                 </label>
                 <input
                   type="text"
-                  value={priceRange[0].toLocaleString("fa-IR")}
+                  value={getPriceDisplayValue(priceInputs.min)}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9]/g, "");
-                    const numValue = parseInt(value) || 0;
+                    const value = e.target.value;
+                    // Convert Persian to English and remove non-digits
+                    const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                    const cleanValue = english.replace(/[^0-9]/g, "");
+                    const numValue = parseInt(cleanValue) || 0;
+                    setPriceInputs({ ...priceInputs, min: cleanValue });
                     setPriceRange([
                       Math.min(numValue, priceRange[1]),
                       priceRange[1],
                     ]);
                   }}
-                  className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-right"
+                  className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
                   placeholder="۰"
                 />
               </div>
@@ -240,17 +407,21 @@ const FilterSidebar = () => {
                 </label>
                 <input
                   type="text"
-                  value={priceRange[1].toLocaleString("fa-IR")}
+                  value={getPriceDisplayValue(priceInputs.max)}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9]/g, "");
-                    const numValue = parseInt(value) || 900000000;
+                    const value = e.target.value;
+                    // Convert Persian to English and remove non-digits
+                    const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                    const cleanValue = english.replace(/[^0-9]/g, "");
+                    const numValue = parseInt(cleanValue) || 900000000;
+                    setPriceInputs({ ...priceInputs, max: cleanValue });
                     setPriceRange([
                       priceRange[0],
                       Math.max(numValue, priceRange[0]),
                     ]);
                   }}
-                  className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-right"
-                  placeholder="۹۰۰٬۰۰۰٬۰۰۰"
+                  className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
+                  placeholder="۹۰۰,۰۰۰,۰۰۰"
                 />
               </div>
             </div>
@@ -286,9 +457,14 @@ const FilterSidebar = () => {
                       max={100}
                       step={1}
                       value={weightRange}
-                      onValueChange={(value) =>
-                        setWeightRange(value as [number, number])
-                      }
+                      onValueChange={(value) => {
+                        const range = value as [number, number];
+                        setWeightRange(range);
+                        setWeightInputs({
+                          min: range[0].toString(),
+                          max: range[1].toString(),
+                        });
+                      }}
                       className="w-full"
                       inverted
                     />
@@ -300,16 +476,20 @@ const FilterSidebar = () => {
                       </label>
                       <input
                         type="text"
-                        value={weightRange[0].toLocaleString("fa-IR")}
+                        value={getWeightDisplayValue(weightInputs.min)}
                         onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9]/g, "");
-                          const numValue = parseInt(value) || 0;
+                          const value = e.target.value;
+                          // Convert Persian to English and remove non-digits
+                          const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                          const cleanValue = english.replace(/[^0-9]/g, "");
+                          const numValue = parseInt(cleanValue) || 0;
+                          setWeightInputs({ ...weightInputs, min: cleanValue });
                           setWeightRange([
                             Math.min(numValue, weightRange[1]),
                             weightRange[1],
                           ]);
                         }}
-                        className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-right"
+                        className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
                         placeholder="۰"
                       />
                     </div>
@@ -319,16 +499,20 @@ const FilterSidebar = () => {
                       </label>
                       <input
                         type="text"
-                        value={weightRange[1].toLocaleString("fa-IR")}
+                        value={getWeightDisplayValue(weightInputs.max)}
                         onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9]/g, "");
-                          const numValue = parseInt(value) || 100;
+                          const value = e.target.value;
+                          // Convert Persian to English and remove non-digits
+                          const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                          const cleanValue = english.replace(/[^0-9]/g, "");
+                          const numValue = parseInt(cleanValue) || 100;
+                          setWeightInputs({ ...weightInputs, max: cleanValue });
                           setWeightRange([
                             weightRange[0],
                             Math.max(numValue, weightRange[0]),
                           ]);
                         }}
-                        className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-right"
+                        className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
                         placeholder="۱۰۰"
                       />
                     </div>

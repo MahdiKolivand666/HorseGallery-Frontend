@@ -5,19 +5,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { createPortal } from "react-dom";
 import { Slider } from "@/components/ui/slider";
+import type { FilterState } from "./FilterSidebar";
 
 interface FilterDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  onFilterChange?: (filters: FilterState) => void;
+  initialFilters?: Partial<FilterState>;
+  onClearAll?: () => void;
 }
 
-const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
+const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClearAll }: FilterDrawerProps) => {
   const [mounted, setMounted] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([
     0, 900000000,
   ]);
+  const [priceInputs, setPriceInputs] = useState({ min: "0", max: "900000000" });
   const [weightRange, setWeightRange] = useState<[number, number]>([0, 100]);
+  const [weightInputs, setWeightInputs] = useState({ min: "0", max: "100" });
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedKarats, setSelectedKarats] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -28,6 +34,34 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
   const [inStock, setInStock] = useState(false);
   const [onSale, setOnSale] = useState(false);
   const [lowCommission, setLowCommission] = useState(false);
+
+  // Convert to Persian digits
+  const toPersianDigits = (str: string): string => {
+    return str.replace(/[0-9]/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(d)]);
+  };
+
+  // Format number with Persian digits and thousand separators
+  const formatPersianNumber = (num: string): string => {
+    if (!num) return "";
+    // Convert Persian to English first
+    const english = num.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+    // Remove non-digits
+    const digits = english.replace(/\D/g, "");
+    if (!digits) return "";
+    // Add thousand separators
+    const formatted = parseInt(digits).toLocaleString("en-US");
+    // Convert to Persian digits
+    return toPersianDigits(formatted);
+  };
+
+  // Get display value for input - always formatted with Persian digits and commas
+  const getPriceDisplayValue = (value: string): string => {
+    return formatPersianNumber(value);
+  };
+
+  const getWeightDisplayValue = (value: string): string => {
+    return formatPersianNumber(value);
+  };
 
   const colors = [
     { id: "gold", name: "طلایی", value: "#FFD700" },
@@ -58,6 +92,37 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Initialize filters from props (فقط یکبار در mount)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (initialFilters) {
+      if (initialFilters.priceRange) {
+        setPriceRange(initialFilters.priceRange);
+        setPriceInputs({
+          min: initialFilters.priceRange[0].toString(),
+          max: initialFilters.priceRange[1].toString(),
+        });
+      }
+      if (initialFilters.selectedColors) setSelectedColors(initialFilters.selectedColors);
+      if (initialFilters.selectedKarats) setSelectedKarats(initialFilters.selectedKarats);
+      if (initialFilters.selectedBrands) setSelectedBrands(initialFilters.selectedBrands);
+      if (initialFilters.selectedBranches) setSelectedBranches(initialFilters.selectedBranches);
+      if (initialFilters.selectedWages) setSelectedWages(initialFilters.selectedWages);
+      if (initialFilters.selectedSizes) setSelectedSizes(initialFilters.selectedSizes);
+      if (initialFilters.selectedCoatings) setSelectedCoatings(initialFilters.selectedCoatings);
+      if (initialFilters.weightRange) {
+        setWeightRange(initialFilters.weightRange);
+        setWeightInputs({
+          min: initialFilters.weightRange[0].toString(),
+          max: initialFilters.weightRange[1].toString(),
+        });
+      }
+      if (initialFilters.lowCommission !== undefined) setLowCommission(initialFilters.lowCommission);
+      if (initialFilters.inStock !== undefined) setInStock(initialFilters.inStock);
+      if (initialFilters.onSale !== undefined) setOnSale(initialFilters.onSale);
+    }
+  }, []); // فقط یکبار در mount اجرا بشه
 
   useEffect(() => {
     if (isOpen) {
@@ -133,7 +198,9 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
 
   const clearAllFilters = () => {
     setPriceRange([0, 900000000]);
+    setPriceInputs({ min: "0", max: "900000000" });
     setWeightRange([0, 100]);
+    setWeightInputs({ min: "0", max: "100" });
     setSelectedColors([]);
     setSelectedKarats([]);
     setSelectedBrands([]);
@@ -144,23 +211,51 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
     setInStock(false);
     setOnSale(false);
     setLowCommission(false);
+
+    // Apply cleared filters
+    if (onFilterChange) {
+      onFilterChange({
+        selectedCategories: [],
+        priceRange: [0, 900000000],
+        selectedColors: [],
+        selectedKarats: [],
+        selectedBrands: [],
+        selectedBranches: [],
+        selectedWages: [],
+        selectedSizes: [],
+        selectedCoatings: [],
+        weightRange: [0, 100],
+        lowCommission: false,
+        inStock: false,
+        onSale: false,
+        sortBy: "",
+      });
+    }
+
+    // Reset sortBy and other states in parent
+    if (onClearAll) {
+      onClearAll();
+    }
   };
 
   const applyFilters = () => {
-    console.log("Applying filters:", {
-      priceRange,
-      weightRange,
-      colors: selectedColors,
-      karats: selectedKarats,
-      brands: selectedBrands,
-      branches: selectedBranches,
-      wages: selectedWages,
-      sizes: selectedSizes,
-      coatings: selectedCoatings,
-      inStock,
-      onSale,
-      lowCommission,
-    });
+    if (onFilterChange) {
+      onFilterChange({
+        selectedCategories: [],
+        priceRange,
+        selectedColors,
+        selectedKarats,
+        selectedBrands,
+        selectedBranches,
+        selectedWages,
+        selectedSizes,
+        selectedCoatings,
+        weightRange,
+        lowCommission,
+        inStock,
+        onSale,
+      });
+    }
     onClose();
   };
 
@@ -239,9 +334,14 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
                       max={900000000}
                       step={1000000}
                       value={priceRange}
-                      onValueChange={(value) =>
-                        setPriceRange(value as [number, number])
-                      }
+                      onValueChange={(value) => {
+                        const range = value as [number, number];
+                        setPriceRange(range);
+                        setPriceInputs({
+                          min: range[0].toString(),
+                          max: range[1].toString(),
+                        });
+                      }}
                       className="w-full"
                       inverted
                     />
@@ -253,16 +353,20 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
                       </label>
                       <input
                         type="text"
-                        value={priceRange[0].toLocaleString("fa-IR")}
+                        value={getPriceDisplayValue(priceInputs.min)}
                         onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9]/g, "");
-                          const numValue = parseInt(value) || 0;
+                          const value = e.target.value;
+                          // Convert Persian to English and remove non-digits
+                          const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                          const cleanValue = english.replace(/[^0-9]/g, "");
+                          const numValue = parseInt(cleanValue) || 0;
+                          setPriceInputs({ ...priceInputs, min: cleanValue });
                           setPriceRange([
                             Math.min(numValue, priceRange[1]),
                             priceRange[1],
                           ]);
                         }}
-                        className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-right"
+                        className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
                         placeholder="۰"
                       />
                     </div>
@@ -272,17 +376,21 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
                       </label>
                       <input
                         type="text"
-                        value={priceRange[1].toLocaleString("fa-IR")}
+                        value={getPriceDisplayValue(priceInputs.max)}
                         onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9]/g, "");
-                          const numValue = parseInt(value) || 900000000;
+                          const value = e.target.value;
+                          // Convert Persian to English and remove non-digits
+                          const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                          const cleanValue = english.replace(/[^0-9]/g, "");
+                          const numValue = parseInt(cleanValue) || 900000000;
+                          setPriceInputs({ ...priceInputs, max: cleanValue });
                           setPriceRange([
                             priceRange[0],
                             Math.max(numValue, priceRange[0]),
                           ]);
                         }}
-                        className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-right"
-                        placeholder="۹۰۰٬۰۰۰٬۰۰۰"
+                        className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
+                        placeholder="۹۰۰,۰۰۰,۰۰۰"
                       />
                     </div>
                   </div>
@@ -312,9 +420,14 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
                         max={100}
                         step={0.1}
                         value={weightRange}
-                        onValueChange={(value) =>
-                          setWeightRange(value as [number, number])
-                        }
+                        onValueChange={(value) => {
+                          const range = value as [number, number];
+                          setWeightRange(range);
+                          setWeightInputs({
+                            min: range[0].toString(),
+                            max: range[1].toString(),
+                          });
+                        }}
                         className="w-full"
                         inverted
                       />
@@ -326,16 +439,20 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
                         </label>
                         <input
                           type="text"
-                          value={weightRange[0].toLocaleString("fa-IR")}
+                          value={getWeightDisplayValue(weightInputs.min)}
                           onChange={(e) => {
-                            const value = e.target.value.replace(/[^0-9]/g, "");
-                            const numValue = parseInt(value) || 0;
+                            const value = e.target.value;
+                            // Convert Persian to English and remove non-digits
+                            const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                            const cleanValue = english.replace(/[^0-9]/g, "");
+                            const numValue = parseInt(cleanValue) || 0;
+                            setWeightInputs({ ...weightInputs, min: cleanValue });
                             setWeightRange([
                               Math.min(numValue, weightRange[1]),
                               weightRange[1],
                             ]);
                           }}
-                          className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-right"
+                          className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
                           placeholder="۰"
                         />
                       </div>
@@ -345,16 +462,20 @@ const FilterDrawer = ({ isOpen, onClose }: FilterDrawerProps) => {
                         </label>
                         <input
                           type="text"
-                          value={weightRange[1].toLocaleString("fa-IR")}
+                          value={getWeightDisplayValue(weightInputs.max)}
                           onChange={(e) => {
-                            const value = e.target.value.replace(/[^0-9]/g, "");
-                            const numValue = parseInt(value) || 100;
+                            const value = e.target.value;
+                            // Convert Persian to English and remove non-digits
+                            const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                            const cleanValue = english.replace(/[^0-9]/g, "");
+                            const numValue = parseInt(cleanValue) || 100;
+                            setWeightInputs({ ...weightInputs, max: cleanValue });
                             setWeightRange([
                               weightRange[0],
                               Math.max(numValue, weightRange[0]),
                             ]);
                           }}
-                          className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-right"
+                          className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
                           placeholder="۱۰۰"
                         />
                       </div>

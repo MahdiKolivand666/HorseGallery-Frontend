@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface CartItem {
-  id: number;
+  _id: string;
   name: string;
   image: string;
   price: number;
@@ -22,8 +22,8 @@ interface CartContextType {
   openCart: () => void;
   closeCart: () => void;
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => void;
+  removeFromCart: (_id: string) => void;
+  updateQuantity: (_id: string, quantity: number) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -37,10 +37,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = (item: CartItem) => {
     setCartItems((prev) => {
-      const existingItem = prev.find((i) => i.id === item.id && i.size === item.size);
+      const existingItem = prev.find(
+        (i) => i._id === item._id && i.size === item.size
+      );
       if (existingItem) {
         return prev.map((i) =>
-          i.id === item.id && i.size === item.size
+          i._id === item._id && i.size === item.size
             ? { ...i, quantity: i.quantity + 1 }
             : i
         );
@@ -50,17 +52,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     openCart();
   };
 
-  const removeFromCart = (id: number) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
+  const removeFromCart = (_id: string) => {
+    setCartItems((prev) => prev.filter((item) => item._id !== _id));
   };
 
-  const updateQuantity = (id: number, quantity: number) => {
+  const updateQuantity = (_id: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(id);
+      removeFromCart(_id);
       return;
     }
     setCartItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
+      prev.map((item) => (item._id === _id ? { ...item, quantity } : item))
     );
   };
 
@@ -88,4 +90,3 @@ export function useCart() {
   }
   return context;
 }
-

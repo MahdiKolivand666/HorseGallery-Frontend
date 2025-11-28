@@ -3,6 +3,7 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, EffectFade, Pagination } from "swiper/modules";
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { TypeAnimation } from "react-type-animation";
@@ -13,10 +14,10 @@ const HeroSlider = () => {
 
   const slides = {
     desktop: [
-      "/images/slider/Slider-1.jpg",
-      "/images/slider/Slider-2.jpg",
       "/images/slider/Slider-5.webp",
       "/images/slider/Slider-7.webp",
+      "/images/slider/Slider-1.jpg",
+      "/images/slider/Slider-2.jpg",
     ],
     mobile: ["/images/slider/sliderT-3.jpg", "/images/slider/sliderT-4.jpg"],
   };
@@ -115,16 +116,21 @@ const HeroSlider = () => {
               }}
             />
           </motion.div>
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            whileHover={{ scale: 1.05, backgroundColor: "rgba(49, 93, 73, 1)" }}
-            whileTap={{ scale: 0.95 }}
-            className="px-6 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-3.5 bg-primary text-white rounded-full text-sm sm:text-base md:text-lg font-semibold hover:bg-primary-700 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)] pointer-events-auto border-2 border-white/20"
-          >
-            {t("cta")}
-          </motion.button>
+          <Link href="/products/women" className="pointer-events-auto">
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              whileHover={{
+                scale: 1.05,
+                backgroundColor: "rgba(49, 93, 73, 1)",
+              }}
+              whileTap={{ scale: 0.95 }}
+              className="px-6 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-3.5 bg-primary text-white rounded-full text-sm sm:text-base md:text-lg font-semibold hover:bg-primary-700 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)] border-2 border-white/20"
+            >
+              {t("cta")}
+            </motion.button>
+          </Link>
         </div>
       </div>
     </section>

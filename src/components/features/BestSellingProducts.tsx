@@ -10,100 +10,31 @@ import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Product {
-  id: string;
+  _id: string;
   name: string;
-  price: string;
-  image: string;
-  hoverImage: string;
-  href: string;
+  price: number;
+  images: string[];
+  slug: string;
+  category: {
+    slug: string;
+  };
 }
 
-const BestSellingProducts = () => {
+interface Props {
+  products: Product[];
+}
+
+const BestSellingProducts = ({ products }: Props) => {
   const t = useTranslations("home.bestSelling");
   const [activeProduct, setActiveProduct] = useState<string | null>(null);
 
-  const products: Product[] = [
-    {
-      id: "product1",
-      name: "گردنبند طلا",
-      price: "۲,۵۰۰,۰۰۰",
-      image: "/images/products/product1.webp",
-      hoverImage: "/images/products/product2-2.webp",
-      href: "/products/product1",
-    },
-    {
-      id: "product2",
-      name: "دستبند طلا",
-      price: "۳,۲۰۰,۰۰۰",
-      image: "/images/products/product2.webp",
-      hoverImage: "/images/products/product2-2.webp",
-      href: "/products/product2",
-    },
-    {
-      id: "product3",
-      name: "انگشتر طلا",
-      price: "۱,۸۰۰,۰۰۰",
-      image: "/images/products/product3.webp",
-      hoverImage: "/images/products/product3-3.webp",
-      href: "/products/product3",
-    },
-    {
-      id: "product4",
-      name: "گوشواره طلا",
-      price: "۲,۱۰۰,۰۰۰",
-      image: "/images/products/product4.webp",
-      hoverImage: "/images/products/product4-4.webp",
-      href: "/products/product4",
-    },
-    {
-      id: "product5",
-      name: "سرویس طلا",
-      price: "۶,۵۰۰,۰۰۰",
-      image: "/images/products/product5.webp",
-      hoverImage: "/images/products/product5-5.webp",
-      href: "/products/product5",
-    },
-    {
-      id: "product6",
-      name: "پلاک طلا",
-      price: "۱,۵۰۰,۰۰۰",
-      image: "/images/products/product6.webp",
-      hoverImage: "/images/products/product6-6.webp",
-      href: "/products/product6",
-    },
-    {
-      id: "product7",
-      name: "النگو طلا",
-      price: "۴,۲۰۰,۰۰۰",
-      image: "/images/products/product7.webp",
-      hoverImage: "/images/products/product7-7.webp",
-      href: "/products/product7",
-    },
-    {
-      id: "product8",
-      name: "حلقه طلا",
-      price: "۲,۸۰۰,۰۰۰",
-      image: "/images/products/product8.webp",
-      hoverImage: "/images/products/product8-8.webp",
-      href: "/products/product8",
-    },
-    {
-      id: "product9",
-      name: "آویز طلا",
-      price: "۱,۲۰۰,۰۰۰",
-      image: "/images/products/product9.webp",
-      hoverImage: "/images/products/product9-9.webp",
-      href: "/products/product9",
-    },
-    {
-      id: "product10",
-      name: "زنجیر طلا",
-      price: "۳,۵۰۰,۰۰۰",
-      image: "/images/products/product10.webp",
-      hoverImage: "/images/products/product10-10.webp",
-      href: "/products/product10",
-    },
-  ];
+  // اگر محصولی نبود، چیزی نشون نده
+  if (!products || products.length === 0) {
+    return null;
+  }
+
+  const productsFormatted = products.slice(0, 10);
+
 
   return (
     <section className="w-full px-4 sm:px-6 lg:px-8 bg-gray-50 overflow-hidden">
@@ -154,11 +85,14 @@ const BestSellingProducts = () => {
             }}
             className="!pb-4"
           >
-            {products.map((product) => {
-              const isActive = activeProduct === product.id;
+            {productsFormatted.map((product) => {
+              const isActive = activeProduct === product._id;
+              const productImage = product.images[0] || "/images/products/product1.webp";
+              const productHoverImage = product.images[1] || product.images[0] || "/images/products/product1-1.webp";
+              const productHref = `/${product.category.slug}/${product.slug}`;
 
               return (
-                <SwiperSlide key={product.id}>
+                <SwiperSlide key={product._id}>
                   <motion.div
                     initial={{ opacity: 0, y: 40, scale: 0.95 }}
                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
@@ -171,12 +105,12 @@ const BestSellingProducts = () => {
                     }}
                     className="relative"
                   >
-                    <Link href={product.href}>
+                    <Link href={productHref}>
                       <div
                         className="relative"
                         onClick={(e) => {
                           e.preventDefault();
-                          setActiveProduct(isActive ? null : product.id);
+                          setActiveProduct(isActive ? null : product._id);
                         }}
                       >
                         <motion.div
@@ -214,8 +148,8 @@ const BestSellingProducts = () => {
                                 transition={{ duration: 0.4 }}
                               >
                                 <Image
-                                  src={product.image}
-                                  alt={`Product ${product.id}`}
+                                  src={productImage}
+                                  alt={product.name}
                                   width={340}
                                   height={439}
                                   className="object-cover w-full h-full"
@@ -250,8 +184,8 @@ const BestSellingProducts = () => {
                                 transition={{ duration: 0.4 }}
                               >
                                 <Image
-                                  src={product.hoverImage}
-                                  alt={`Product ${product.id}`}
+                                  src={productHoverImage}
+                                  alt={product.name}
                                   width={340}
                                   height={439}
                                   className="object-cover w-full h-full"
@@ -281,7 +215,7 @@ const BestSellingProducts = () => {
                           {product.name}
                         </h3>
                         <p className="text-xs text-gray-600 mt-0.5">
-                          {product.price} تومان
+                          {product.price.toLocaleString("fa-IR")} تومان
                         </p>
                       </div>
                     </Link>

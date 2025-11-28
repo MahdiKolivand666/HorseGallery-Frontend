@@ -45,10 +45,10 @@ const ImageCards = () => {
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
-                
+
                 {/* Overlay */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
-                
+
                 {/* Title and Description on Image */}
                 <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-full px-4 text-center transition-all duration-300 group-hover:bottom-24">
                   <h3 className="text-base font-bold text-white mb-2">
@@ -75,4 +75,3 @@ const ImageCards = () => {
 };
 
 export default ImageCards;
-

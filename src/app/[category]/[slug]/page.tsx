@@ -16,108 +16,130 @@ import { motion } from "framer-motion";
 import PhotoSwipeLightbox from "photoswipe/lightbox";
 import "photoswipe/style.css";
 import { useCart } from "@/contexts/CartContext";
+import { getProductBySlug } from "@/lib/api/products";
 
-// Mock data - در پروژه واقعی از API دریافت می‌شه
-const getProductData = (slug: string, category: string) => {
-  // از slug اطلاعات محصول رو استخراج می‌کنیم
-  const parts = slug.split("-");
-  const id = parts[parts.length - 1];
+interface RelatedProduct {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+  hoverImage: string;
+  slug: string;
+}
 
-  return {
-    id,
-    slug,
-    name: "گردنبند طلای کلاسیک",
-    code: "GN-001-18K",
-    category:
-      category === "women"
-        ? "زنانه"
-        : category === "men"
-        ? "مردانه"
-        : "کودکانه",
-    categorySlug: category,
-    subcategory: "گردنبند",
-    subcategorySlug: "necklace",
-    price: 45000000,
-    goldPrice: 2500000,
-    rating: 4.5,
-    reviewsCount: 128,
-    stock: 12,
-    deliveryDays: "2-3",
-    images: [
-      "/images/products/product1.webp",
-      "/images/products/product1-1.webp",
-      "/images/products/product2.webp",
-      "/images/products/product3.webp",
-      "/images/products/product4.webp",
-    ],
-    specifications: {
-      weight: "12.5 گرم",
-      karat: "18 عیار",
-      material: "طلای سرخ",
-      brand: "گالری اسب",
-      dimensions: "45 سانتی‌متر",
-      warranty: "گارانتی اصالت و 18 ماه گارانتی ساخت",
-    },
-    description: `این گردنبند طلای کلاسیک با طراحی منحصر به فرد و ظریف، یکی از محبوب‌ترین محصولات گالری اسب است. این محصول با استفاده از بهترین مواد اولیه و با دقت بالا ساخته شده است.
-
-طراحی این گردنبند به گونه‌ای است که می‌توانید آن را در مناسبت‌های مختلف به راحتی استفاده کنید. وزن مناسب و کیفیت عالی این محصول باعث شده تا یکی از پرفروش‌ترین محصولات باشد.
-
-گالری اسب با سال‌ها تجربه در زمینه طراحی و ساخت جواهرات، تضمین می‌کند که این محصول کیفیتی عالی دارد و برای مدت طولانی قابل استفاده است.`,
-    features: [
-      "طلای 18 عیار با گارانتی اصالت",
-      "طراحی منحصر به فرد و دست‌ساز",
-      "قابلیت تنظیم طول زنجیر",
-      "بسته‌بندی لوکس و مناسب هدیه",
-    ],
-    sizes: ["40 سانتی‌متر", "45 سانتی‌متر", "50 سانتی‌متر"],
-    relatedProducts: [
-      {
-        id: 1,
-        name: "گردنبند طلا",
-        price: 38000000,
-        image: "/images/products/product2.webp",
-        hoverImage: "/images/products/product2-2.webp",
-        slug: "gold-necklace-002",
-      },
-      {
-        id: 2,
-        name: "دستبند طلا",
-        price: 42000000,
-        image: "/images/products/product3.webp",
-        hoverImage: "/images/products/product3-3.webp",
-        slug: "gold-bracelet-003",
-      },
-      {
-        id: 3,
-        name: "انگشتر طلا",
-        price: 35000000,
-        image: "/images/products/product4.webp",
-        hoverImage: "/images/products/product4-4.webp",
-        slug: "gold-ring-004",
-      },
-      {
-        id: 4,
-        name: "گوشواره طلا",
-        price: 28000000,
-        image: "/images/products/product5.webp",
-        hoverImage: "/images/products/product5-5.webp",
-        slug: "gold-earring-005",
-      },
-    ],
+interface ProductDetail {
+  id: string | number;
+  slug: string;
+  name: string;
+  code: string;
+  category: string;
+  categorySlug: string;
+  subcategory?: string;
+  subcategorySlug?: string;
+  price: number;
+  discountPrice?: number;
+  discount?: number; // درصد تخفیف (محاسبه شده توسط backend)
+  onSale?: boolean; // آیا محصول تخفیف دارد؟ (محاسبه شده توسط backend)
+  lowCommission?: boolean; // آیا محصول اجرت کم دارد؟ (پیشنهاد ویژه)
+  commission?: number; // درصد اجرت
+  goldPrice: number;
+  rating: number;
+  reviewsCount: number;
+  stock: number;
+  deliveryDays: string;
+  images: string[];
+  specifications: {
+    weight: string;
+    karat: string;
+    material: string;
+    brand: string;
+    dimensions: string;
+    warranty: string;
   };
-};
+  description: string;
+  features: string[];
+  sizes: string[];
+  relatedProducts: RelatedProduct[];
+}
 
 const ProductDetailPage = () => {
   const params = useParams();
   const category = params.category as string;
   const slug = params.slug as string;
 
-  const productData = getProductData(slug, category);
-
+  const [productData, setProductData] = useState<ProductDetail | null>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(productData.sizes[1]);
+  const [selectedSize, setSelectedSize] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
   const { addToCart } = useCart();
+
+  // Fetch product data from API
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const product = await getProductBySlug(slug);
+
+        if (isMounted && product) {
+          setProductData({
+            id: product._id,
+            slug: product.slug,
+            name: product.name,
+            code: product.code || "N/A",
+            category: product.category?.name || "عمومی",
+            categorySlug: product.category?.slug || category,
+            subcategory: product.subcategory?.name,
+            subcategorySlug: product.subcategory?.slug,
+            price: product.price,
+            discountPrice: product.discountPrice,
+            discount: product.discount, // درصد تخفیف از backend
+            onSale: product.onSale, // آیا تخفیف داره؟
+            lowCommission: product.lowCommission, // آیا کم اجرت داره؟ (پیشنهاد ویژه)
+            commission: product.commission, // درصد اجرت
+            goldPrice: 2500000, // This should come from API
+            rating: product.rating || 0,
+            reviewsCount: product.reviewsCount || 0,
+            stock: product.stock || 0,
+            deliveryDays: "2-3",
+            images: product.images || ["/images/products/product1.webp"],
+            specifications: {
+              weight: product.specifications?.weight || "N/A",
+              karat: product.specifications?.karat || "N/A",
+              material: product.specifications?.material || "N/A",
+              brand: product.specifications?.brand || "گالری اسب",
+              dimensions: product.specifications?.dimensions || "N/A",
+              warranty: product.specifications?.warranty || "گارانتی اصالت",
+            },
+            description: product.description || "",
+            features: [
+              "طلای 18 عیار با گارانتی اصالت",
+              "طراحی منحصر به فرد و دست‌ساز",
+              "قابلیت تنظیم طول زنجیر",
+              "بسته‌بندی لوکس و مناسب هدیه",
+            ],
+            sizes: ["40 سانتی‌متر", "45 سانتی‌متر", "50 سانتی‌متر"],
+            relatedProducts: [], // This should come from API
+          });
+          setSelectedSize("45 سانتی‌متر");
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [slug, category]);
 
   // Initialize PhotoSwipe
   useEffect(() => {
@@ -143,31 +165,77 @@ const ProductDetailPage = () => {
   }, []);
 
   const handleAddToCart = () => {
+    if (!productData) return;
+
+    // محاسبه قیمت نهایی و درصد تخفیف (با fallback اگه backend نفرستاد)
+    const finalPrice = productData.onSale && productData.discountPrice 
+      ? productData.discountPrice 
+      : productData.price;
+    
+    const discountPercent = productData.discount 
+      || (productData.discountPrice && productData.discountPrice < productData.price
+        ? Math.round(((productData.price - productData.discountPrice) / productData.price) * 100)
+        : 0);
+
     addToCart({
-      id: parseInt(productData.id),
+      _id:
+        typeof productData.id === "string"
+          ? productData.id
+          : String(productData.id),
       name: productData.name,
       image: productData.images[0],
-      price: productData.price,
+      price: finalPrice,
       quantity: 1,
       code: productData.code,
       weight: productData.specifications.weight,
       size: selectedSize,
       slug: productData.slug,
       category: productData.categorySlug,
-      discount: 0,
+      discount: discountPercent,
     });
   };
 
   const handleNextImage = () => {
-    setSelectedImage((prev) => (prev + 1) % productData.images.length);
+    if (productData) {
+      setSelectedImage((prev) => (prev + 1) % productData.images.length);
+    }
   };
 
   const handlePrevImage = () => {
-    setSelectedImage(
-      (prev) =>
-        (prev - 1 + productData.images.length) % productData.images.length
-    );
+    if (productData) {
+      setSelectedImage(
+        (prev) =>
+          (prev - 1 + productData.images.length) % productData.images.length
+      );
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white pt-24 sm:pt-28 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">در حال بارگذاری جزئیات محصول...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!productData) {
+    return (
+      <div className="min-h-screen bg-white pt-24 sm:pt-28 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 text-lg mb-4">محصول مورد نظر یافت نشد.</p>
+          <Link
+            href="/"
+            className="text-primary hover:text-primary/80 underline"
+          >
+            بازگشت به صفحه اصلی
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white pt-24 sm:pt-28">
@@ -189,13 +257,19 @@ const ProductDetailPage = () => {
             >
               {productData.category}
             </Link>
-            <ChevronLeft className="w-4 h-4 text-primary" />
-            <Link
-              href={`/products/${productData.categorySlug}/${productData.subcategorySlug}`}
-              className="text-primary hover:text-primary/80 transition-colors"
-            >
-              {productData.subcategory}
-            </Link>
+            
+            {productData.subcategory && productData.subcategorySlug && (
+              <>
+                <ChevronLeft className="w-4 h-4 text-primary" />
+                <Link
+                  href={`/products/${productData.categorySlug}/${productData.subcategorySlug}`}
+                  className="text-primary hover:text-primary/80 transition-colors"
+                >
+                  {productData.subcategory}
+                </Link>
+              </>
+            )}
+            
             <ChevronLeft className="w-4 h-4 text-primary" />
             <span className="text-gray-700">{productData.name}</span>
           </nav>
@@ -213,6 +287,26 @@ const ProductDetailPage = () => {
                 className="relative aspect-square mb-4 bg-gray-100 group"
                 id="product-gallery"
               >
+                {/* Badges */}
+                <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
+                  {/* Discount Badge - اولویت اول */}
+                  {productData.discountPrice && productData.discountPrice < productData.price && (
+                    <div className="bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+                      {productData.discount || Math.round(((productData.price - productData.discountPrice) / productData.price) * 100)}٪ تخفیف
+                    </div>
+                  )}
+                  
+                  {/* Low Commission Badge - پیشنهاد ویژه (کم اجرت) */}
+                  {productData.lowCommission && (
+                    <div className="bg-primary text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 fill-white">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                      </svg>
+                      پیشنهاد ویژه (کم اجرت)
+                    </div>
+                  )}
+                </div>
+
                 {productData.images.map((image, index) => (
                   <a
                     key={index}
@@ -386,11 +480,35 @@ const ProductDetailPage = () => {
               {/* Price */}
               <div className="bg-primary/5 p-4 mb-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">قیمت:</span>
-                    <span className="text-2xl font-bold text-gray-900">
-                      {productData.price.toLocaleString("fa-IR")} تومان
-                    </span>
+                  <div className="flex flex-col gap-2">
+                    {productData.discountPrice && productData.discountPrice < productData.price ? (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">قیمت اصلی:</span>
+                          <span className="text-lg text-gray-400 line-through">
+                            {productData.price.toLocaleString("fa-IR")} تومان
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">قیمت با تخفیف:</span>
+                          <span className="text-2xl font-bold text-red-600">
+                            {productData.discountPrice.toLocaleString("fa-IR")} تومان
+                          </span>
+                          {(productData.discount || (productData.discountPrice && productData.discountPrice < productData.price)) && (
+                            <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+                              {productData.discount || Math.round(((productData.price - productData.discountPrice) / productData.price) * 100)}٪ تخفیف
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">قیمت:</span>
+                        <span className="text-2xl font-bold text-gray-900">
+                          {productData.price.toLocaleString("fa-IR")} تومان
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <Link
                     href="#"

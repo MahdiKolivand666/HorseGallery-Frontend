@@ -27,6 +27,7 @@ import { useCart } from "@/contexts/CartContext";
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProductsMenuOpen, setIsProductsMenuOpen] = useState(false);
   const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(false);
@@ -88,11 +89,29 @@ const Navbar = () => {
     },
   ];
 
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      // TODO: Implement search functionality
+      console.log("Searching for:", searchQuery);
+      // Navigate to search results page or perform search
+      // router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setIsSearchOpen(false);
+      setSearchQuery("");
+    }
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   const handleScroll = useCallback(() => {
     setIsScrolled(window.scrollY > 50);
     // Close search box when scrolling
     if (isSearchOpen) {
       setIsSearchOpen(false);
+      setSearchQuery("");
     }
   }, [isSearchOpen]);
 
@@ -135,6 +154,7 @@ const Navbar = () => {
       !isSearchButton
     ) {
       setIsSearchOpen(false);
+      setSearchQuery("");
     }
 
     if (
@@ -598,9 +618,10 @@ const Navbar = () => {
                                     setIsMobileMenuOpen(false);
                                     setIsMobileProductsOpen(false);
                                   }}
-                                  className="block py-2 px-4 text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors underline"
+                                  className="flex items-center gap-2 py-2 px-4 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                                 >
-                                  مشاهده محصولات {category.title}
+                                  <span>مشاهده محصولات {category.title}</span>
+                                  <ChevronLeft className="w-3.5 h-3.5" />
                                 </Link>
                               </div>
                             ))}
@@ -647,38 +668,57 @@ const Navbar = () => {
         )}
       </AnimatePresence>
 
-      {/* Search Dropdown */}
+      {/* Search Overlay - Covers entire navbar */}
       <AnimatePresence>
         {isSearchOpen && (
           <motion.div
             ref={searchRef}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className={`overflow-hidden border-t backdrop-blur-md ${
-              isScrolled
-                ? "bg-primary/95 border-white/10"
-                : "bg-primary/10 border-primary/10"
-            }`}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-0 left-0 right-0 z-[60] bg-primary shadow-lg"
           >
-            <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
-              <div className="relative">
-                <Search
-                  className={`absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
-                    isScrolled ? "text-white/70" : "text-primary/70"
-                  }`}
-                />
-                <input
-                  type="text"
-                  placeholder={t("search.placeholder")}
-                  autoFocus
-                  className={`w-full pr-12 pl-6 py-4 text-base rounded-xl border-2 outline-none transition-all focus:scale-[1.02] ${
-                    isScrolled
-                      ? "bg-white/10 border-white/30 text-white placeholder:text-white/60 focus:bg-white/15 focus:border-white/50"
-                      : "bg-white/80 border-primary/30 text-primary placeholder:text-primary/60 focus:bg-white focus:border-primary/50"
-                  }`}
-                />
+            {/* Top spacer to match navbar top bar */}
+            <div className="h-8 sm:h-9 lg:h-10"></div>
+            
+            {/* Main search bar */}
+            <div className="w-full max-w-[1920px] mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-center gap-4 h-16 xs:h-18 sm:h-20">
+                {/* Close Button */}
+                <button
+                  onClick={() => {
+                    setIsSearchOpen(false);
+                    setSearchQuery("");
+                  }}
+                  className="text-white hover:text-white/70 transition-colors flex-shrink-0"
+                  aria-label="بستن جستجو"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+
+                {/* Search Box Container */}
+                <div className="flex items-center gap-3 flex-1 max-w-2xl">
+                  {/* Search Input - Simple line */}
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                    placeholder="جستجوی محصولات"
+                    autoFocus
+                    className="flex-1 bg-transparent border-0 border-b-2 border-white/40 px-4 py-2 text-base sm:text-lg text-white placeholder:text-white/50 outline-none focus:border-white transition-colors text-center"
+                  />
+
+                  {/* Search Icon Button */}
+                  <button
+                    onClick={handleSearch}
+                    className="text-white hover:text-white/80 transition-colors flex-shrink-0"
+                    aria-label="جستجو"
+                  >
+                    <Search className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -727,9 +767,10 @@ const Navbar = () => {
                       <Link
                         href={`/products/${category.id}`}
                         onClick={() => setIsProductsMenuOpen(false)}
-                        className="inline-block text-xs font-medium transition-all hover:opacity-70 underline text-white/80 hover:text-white mt-2"
+                        className="inline-flex items-center gap-1 text-sm font-semibold transition-all hover:opacity-70 text-white/90 hover:text-white mt-3"
                       >
-                        مشاهده محصولات {category.title}
+                        <span>مشاهده محصولات {category.title}</span>
+                        <ChevronLeft className="w-4 h-4" />
                       </Link>
                     </div>
                   ))}
