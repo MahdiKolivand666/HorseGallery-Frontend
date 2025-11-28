@@ -203,3 +203,106 @@ export async function getProductCategories() {
     return [];
   }
 }
+
+/**
+ * Search products by query string
+ * @param query - Search query string
+ * @param page - Page number (default: 1)
+ * @param limit - Items per page (default: 20)
+ * @param sortBy - Sort option (newest, price-asc, price-desc, popular)
+ * @returns Search results with pagination
+ */
+export interface SearchResponse {
+  success: boolean;
+  query: string;
+  data: Product[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+  };
+}
+
+export async function searchProducts(
+  query: string,
+  page: number = 1,
+  limit: number = 20,
+  sortBy?: string
+): Promise<SearchResponse> {
+  try {
+    if (!query || query.trim() === "") {
+      return {
+        success: false,
+        query: "",
+        data: [],
+        pagination: {
+          currentPage: 1,
+          totalPages: 0,
+          totalItems: 0,
+          itemsPerPage: limit,
+        },
+      };
+    }
+
+    const queryParams = new URLSearchParams({
+      q: query.trim(),
+      page: String(page),
+      limit: String(limit),
+    });
+
+    if (sortBy) {
+      queryParams.append("sort", sortBy);
+    }
+
+    const url = `${
+      API_CONFIG.BASE_URL
+    }/product/public/search?${queryParams.toString()}`;
+
+    const res = await fetch(url, {
+      cache: "no-store", // Always get fresh search results
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(
+        `Search failed: ${res.status}`,
+        errorText.substring(0, 200)
+      );
+      throw new Error(`Search failed: ${res.status}`);
+    }
+
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await res.text();
+      console.error("Search response is not JSON:", text.substring(0, 200));
+      return {
+        success: false,
+        query: query.trim(),
+        data: [],
+        pagination: {
+          currentPage: 1,
+          totalPages: 0,
+          totalItems: 0,
+          itemsPerPage: limit,
+        },
+      };
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error searching products:", error);
+    return {
+      success: false,
+      query: query.trim(),
+      data: [],
+      pagination: {
+        currentPage: 1,
+        totalPages: 0,
+        totalItems: 0,
+        itemsPerPage: limit,
+      },
+    };
+  }
+}

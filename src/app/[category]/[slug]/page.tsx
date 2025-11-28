@@ -13,7 +13,6 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import PhotoSwipeLightbox from "photoswipe/lightbox";
 import "photoswipe/style.css";
 import { useCart } from "@/contexts/CartContext";
 import { getProductBySlug } from "@/lib/api/products";
@@ -141,28 +140,32 @@ const ProductDetailPage = () => {
     };
   }, [slug, category]);
 
-  // Initialize PhotoSwipe
-  useEffect(() => {
-    let lightbox: PhotoSwipeLightbox | null = null;
+  // Open PhotoSwipe Gallery
+  const openGallery = (startIndex: number = 0) => {
+    const items = productData?.images.map((img) => ({
+      src: img,
+      width: 1200,
+      height: 1200,
+    })) || [];
 
-    if (typeof window !== "undefined") {
-      lightbox = new PhotoSwipeLightbox({
-        gallery: "#product-gallery",
-        children: "a",
-        pswpModule: () => import("photoswipe"),
+    if (items.length === 0) return;
+
+    import('photoswipe').then((PhotoSwipeModule) => {
+      const PhotoSwipe = PhotoSwipeModule.default;
+      const pswp = new PhotoSwipe({
+        dataSource: items,
+        index: startIndex,
+        bgOpacity: 0.95,
+        loop: true,
+        pinchToClose: true,
+        closeOnVerticalDrag: true,
+        escKey: true,
+        arrowKeys: true,
         padding: { top: 50, bottom: 50, left: 50, right: 50 },
-        bgOpacity: 0.9,
       });
-
-      lightbox.init();
-    }
-
-    return () => {
-      if (lightbox) {
-        lightbox.destroy();
-      }
-    };
-  }, []);
+      pswp.init();
+    });
+  };
 
   const handleAddToCart = () => {
     if (!productData) return;
@@ -282,11 +285,8 @@ const ProductDetailPage = () => {
           {/* Image Gallery - Right Side */}
           <div className="order-1 h-full">
             <div className="bg-white p-4 h-full">
-              {/* Main Image with PhotoSwipe */}
-              <div
-                className="relative aspect-square mb-4 bg-gray-100 group"
-                id="product-gallery"
-              >
+              {/* Main Image Display */}
+              <div className="relative aspect-square mb-4 bg-gray-100 group">
                 {/* Badges */}
                 <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
                   {/* Discount Badge - اولویت اول */}
@@ -307,30 +307,27 @@ const ProductDetailPage = () => {
                   )}
                 </div>
 
-                {productData.images.map((image, index) => (
-                  <a
-                    key={index}
-                    href={image}
-                    data-pswp-width="1200"
-                    data-pswp-height="1200"
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`${
-                      index === selectedImage ? "block" : "hidden"
-                    } relative aspect-square cursor-zoom-in`}
-                  >
-                    <Image
-                      src={image}
-                      alt={`${productData.name} - تصویر ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      priority={index === 0}
-                    />
-                    <div className="absolute top-4 left-4 p-2 bg-white/80 hover:bg-white transition-colors opacity-0 group-hover:opacity-100">
-                      <ZoomIn className="w-5 h-5 text-gray-700" />
-                    </div>
-                  </a>
-                ))}
+                {/* Current Image Display */}
+                <div className="relative aspect-square">
+                  <Image
+                    src={productData.images[selectedImage]}
+                    alt={`${productData.name} - تصویر ${selectedImage + 1}`}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+
+                {/* Zoom Icon */}
+                <div className="absolute top-4 left-4 p-2 bg-white/80 hover:bg-white transition-colors opacity-0 group-hover:opacity-100 pointer-events-none z-20">
+                  <ZoomIn className="w-5 h-5 text-gray-700" />
+                </div>
+
+                {/* Click Overlay to Open Gallery */}
+                <div
+                  className="absolute inset-0 cursor-zoom-in z-10"
+                  onClick={() => openGallery(selectedImage)}
+                />
 
                 {/* Navigation Buttons */}
                 <button
@@ -354,11 +351,14 @@ const ProductDetailPage = () => {
                 {productData.images.map((image, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedImage(index)}
-                    className={`relative aspect-square transition-colors ${
+                    onClick={() => {
+                      setSelectedImage(index);
+                      openGallery(index);
+                    }}
+                    className={`relative aspect-square transition-all cursor-pointer ${
                       selectedImage === index
-                        ? "opacity-100"
-                        : "opacity-70 hover:opacity-90"
+                        ? "opacity-100 ring-2 ring-primary"
+                        : "opacity-70 hover:opacity-100 hover:ring-2 hover:ring-primary/50"
                     }`}
                   >
                     <Image
