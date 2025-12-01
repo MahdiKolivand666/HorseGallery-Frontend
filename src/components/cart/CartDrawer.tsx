@@ -109,7 +109,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
             {cartItems.length > 0 && (
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-gray-700">مهلت خرید:</span>
-                <span className="text-xs font-bold text-white font-mono bg-red-500 px-2 py-0.5">
+                <span className="text-xs font-bold text-white font-mono bg-red-500 px-2 py-0.5 rounded">
                   {formatTime(timeLeft)}
                 </span>
               </div>
@@ -117,7 +117,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-200 transition-colors"
+              className="p-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
               aria-label="بستن"
             >
               <X className="w-5 h-5 text-gray-700" />
@@ -146,7 +146,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               <Link
                 href="/products/women"
                 onClick={onClose}
-                className="px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-medium"
+                className="px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-medium rounded"
               >
                 مشاهده محصولات
               </Link>
@@ -248,14 +248,14 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                 <div className="flex gap-2">
                   <button
                     onClick={onClose}
-                    className="w-1/3 bg-white hover:bg-gray-100 text-gray-700 text-center py-2 font-medium transition-colors border border-gray-300 text-sm"
+                    className="w-1/3 bg-white hover:bg-gray-50 text-gray-700 text-center py-2 font-medium transition-colors border border-gray-300 rounded text-sm"
                   >
                     ادامه خرید
                   </button>
                   <Link
                     href="/purchase/basket/53500"
                     onClick={onClose}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-white text-center py-2 font-medium transition-colors text-sm"
+                    className="flex-1 bg-primary hover:bg-primary/90 text-white text-center py-2 font-medium transition-colors rounded text-sm"
                   >
                     تکمیل خرید
                   </Link>

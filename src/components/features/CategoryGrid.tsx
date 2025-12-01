@@ -21,28 +21,28 @@ const CategoryGrid = () => {
       id: "category1",
       image: "/images/categories/categories1.webp",
       hoverImage: "/images/categories/categories1-1.webp",
-      href: "/categories/category1",
+      href: "/products/women/bracelet",
       name: "دستبند",
     },
     {
       id: "category2",
       image: "/images/categories/categories2.webp",
       hoverImage: "/images/categories/categories2-2.webp",
-      href: "/categories/category2",
+      href: "/products/women/necklace",
       name: "گردنبند",
     },
     {
       id: "category3",
       image: "/images/categories/categories3.jpg",
       hoverImage: "/images/categories/categories3-3.webp",
-      href: "/categories/category3",
+      href: "/products/women/earring",
       name: "گوشواره",
     },
     {
       id: "category4",
       image: "/images/categories/categories4.jpg",
       hoverImage: "/images/categories/categories4-4.webp",
-      href: "/categories/category4",
+      href: "/products/women/ring",
       name: "انگشتر",
     },
   ];
@@ -117,10 +117,8 @@ const CategoryGrid = () => {
                 <Link href={category.href}>
                   <div
                     className="relative mb-4"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setActiveCategory(isActive ? null : category.id);
-                    }}
+                    onMouseEnter={() => setActiveCategory(category.id)}
+                    onMouseLeave={() => setActiveCategory(null)}
                   >
                     <motion.div
                       whileHover={{ scale: 1.05, y: -8 }}
@@ -132,7 +130,7 @@ const CategoryGrid = () => {
                       }}
                       className="relative overflow-visible cursor-pointer w-full"
                     >
-                      <div className="relative overflow-hidden w-full shadow-md hover:shadow-2xl transition-shadow duration-300 rounded-sm aspect-square">
+                      <div className="relative overflow-hidden w-full border border-gray-300 aspect-square rounded">
                         {/* Default Image */}
                         <motion.div
                           className="absolute inset-0"

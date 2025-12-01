@@ -39,7 +39,7 @@ const ScrollToTop = () => {
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.2 }}
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-50 bg-primary hover:bg-primary/90 text-white p-2 shadow-lg transition-all hover:shadow-xl"
+          className="fixed bottom-6 right-6 z-50 bg-primary hover:bg-primary/90 text-white p-2 shadow-lg transition-all hover:shadow-xl rounded-lg"
           aria-label="برگشت به بالا"
         >
           <ChevronUp className="w-5 h-5" />

@@ -60,7 +60,7 @@ const FAQSection = ({ faqs }: Props) => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="relative w-full h-[350px] sm:h-[400px] overflow-hidden shadow-2xl"
+            className="relative w-full h-[350px] sm:h-[400px] overflow-hidden border border-gray-300 rounded"
           >
             <Image
               src="/images/aboutUs/Main_Photos1.webp"
@@ -99,10 +99,8 @@ const FAQSection = ({ faqs }: Props) => {
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                 >
                   <div
-                    className={`bg-white border transition-all duration-300 overflow-hidden ${
-                      openId === item._id
-                        ? "border-primary shadow-md"
-                        : "border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md"
+                    className={`bg-white border transition-all duration-300 overflow-hidden rounded ${
+                      openId === item._id ? "border-primary" : "border-gray-300"
                     }`}
                   >
                     {/* Question Button */}

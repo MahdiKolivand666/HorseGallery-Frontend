@@ -122,7 +122,7 @@ const FAQPage = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: 0.1 * index }}
-                      className="border border-gray-200 bg-white hover:shadow-md transition-all"
+                      className="border border-gray-300 bg-white transition-all rounded"
                     >
                       <button
                         onClick={() => toggleFAQ(index)}
@@ -172,7 +172,7 @@ const FAQPage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 * index }}
-                className="border border-gray-200 bg-white hover:shadow-md transition-all"
+                className="border border-gray-300 bg-white transition-all rounded"
               >
                 <button
                   onClick={() => toggleFAQ(index)}

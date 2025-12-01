@@ -97,12 +97,12 @@ const BlogSection = ({ posts }: Props) => {
           >
             {blogPosts.map((post) => (
               <SwiperSlide key={post._id}>
-                <article className="group bg-white overflow-hidden hover:shadow-lg transition-all duration-300">
+                <article className="group bg-white">
                   <Link href={`/blog/${post.slug}`}>
                     <div className="flex flex-row-reverse gap-4">
                       {/* Image - Left Side (Vertical) */}
                       <div className="w-1/2 flex-shrink-0">
-                        <div className="relative w-full h-full min-h-[300px] overflow-hidden">
+                        <div className="relative w-full h-full min-h-[300px] overflow-hidden border border-gray-300 rounded">
                           <Image
                             src={post.image || "/images/blogs/Blog_Square.webp"}
                             alt={post.title}
@@ -117,7 +117,7 @@ const BlogSection = ({ posts }: Props) => {
                       <div className="w-1/2 flex flex-col justify-between text-right py-2">
                         <div>
                           {/* Title */}
-                          <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-4 group-hover:text-primary transition-colors line-clamp-2">
+                          <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-4 line-clamp-2">
                             {post.title}
                           </h3>
 
@@ -128,9 +128,9 @@ const BlogSection = ({ posts }: Props) => {
                         </div>
 
                         {/* Read More Link */}
-                        <div className="mt-3 flex items-center gap-2 text-primary text-xs font-medium group-hover:gap-3 transition-all justify-end">
+                        <div className="mt-3 flex items-center gap-2 text-primary text-xs font-medium justify-end">
                           <span>ادامه مطلب</span>
-                          <ChevronLeft className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                          <ChevronLeft className="w-3 h-3" />
                         </div>
                       </div>
                     </div>
@@ -169,13 +169,13 @@ const BlogSection = ({ posts }: Props) => {
             <motion.article
               key={post._id}
               variants={itemVariants}
-              className="group bg-white overflow-hidden hover:shadow-lg transition-all duration-300"
+              className="group bg-white"
             >
               <Link href={`/blog/${post.slug}`}>
                 <div className="flex flex-row-reverse gap-4">
                   {/* Image - Left Side (Vertical) */}
                   <div className="w-1/2 flex-shrink-0">
-                    <div className="relative w-full h-full min-h-[320px] overflow-hidden">
+                    <div className="relative w-full h-full min-h-[320px] overflow-hidden border border-gray-300 rounded">
                       <Image
                         src={post.image || "/images/blogs/Blog_Square.webp"}
                         alt={post.title}
@@ -190,7 +190,7 @@ const BlogSection = ({ posts }: Props) => {
                   <div className="w-1/2 flex flex-col justify-between text-right py-2">
                     <div>
                       {/* Title */}
-                      <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-4 group-hover:text-primary transition-colors line-clamp-2">
+                      <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-4 line-clamp-2">
                         {post.title}
                       </h3>
 
@@ -201,9 +201,9 @@ const BlogSection = ({ posts }: Props) => {
                     </div>
 
                     {/* Read More Link */}
-                    <div className="mt-3 flex items-center gap-2 text-primary text-xs font-medium group-hover:gap-3 transition-all justify-end">
+                    <div className="mt-3 flex items-center gap-2 text-primary text-xs font-medium justify-end">
                       <span>ادامه مطلب</span>
-                      <ChevronLeft className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                      <ChevronLeft className="w-3 h-3" />
                     </div>
                   </div>
                 </div>

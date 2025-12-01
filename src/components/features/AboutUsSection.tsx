@@ -69,7 +69,7 @@ const AboutUsSection = () => {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="order-1 lg:order-2"
           >
-            <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden shadow-2xl">
+            <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden border border-gray-300 rounded">
               <Image
                 src="/images/aboutUs/MainStore.webp"
                 alt="Horse Gallery Store"

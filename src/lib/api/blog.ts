@@ -20,6 +20,7 @@ export interface BlogPost {
     _id: string;
     firstName: string;
     lastName: string;
+    avatar?: string | null;
   };
   tags: string[];
   views: number;
@@ -86,3 +87,25 @@ export async function getBlogs(params?: {
   }
 }
 
+/**
+ * دریافت جزئیات یک بلاگ بر اساس slug
+ */
+export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
+  try {
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BLOGS}/${slug}`;
+
+    const res = await fetch(url, {
+      next: { revalidate: 300 }, // 5 minutes
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch blog");
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching blog:", error);
+    return null;
+  }
+}

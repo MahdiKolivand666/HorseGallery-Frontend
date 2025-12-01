@@ -100,7 +100,7 @@ export default function SuggestPage() {
             transition={{ duration: 0.6 }}
             className="max-w-2xl"
           >
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-white mb-4 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] tracking-wide">
               پیشنهادات ویژه
             </h1>
             <p className="text-lg sm:text-xl text-white/90">
@@ -358,7 +358,7 @@ const PopularProductCard = ({ product }: { product: Product }) => {
       </div>
 
       <Link href={productHref}>
-        <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-2">
+        <div className="relative aspect-[3/4] overflow-hidden mb-2 border border-gray-300 rounded">
           <Image
             src={productImage}
             alt={product.name}
@@ -457,7 +457,7 @@ const ProductCard = ({
       )}
 
       <Link href={productHref}>
-        <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-3">
+        <div className="relative aspect-[3/4] overflow-hidden mb-3 border border-gray-300 rounded">
           <Image
             src={productImage}
             alt={product.name}

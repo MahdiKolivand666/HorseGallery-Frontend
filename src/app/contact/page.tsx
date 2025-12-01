@@ -84,7 +84,7 @@ const ContactPage = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.1 * index }}
-                  className="bg-primary p-4 text-right hover:shadow-md transition-shadow"
+                  className="bg-primary p-4 text-right border border-gray-300 rounded"
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
@@ -115,7 +115,7 @@ const ContactPage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="bg-white border border-gray-200 shadow-sm overflow-hidden"
+              className="bg-white border border-gray-300 rounded overflow-hidden"
             >
               <div className="w-full h-[350px] sm:h-[380px] lg:h-[480px]">
                 <iframe
@@ -139,7 +139,7 @@ const ContactPage = () => {
             transition={{ duration: 0.6 }}
             className="order-2 lg:order-2"
           >
-            <div className="relative w-full h-[500px] sm:h-[570px] lg:h-[690px] overflow-hidden shadow-lg">
+            <div className="relative w-full h-[500px] sm:h-[570px] lg:h-[690px] overflow-hidden border border-gray-300 rounded">
               <Image
                 src="/images/aboutUs/MainStore.webp"
                 alt="Horse Gallery Store"

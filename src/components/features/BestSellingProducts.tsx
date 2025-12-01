@@ -35,7 +35,6 @@ const BestSellingProducts = ({ products }: Props) => {
 
   const productsFormatted = products.slice(0, 10);
 
-
   return (
     <section className="w-full px-4 sm:px-6 lg:px-8 bg-gray-50 overflow-hidden">
       <div className="max-w-7xl mx-auto">
@@ -55,7 +54,7 @@ const BestSellingProducts = ({ products }: Props) => {
             {t("title")}
           </h2>
           <Link
-            href="/products/best-selling"
+            href="/products/women"
             className="text-xs sm:text-sm text-primary hover:opacity-70 transition-opacity font-medium"
           >
             {t("viewAll")}
@@ -87,8 +86,12 @@ const BestSellingProducts = ({ products }: Props) => {
           >
             {productsFormatted.map((product) => {
               const isActive = activeProduct === product._id;
-              const productImage = product.images[0] || "/images/products/product1.webp";
-              const productHoverImage = product.images[1] || product.images[0] || "/images/products/product1-1.webp";
+              const productImage =
+                product.images[0] || "/images/products/product1.webp";
+              const productHoverImage =
+                product.images[1] ||
+                product.images[0] ||
+                "/images/products/product1-1.webp";
               const productHref = `/${product.category.slug}/${product.slug}`;
 
               return (
@@ -108,10 +111,8 @@ const BestSellingProducts = ({ products }: Props) => {
                     <Link href={productHref}>
                       <div
                         className="relative"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setActiveProduct(isActive ? null : product._id);
-                        }}
+                        onMouseEnter={() => setActiveProduct(product._id)}
+                        onMouseLeave={() => setActiveProduct(null)}
                       >
                         <motion.div
                           whileHover={{ scale: 1.05, y: -8 }}
@@ -124,7 +125,7 @@ const BestSellingProducts = ({ products }: Props) => {
                           className="relative overflow-visible cursor-pointer w-full"
                         >
                           <div
-                            className="relative overflow-hidden w-full shadow-md hover:shadow-2xl transition-shadow duration-300 rounded-sm"
+                            className="relative overflow-hidden w-full border border-gray-300 rounded"
                             style={{ height: "439px" }}
                           >
                             {/* Default Image */}

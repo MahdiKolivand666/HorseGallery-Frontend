@@ -13,18 +13,14 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
 import "photoswipe/style.css";
 import { useCart } from "@/contexts/CartContext";
-import { getProductBySlug } from "@/lib/api/products";
-
-interface RelatedProduct {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  hoverImage: string;
-  slug: string;
-}
+import { getProductBySlug, RelatedProduct, GoldInfo } from "@/lib/api/products";
+import GoldInfoCard from "@/components/GoldInfoCard";
 
 interface ProductDetail {
   id: string | number;
@@ -59,6 +55,9 @@ interface ProductDetail {
   features: string[];
   sizes: string[];
   relatedProducts: RelatedProduct[];
+  // ✨ فیلدهای جدید برای سکه و شمش
+  productType?: "jewelry" | "coin" | "melted_gold";
+  goldInfo?: GoldInfo;
 }
 
 const ProductDetailPage = () => {
@@ -71,6 +70,7 @@ const ProductDetailPage = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
+  const [activeRelatedProduct, setActiveRelatedProduct] = useState<string | null>(null);
   const { addToCart } = useCart();
 
   // Fetch product data from API
@@ -83,6 +83,14 @@ const ProductDetailPage = () => {
         const product = await getProductBySlug(slug);
 
         if (isMounted && product) {
+          // ✨ برای سکه و شمش از تصاویر اختصاصی استفاده کن
+          const productImages =
+            product.productType === "coin"
+              ? ["/images/products/coinphoto.webp"]
+              : product.productType === "melted_gold"
+              ? ["/images/products/goldbarphoto.webp"]
+              : product.images || ["/images/products/product1.webp"];
+
           setProductData({
             id: product._id,
             slug: product.slug,
@@ -103,7 +111,7 @@ const ProductDetailPage = () => {
             reviewsCount: product.reviewsCount || 0,
             stock: product.stock || 0,
             deliveryDays: "2-3",
-            images: product.images || ["/images/products/product1.webp"],
+            images: productImages,
             specifications: {
               weight: product.specifications?.weight || "N/A",
               karat: product.specifications?.karat || "N/A",
@@ -120,7 +128,10 @@ const ProductDetailPage = () => {
               "بسته‌بندی لوکس و مناسب هدیه",
             ],
             sizes: ["40 سانتی‌متر", "45 سانتی‌متر", "50 سانتی‌متر"],
-            relatedProducts: [], // This should come from API
+            relatedProducts: product.relatedProducts || [],
+            // ✨ فیلدهای جدید برای سکه و شمش
+            productType: product.productType,
+            goldInfo: product.goldInfo,
           });
           setSelectedSize("45 سانتی‌متر");
         }
@@ -155,6 +166,7 @@ const ProductDetailPage = () => {
       const pswp = new PhotoSwipe({
         dataSource: items,
         index: startIndex,
+
         bgOpacity: 0.95,
         loop: true,
         pinchToClose: true,
@@ -254,24 +266,57 @@ const ProductDetailPage = () => {
               <span>خانه</span>
             </Link>
             <ChevronLeft className="w-4 h-4 text-primary" />
-            <Link
-              href={`/products/${productData.categorySlug}`}
-              className="text-primary hover:text-primary/80 transition-colors"
-            >
-              {productData.category}
-            </Link>
             
-            {productData.subcategory && productData.subcategorySlug && (
+            {/* برای سکه و شمش */}
+            {(productData.productType === "coin" ||
+              productData.productType === "melted_gold") && (
               <>
-                <ChevronLeft className="w-4 h-4 text-primary" />
                 <Link
-                  href={`/products/${productData.categorySlug}/${productData.subcategorySlug}`}
+                  href="/category/gold-investment"
                   className="text-primary hover:text-primary/80 transition-colors"
                 >
-                  {productData.subcategory}
+                  سرمایه‌گذاری طلا
+                </Link>
+                <ChevronLeft className="w-4 h-4 text-primary" />
+                <Link
+                  href={
+                    productData.productType === "coin"
+                      ? "/coin"
+                      : "/melted-gold"
+                  }
+                  className="text-primary hover:text-primary/80 transition-colors"
+                >
+                  {productData.productType === "coin"
+                    ? "سکه طلا"
+                    : "شمش طلا"}
                 </Link>
               </>
             )}
+            
+            {/* برای جواهرات */}
+            {productData.productType !== "coin" &&
+              productData.productType !== "melted_gold" && (
+                <>
+                  <Link
+                    href={`/products/${productData.categorySlug}`}
+                    className="text-primary hover:text-primary/80 transition-colors"
+                  >
+                    {productData.category}
+                  </Link>
+
+                  {productData.subcategory && productData.subcategorySlug && (
+                    <>
+                      <ChevronLeft className="w-4 h-4 text-primary" />
+                      <Link
+                        href={`/products/${productData.categorySlug}/${productData.subcategorySlug}`}
+                        className="text-primary hover:text-primary/80 transition-colors"
+                      >
+                        {productData.subcategory}
+                      </Link>
+                    </>
+                  )}
+                </>
+              )}
             
             <ChevronLeft className="w-4 h-4 text-primary" />
             <span className="text-gray-700">{productData.name}</span>
@@ -286,19 +331,19 @@ const ProductDetailPage = () => {
           <div className="order-1 h-full">
             <div className="bg-white p-4 h-full">
               {/* Main Image Display */}
-              <div className="relative aspect-square mb-4 bg-gray-100 group">
+              <div className="relative aspect-square mb-4 group">
                 {/* Badges */}
                 <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
                   {/* Discount Badge - اولویت اول */}
                   {productData.discountPrice && productData.discountPrice < productData.price && (
-                    <div className="bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+                    <div className="bg-red-500 text-white px-4 py-2 rounded text-sm font-bold">
                       {productData.discount || Math.round(((productData.price - productData.discountPrice) / productData.price) * 100)}٪ تخفیف
                     </div>
                   )}
                   
                   {/* Low Commission Badge - پیشنهاد ویژه (کم اجرت) */}
                   {productData.lowCommission && (
-                    <div className="bg-primary text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2">
+                    <div className="bg-primary text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 fill-white">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                       </svg>
@@ -320,8 +365,8 @@ const ProductDetailPage = () => {
 
                 {/* Zoom Icon */}
                 <div className="absolute top-4 left-4 p-2 bg-white/80 hover:bg-white transition-colors opacity-0 group-hover:opacity-100 pointer-events-none z-20">
-                  <ZoomIn className="w-5 h-5 text-gray-700" />
-                </div>
+                      <ZoomIn className="w-5 h-5 text-gray-700" />
+                    </div>
 
                 {/* Click Overlay to Open Gallery */}
                 <div
@@ -329,36 +374,43 @@ const ProductDetailPage = () => {
                   onClick={() => openGallery(selectedImage)}
                 />
 
-                {/* Navigation Buttons */}
-                <button
-                  onClick={handlePrevImage}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
-                  aria-label="تصویر قبلی"
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-700" />
-                </button>
-                <button
-                  onClick={handleNextImage}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
-                  aria-label="تصویر بعدی"
-                >
-                  <ChevronLeft className="w-5 h-5 text-gray-700" />
-                </button>
+                {/* Navigation Buttons - فقط برای جواهرات */}
+                {productData.productType !== "coin" &&
+                  productData.productType !== "melted_gold" && (
+                    <>
+                      <button
+                        onClick={handlePrevImage}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 border border-gray-300 rounded transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
+                        aria-label="تصویر قبلی"
+                      >
+                        <ChevronRight className="w-5 h-5 text-gray-700" />
+                      </button>
+                      <button
+                        onClick={handleNextImage}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 border border-gray-300 rounded transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
+                        aria-label="تصویر بعدی"
+                      >
+                        <ChevronLeft className="w-5 h-5 text-gray-700" />
+                      </button>
+                    </>
+                  )}
               </div>
 
-              {/* Thumbnails */}
-              <div className="grid grid-cols-5 gap-2">
-                {productData.images.map((image, index) => (
+              {/* Thumbnails - فقط برای جواهرات */}
+              {productData.productType !== "coin" &&
+                productData.productType !== "melted_gold" && (
+                  <div className="grid grid-cols-5 gap-2">
+                    {productData.images.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => {
                       setSelectedImage(index);
                       openGallery(index);
                     }}
-                    className={`relative aspect-square transition-all cursor-pointer ${
+                    className={`relative aspect-square border transition-all cursor-pointer rounded overflow-hidden ${
                       selectedImage === index
-                        ? "opacity-100 ring-2 ring-primary"
-                        : "opacity-70 hover:opacity-100 hover:ring-2 hover:ring-primary/50"
+                        ? "opacity-100 border-primary border-2"
+                        : "opacity-70 hover:opacity-100 border-gray-300 hover:border-primary/50"
                     }`}
                   >
                     <Image
@@ -367,9 +419,10 @@ const ProductDetailPage = () => {
                       fill
                       className="object-cover"
                     />
-                  </button>
-                ))}
-              </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -397,7 +450,7 @@ const ProductDetailPage = () => {
                   </span>
                   <Link
                     href="#"
-                    className="text-xs text-primary hover:text-primary/80 transition-colors border border-primary px-3 py-1.5"
+                    className="text-xs text-primary hover:text-primary/80 transition-colors border border-primary rounded px-3 py-1.5"
                   >
                     راهنمای انتخاب سایز
                   </Link>
@@ -407,10 +460,10 @@ const ProductDetailPage = () => {
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`px-4 py-2 text-sm transition-colors ${
+                      className={`px-4 py-2 text-sm border rounded transition-colors ${
                         selectedSize === size
-                          ? "bg-primary text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          ? "bg-primary text-white border-primary"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                       }`}
                     >
                       {size}
@@ -478,7 +531,7 @@ const ProductDetailPage = () => {
               </div>
 
               {/* Price */}
-              <div className="bg-primary/5 p-4 mb-6">
+              <div className="bg-primary/5 border border-gray-300 rounded p-4 mb-6">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col gap-2">
                     {productData.discountPrice && productData.discountPrice < productData.price ? (
@@ -502,17 +555,17 @@ const ProductDetailPage = () => {
                         </div>
                       </>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">قیمت:</span>
-                        <span className="text-2xl font-bold text-gray-900">
-                          {productData.price.toLocaleString("fa-IR")} تومان
-                        </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">قیمت:</span>
+                    <span className="text-2xl font-bold text-gray-900">
+                      {productData.price.toLocaleString("fa-IR")} تومان
+                    </span>
                       </div>
                     )}
                   </div>
                   <Link
                     href="#"
-                    className="text-xs text-primary hover:text-primary/80 transition-colors border border-primary px-3 py-1.5"
+                    className="text-xs text-primary hover:text-primary/80 transition-colors border border-primary rounded px-3 py-1.5"
                   >
                     نحوه محاسبه قیمت
                   </Link>
@@ -523,8 +576,8 @@ const ProductDetailPage = () => {
               <div className="flex gap-3 mb-6">
                 <button
                   onClick={() => setIsFavorite(!isFavorite)}
-                  className={`w-12 h-12 flex items-center justify-center transition-colors ${
-                    isFavorite ? "bg-red-50" : "bg-gray-100 hover:bg-gray-200"
+                  className={`w-12 h-12 flex items-center justify-center border border-gray-300 rounded transition-colors ${
+                    isFavorite ? "bg-red-50" : "bg-white hover:bg-gray-50"
                   }`}
                 >
                   <Heart
@@ -535,7 +588,7 @@ const ProductDetailPage = () => {
                 </button>
                 <button
                   onClick={handleAddToCart}
-                  className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-3 transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded transition-colors flex items-center justify-center gap-2"
                 >
                   <ShoppingCart className="w-5 h-5" />
                   <span>افزودن به سبد خرید</span>
@@ -547,25 +600,25 @@ const ProductDetailPage = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <Link
                     href="/auth/guide"
-                    className="text-sm text-gray-600 hover:text-primary hover:border-primary transition-colors text-center border border-gray-300 px-3 py-2"
+                    className="text-sm text-gray-600 hover:text-primary hover:border-primary transition-colors text-center border border-gray-300 rounded px-3 py-2"
                   >
                     راهنمای خرید
                   </Link>
                   <Link
                     href="/auth/guide"
-                    className="text-sm text-gray-600 hover:text-primary hover:border-primary transition-colors text-center border border-gray-300 px-3 py-2"
+                    className="text-sm text-gray-600 hover:text-primary hover:border-primary transition-colors text-center border border-gray-300 rounded px-3 py-2"
                   >
                     راهنمای ارسال
                   </Link>
                   <Link
                     href="/faq"
-                    className="text-sm text-gray-600 hover:text-primary hover:border-primary transition-colors text-center border border-gray-300 px-3 py-2"
+                    className="text-sm text-gray-600 hover:text-primary hover:border-primary transition-colors text-center border border-gray-300 rounded px-3 py-2"
                   >
                     سوالات متداول
                   </Link>
                   <Link
                     href="/contact"
-                    className="text-sm text-gray-600 hover:text-primary hover:border-primary transition-colors text-center border border-gray-300 px-3 py-2"
+                    className="text-sm text-gray-600 hover:text-primary hover:border-primary transition-colors text-center border border-gray-300 rounded px-3 py-2"
                   >
                     تماس با ما
                   </Link>
@@ -648,7 +701,7 @@ const ProductDetailPage = () => {
         </section>
 
         {/* Description Section */}
-        <div className="mt-8 bg-white p-6">
+        <div className="mt-8 bg-white border border-gray-300 rounded p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4 text-right">
             توضیحات
           </h2>
@@ -657,160 +710,218 @@ const ProductDetailPage = () => {
               <p key={index}>{paragraph}</p>
             ))}
           </div>
+
+          {/* ✨ Gold Info Card - برای سکه و شمش */}
+          {productData.goldInfo &&
+            (productData.productType === "coin" ||
+              productData.productType === "melted_gold") && (
+              <GoldInfoCard
+                goldInfo={productData.goldInfo}
+                productType={
+                  productData.productType as "coin" | "melted_gold"
+                }
+              />
+            )}
         </div>
 
         {/* Related Products */}
-        <div className="mt-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 text-right">
-            محصولات مرتبط
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {productData.relatedProducts.map((product) => (
-              <RelatedProductCard
-                key={product.id}
-                product={product}
-                categorySlug={productData.categorySlug}
-              />
-            ))}
+        <div className="mt-8 py-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Section Header */}
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{
+                type: "spring" as const,
+                stiffness: 150,
+                damping: 20,
+              }}
+              className="flex items-center justify-between py-8 sm:py-5"
+            >
+              <h2 className="text-sm sm:text-base md:text-lg font-medium text-gray-700">
+                {productData.productType === "coin"
+                  ? "سکه‌های مشابه"
+                  : productData.productType === "melted_gold"
+                  ? "شمش‌های مشابه"
+                  : "محصولات مرتبط"}
+              </h2>
+            </motion.div>
+
+            {/* Products Slider */}
+            <div className="relative related-products-swiper">
+              <Swiper
+                modules={[Navigation, Autoplay]}
+                spaceBetween={24}
+                slidesPerView={1}
+                navigation={{
+                  nextEl: ".related-swiper-button-next-custom",
+                  prevEl: ".related-swiper-button-prev-custom",
+                }}
+                autoplay={{
+                  delay: 3000,
+                  disableOnInteraction: false,
+                  pauseOnMouseEnter: true,
+                }}
+                breakpoints={{
+                  1024: {
+                    slidesPerView: 4,
+                    spaceBetween: 24,
+                  },
+                }}
+                className="!pb-4"
+              >
+                {productData.relatedProducts.map((product) => {
+                  const isActive = activeRelatedProduct === product._id;
+                  const productImage = product.images[0] || "/images/products/product1.webp";
+                  const productHoverImage = product.images[1] || product.images[0] || "/images/products/product1-1.webp";
+                  const productHref = `/${productData.categorySlug}/${product.slug}`;
+
+                  return (
+                    <SwiperSlide key={product._id}>
+                      <motion.div
+                        initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{
+                          type: "spring" as const,
+                          stiffness: 100,
+                          damping: 15,
+                          mass: 0.8,
+                        }}
+                        className="relative"
+                      >
+                        <Link href={productHref}>
+                          <div
+                            className="relative"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setActiveRelatedProduct(isActive ? null : product._id);
+                            }}
+                          >
+                            <motion.div
+                              whileHover={{ scale: 1.05, y: -8 }}
+                              whileTap={{ scale: 0.98 }}
+                              transition={{
+                                type: "spring" as const,
+                                stiffness: 300,
+                                damping: 20,
+                              }}
+                              className="relative overflow-visible cursor-pointer w-full"
+                            >
+                              <div
+                                className="relative overflow-hidden w-full border border-gray-300 rounded"
+                                style={{ height: "439px" }}
+                              >
+                                {/* Default Image */}
+                                <motion.div
+                                  className="absolute inset-0"
+                                  initial={false}
+                                  animate={{
+                                    opacity: isActive ? 0 : 1,
+                                  }}
+                                  whileHover={{
+                                    opacity: 0,
+                                  }}
+                                  transition={{
+                                    duration: 0.4,
+                                    ease: "easeInOut",
+                                  }}
+                                >
+                                  <motion.div
+                                    className="w-full h-full"
+                                    whileHover={{ scale: 1.1 }}
+                                    transition={{ duration: 0.4 }}
+                                  >
+                                    <Image
+                                      src={productImage}
+                                      alt={product.name}
+                                      width={340}
+                                      height={439}
+                                      className="object-cover w-full h-full"
+                                      style={{
+                                        width: "340px",
+                                        height: "439px",
+                                      }}
+                                    />
+                                  </motion.div>
+                                </motion.div>
+
+                                {/* Hover Image */}
+                                <motion.div
+                                  className="absolute inset-0"
+                                  initial={false}
+                                  animate={{
+                                    opacity: isActive ? 1 : 0,
+                                  }}
+                                  whileHover={{
+                                    opacity: 1,
+                                  }}
+                                  transition={{
+                                    duration: 0.4,
+                                    ease: "easeInOut",
+                                  }}
+                                >
+                                  <motion.div
+                                    className="w-full h-full"
+                                    initial={{ scale: 0.9 }}
+                                    whileHover={{ scale: 1 }}
+                                    transition={{ duration: 0.4 }}
+                                  >
+                                    <Image
+                                      src={productHoverImage}
+                                      alt={product.name}
+                                      width={340}
+                                      height={439}
+                                      className="object-cover w-full h-full"
+                                      style={{
+                                        width: "340px",
+                                        height: "439px",
+                                      }}
+                                    />
+                                  </motion.div>
+                                </motion.div>
+
+                                {/* Gradient Overlay on Hover */}
+                                <motion.div
+                                  className="absolute inset-0 bg-gradient-to-t from-primary/30 to-transparent pointer-events-none"
+                                  initial={{ opacity: 0 }}
+                                  whileHover={{ opacity: 1 }}
+                                  transition={{ duration: 0.3 }}
+                                />
+          </div>
+                            </motion.div>
+                          </div>
+
+                          {/* Product Name Below Image */}
+                          <p className="mt-3 text-center text-sm font-medium text-gray-800 truncate">
+                            {product.name}
+                          </p>
+                        </Link>
+                      </motion.div>
+                    </SwiperSlide>
+                  );
+                })}
+              </Swiper>
+
+              {/* Navigation Arrows */}
+              <button
+                className="related-swiper-button-prev-custom absolute left-2 sm:left-4 top-[45%] -translate-y-1/2 z-10 bg-white/90 hover:bg-white p-2 sm:p-3 border border-gray-300 rounded transition-all hover:scale-110 flex items-center justify-center"
+                aria-label="Previous"
+              >
+                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+              </button>
+              <button
+                className="related-swiper-button-next-custom absolute right-2 sm:right-4 top-[45%] -translate-y-1/2 z-10 bg-white/90 hover:bg-white p-2 sm:p-3 border border-gray-300 rounded transition-all hover:scale-110 flex items-center justify-center"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  );
-};
-
-// Related Product Card Component with hover effect
-const RelatedProductCard = ({
-  product,
-  categorySlug,
-}: {
-  product: {
-    id: number;
-    name: string;
-    price: number;
-    image: string;
-    hoverImage: string;
-    slug: string;
-  };
-  categorySlug: string;
-}) => {
-  const [isActive, setIsActive] = useState(false);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 40, scale: 0.95 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{
-        type: "spring" as const,
-        stiffness: 100,
-        damping: 15,
-        mass: 0.8,
-      }}
-      className="relative"
-    >
-      <Link href={`/${categorySlug}/${product.slug}`}>
-        <div
-          className="relative"
-          onClick={(e) => {
-            e.preventDefault();
-            setIsActive(!isActive);
-          }}
-        >
-          <motion.div
-            whileHover={{ scale: 1.05, y: -8 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{
-              type: "spring" as const,
-              stiffness: 300,
-              damping: 20,
-            }}
-            className="relative overflow-visible cursor-pointer w-full"
-          >
-            <div className="relative overflow-hidden w-full shadow-md hover:shadow-2xl transition-shadow duration-300">
-              <div className="relative aspect-square">
-                {/* Default Image */}
-                <motion.div
-                  className="absolute inset-0"
-                  initial={false}
-                  animate={{
-                    opacity: isActive ? 0 : 1,
-                  }}
-                  whileHover={{
-                    opacity: 0,
-                  }}
-                  transition={{
-                    duration: 0.4,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <motion.div
-                    className="w-full h-full"
-                    whileHover={{ scale: 1.1 }}
-                    transition={{ duration: 0.4 }}
-                  >
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      className="object-cover w-full h-full"
-                    />
-                  </motion.div>
-                </motion.div>
-
-                {/* Hover Image */}
-                <motion.div
-                  className="absolute inset-0"
-                  initial={false}
-                  animate={{
-                    opacity: isActive ? 1 : 0,
-                  }}
-                  whileHover={{
-                    opacity: 1,
-                  }}
-                  transition={{
-                    duration: 0.4,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <motion.div
-                    className="w-full h-full"
-                    initial={{ scale: 0.9 }}
-                    whileHover={{ scale: 1 }}
-                    transition={{ duration: 0.4 }}
-                  >
-                    <Image
-                      src={product.hoverImage}
-                      alt={product.name}
-                      fill
-                      className="object-cover w-full h-full"
-                    />
-                  </motion.div>
-                </motion.div>
-
-                {/* Gradient Overlay on Hover */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-t from-primary/30 to-transparent pointer-events-none"
-                  initial={{ opacity: 0 }}
-                  whileHover={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Product Info */}
-        <div className="mt-2 text-center">
-          <h3 className="text-xs font-medium text-gray-800 truncate">
-            {product.name}
-          </h3>
-          <p className="text-xs text-gray-600 mt-0.5">
-            {product.price.toLocaleString("fa-IR")} تومان
-          </p>
-        </div>
-      </Link>
-    </motion.div>
   );
 };
 

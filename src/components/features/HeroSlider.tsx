@@ -126,7 +126,7 @@ const HeroSlider = () => {
                 backgroundColor: "rgba(49, 93, 73, 1)",
               }}
               whileTap={{ scale: 0.95 }}
-              className="px-6 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-3.5 bg-primary text-white rounded-full text-sm sm:text-base md:text-lg font-semibold hover:bg-primary-700 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)] border-2 border-white/20"
+              className="px-6 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-3.5 bg-primary text-white text-sm sm:text-base md:text-lg font-semibold hover:bg-primary-700 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)] border-2 border-white/20 rounded"
             >
               {t("cta")}
             </motion.button>

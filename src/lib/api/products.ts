@@ -4,6 +4,15 @@
 
 import API_CONFIG from "@/config/api";
 
+// ✨ Interface جدید برای اطلاعات تخصصی سکه و شمش
+export interface GoldInfo {
+  weight?: number; // وزن به گرم
+  purity?: string; // خلوص (مثال: "900" یا "999.9")
+  certificate?: string; // شماره گواهی
+  mintYear?: number; // سال ضرب - فقط برای سکه
+  manufacturer?: string; // تولید کننده - فقط برای شمش
+}
+
 export interface Product {
   _id: string;
   name: string;
@@ -51,8 +60,27 @@ export interface Product {
   viewsCount?: number; // تعداد بازدید
   popularityScore?: number; // امتیاز محبوبیت (محاسبه شده)
 
+  // ✨ فیلدهای جدید برای سکه و شمش طلا
+  productType?: "jewelry" | "coin" | "melted_gold"; // نوع محصول
+  goldInfo?: GoldInfo; // اطلاعات تخصصی سکه/شمش
+
+  // محصولات مرتبط (فقط در جزئیات محصول)
+  relatedProducts?: RelatedProduct[];
+
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RelatedProduct {
+  _id: string;
+  name: string;
+  slug: string;
+  images: string[];
+  price: number;
+  discountPrice: number | null;
+  isAvailable: boolean;
+  productType?: "jewelry" | "coin" | "melted_gold"; // ✨ نوع محصول برای فیلتر محصولات مرتبط
+  goldInfo?: GoldInfo; // ✨ اطلاعات تخصصی (اختیاری)
 }
 
 export interface ProductFilters {
@@ -88,6 +116,8 @@ export interface ProductFilters {
   inStock?: boolean;
   onSale?: boolean;
   lowCommission?: boolean;
+  // ✨ فیلتر جدید برای نوع محصول (سکه، شمش، جواهرات)
+  productType?: "jewelry" | "coin" | "melted_gold";
   // Sort
   sortBy?: string;
 }

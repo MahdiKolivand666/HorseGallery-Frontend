@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 const ImageCards = () => {
   const cards = [
@@ -9,24 +10,28 @@ const ImageCards = () => {
       image: "/images/card/card1.webp",
       title: "پیشنهاد ویژه",
       description: "بهترین محصولات با کیفیت عالی\nو قیمت مناسب برای شما",
+      href: "/suggest",
     },
     {
       id: 2,
       image: "/images/card/card2.webp",
       title: "محصولات اختصاصی",
       description: "طراحی‌های منحصر به فرد و خاص\nفقط در گالری اسب",
+      href: "/products/women",
     },
     {
       id: 3,
       image: "/images/card/card3.webp",
       title: "کلکسیون جدید",
       description: "جدیدترین مدل‌های سال\nبا طراحی مدرن و شیک",
+      href: "/products/women",
     },
     {
       id: 4,
       image: "/images/card/card4.webp",
       title: "فروش ویژه",
       description: "تخفیف‌های استثنایی\nبرای محصولات منتخب",
+      href: "/suggest",
     },
   ];
 
@@ -35,9 +40,13 @@ const ImageCards = () => {
       <div className="w-full">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {cards.map((card) => (
-            <div key={card.id} className="relative group cursor-pointer">
+            <Link
+              key={card.id}
+              href={card.href}
+              className="relative group cursor-pointer"
+            >
               {/* Image Container */}
-              <div className="relative w-full lg:w-[358px] h-auto lg:h-[584px] aspect-[358/584] lg:aspect-auto overflow-hidden mx-auto">
+              <div className="relative w-full lg:w-[358px] h-auto lg:h-[584px] aspect-[358/584] lg:aspect-auto overflow-hidden mx-auto border border-gray-300 rounded">
                 <Image
                   src={card.image}
                   alt={card.title}
@@ -61,12 +70,12 @@ const ImageCards = () => {
 
                 {/* Button on Image */}
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 transition-all duration-300 group-hover:bottom-8">
-                  <button className="w-[109px] h-[40px] bg-transparent border border-white text-white text-xs font-medium hover:bg-white hover:text-gray-900 transition-colors">
+                  <div className="w-[109px] h-[40px] bg-transparent border border-white text-white text-xs font-medium hover:bg-white hover:text-gray-900 transition-colors flex items-center justify-center">
                     خرید محصول
-                  </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

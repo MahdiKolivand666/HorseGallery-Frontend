@@ -279,7 +279,7 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
           priority
         />
         <div className="absolute inset-0 flex items-end justify-start p-6 sm:p-8 lg:p-12">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#e8f5e9] drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#e8f5e9] drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] tracking-wide">
             {subcategoryData.name} {categoryData.title}
           </h1>
         </div>
@@ -518,11 +518,11 @@ const ProductCard = ({ product }: { product: Product }) => {
   return (
     <motion.div
       whileHover={{ y: -4 }}
-      className="bg-white overflow-hidden shadow-sm hover:shadow-md transition-all"
+      className="bg-white overflow-hidden border border-gray-300 rounded"
     >
       <Link href={productHref}>
         <div
-          className="relative aspect-[3/4] overflow-hidden cursor-pointer bg-gray-100"
+          className="relative aspect-[3/4] overflow-hidden cursor-pointer"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >

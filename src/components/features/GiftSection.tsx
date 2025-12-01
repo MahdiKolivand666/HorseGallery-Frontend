@@ -123,7 +123,7 @@ const GiftSection = ({ products: apiProducts }: Props) => {
             <div className="max-w-3xl mx-auto">
               {/* Large Image for Mobile/Tablet (Above Products) */}
               <div className="lg:hidden mb-6 sm:mb-8">
-                <div className="relative w-full h-64 sm:h-80 rounded-lg overflow-hidden shadow-lg">
+                <div className="relative w-full h-64 sm:h-80 overflow-hidden border border-gray-300 rounded">
                   <Image
                     src="/images/categories/categories1.webp"
                     alt="Gift Collection"
@@ -166,10 +166,8 @@ const GiftSection = ({ products: apiProducts }: Props) => {
                     >
                       <div
                         className="relative"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setActiveProduct(isActive ? null : product._id);
-                        }}
+                        onMouseEnter={() => setActiveProduct(product._id)}
+                        onMouseLeave={() => setActiveProduct(null)}
                       >
                         <motion.div
                           whileHover={{ scale: 1.05, y: -8 }}
@@ -181,7 +179,7 @@ const GiftSection = ({ products: apiProducts }: Props) => {
                           }}
                           className="relative overflow-visible cursor-pointer w-full"
                         >
-                          <div className="relative overflow-hidden w-full aspect-square shadow-md hover:shadow-2xl transition-shadow duration-300 rounded-sm">
+                          <div className="relative overflow-hidden w-full aspect-square border border-gray-300 rounded">
                             {/* Default Image */}
                             <motion.div
                               className="absolute inset-0"

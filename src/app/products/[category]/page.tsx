@@ -245,7 +245,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
           priority
         />
         <div className="absolute inset-0 flex items-end justify-start p-6 sm:p-8 lg:p-12">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#e8f5e9] drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#e8f5e9] drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] tracking-wide">
             فروشگاه
           </h1>
         </div>
@@ -394,7 +394,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                       className="group"
                     >
                       <Link href={productHref}>
-                        <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-3">
+                        <div className="relative aspect-[3/4] overflow-hidden mb-3 border border-gray-300 rounded">
                           <Image
                             src={productImage}
                             alt={product.name}

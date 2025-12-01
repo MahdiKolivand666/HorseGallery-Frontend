@@ -253,9 +253,9 @@ export default function CheckoutPage() {
 
             {/* Order Summary - Right Side */}
             <div className="lg:col-span-1">
-              <div className="bg-primary p-5 shadow-lg sticky top-[180px]">
+              <div className="bg-primary p-5 border border-gray-300 rounded sticky top-[180px]">
                 {/* Timer Warning */}
-                <div className="mb-5 py-1.5 px-3 border border-white/30 text-center">
+                <div className="mb-5 py-1.5 px-3 border border-white/30 rounded text-center">
                   <div className="flex items-center justify-center gap-1.5 text-white">
                     <Clock className="w-3.5 h-3.5" />
                     <p className="text-[11px]">
@@ -331,7 +331,7 @@ export default function CheckoutPage() {
                   {/* Continue Button */}
                   <button
                     onClick={() => setActiveTab("shipping")}
-                    className="w-full bg-white hover:bg-white/90 text-primary py-2 text-sm font-medium transition-colors mt-3"
+                    className="w-full bg-white hover:bg-white/90 text-primary py-2 text-sm font-medium transition-colors mt-3 rounded"
                   >
                     ادامه خرید
                   </button>
@@ -347,7 +347,7 @@ export default function CheckoutPage() {
             {/* Shipping Form - Left Side */}
             <div className="lg:col-span-2 space-y-6">
               {/* Address Section */}
-              <div className="bg-gray-50 p-6">
+              <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-primary" />
@@ -357,7 +357,7 @@ export default function CheckoutPage() {
                   </div>
                   <button
                     onClick={() => setIsAddressModalOpen(true)}
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 text-sm font-medium transition-colors"
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 text-sm font-medium transition-colors rounded"
                   >
                     <span>+</span>
                     <span>افزودن آدرس جدید</span>
@@ -374,7 +374,7 @@ export default function CheckoutPage() {
               </div>
 
               {/* Shipping Method Section */}
-              <div className="bg-gray-50 p-6">
+              <div className="p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Truck className="w-5 h-5 text-primary" />
                   <h3 className="text-base font-bold text-gray-900">
@@ -389,9 +389,9 @@ export default function CheckoutPage() {
 
             {/* Order Summary - Right Side */}
             <div className="lg:col-span-1">
-              <div className="bg-primary p-4 shadow-lg sticky top-[180px]">
+              <div className="bg-primary p-5 border border-gray-300 rounded sticky top-[180px]">
                 {/* Timer Warning */}
-                <div className="mb-3 py-1.5 px-3 border border-white/30 text-center">
+                <div className="mb-5 py-1.5 px-3 border border-white/30 rounded text-center">
                   <div className="flex items-center justify-center gap-1.5 text-white">
                     <Clock className="w-3.5 h-3.5" />
                     <p className="text-[11px]">
@@ -405,7 +405,7 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Products Summary */}
-                <div className="mb-3 space-y-2">
+                <div className="mb-5 space-y-3">
                   {cartItems.map((item, index) => (
                     <div key={item._id}>
                       <div className="text-white space-y-0.5">
@@ -434,12 +434,12 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Divider before price details */}
-                <div className="py-1.5 mb-2">
+                <div className="py-2 mb-3">
                   <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
                 </div>
 
                 {/* Price Details */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {/* Subtotal */}
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-baseline gap-1.5">
@@ -484,12 +484,12 @@ export default function CheckoutPage() {
                   </div>
 
                   {/* Divider */}
-                  <div className="py-1.5">
+                  <div className="py-2">
                     <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
                   </div>
 
                   {/* Final Total */}
-                  <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-center justify-between pt-2">
                     <span className="text-base font-bold text-white">
                       مبلغ نهایی:
                     </span>
@@ -501,7 +501,7 @@ export default function CheckoutPage() {
                   {/* Continue Button */}
                   <button
                     onClick={() => setActiveTab("payment")}
-                    className="w-full bg-white hover:bg-white/90 text-primary py-2 text-sm font-medium transition-colors mt-2"
+                    className="w-full bg-white hover:bg-white/90 text-primary py-2 text-sm font-medium transition-colors mt-3 rounded"
                   >
                     ادامه خرید
                   </button>
@@ -517,7 +517,7 @@ export default function CheckoutPage() {
             {/* Payment Form - Left Side */}
             <div className="lg:col-span-2 space-y-4">
               {/* Payment Gateway Selection */}
-              <div className="bg-gray-50 p-6">
+              <div className="p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <CreditCard className="w-5 h-5 text-primary" />
                   <h3 className="text-base font-bold text-gray-900">
@@ -527,10 +527,10 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div
                     onClick={() => setSelectedGateway("saman")}
-                    className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 ${
+                    className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 rounded ${
                       selectedGateway === "saman"
                         ? "border-primary"
-                        : "border-transparent"
+                        : "border-gray-300"
                     }`}
                   >
                     <input
@@ -555,10 +555,10 @@ export default function CheckoutPage() {
                   </div>
                   <div
                     onClick={() => setSelectedGateway("mellat")}
-                    className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 ${
+                    className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 rounded ${
                       selectedGateway === "mellat"
                         ? "border-primary"
-                        : "border-transparent"
+                        : "border-gray-300"
                     }`}
                   >
                     <input
@@ -583,10 +583,10 @@ export default function CheckoutPage() {
                   </div>
                   <div
                     onClick={() => setSelectedGateway("zarinpal")}
-                    className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 ${
+                    className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 rounded ${
                       selectedGateway === "zarinpal"
                         ? "border-primary"
-                        : "border-transparent"
+                        : "border-gray-300"
                     }`}
                   >
                     <input
@@ -617,7 +617,7 @@ export default function CheckoutPage() {
               {/* Discount Code & Wallet - Side by Side */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
                 {/* Discount Code */}
-                <div className="bg-gray-50 p-6 h-full flex flex-col">
+                <div className="p-6 h-full flex flex-col">
                   <div className="flex items-center gap-2 mb-4">
                     <Tag className="w-5 h-5 text-primary" />
                     <h3 className="text-base font-bold text-gray-900">
@@ -628,16 +628,16 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       placeholder="کد تخفیف خود را وارد کنید"
-                      className="flex-1 px-4 py-2.5 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
+                      className="flex-1 px-4 py-2.5 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
                     />
-                    <button className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium transition-colors whitespace-nowrap">
+                    <button className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium transition-colors whitespace-nowrap rounded">
                       اعمال کد
                     </button>
                   </div>
                 </div>
 
                 {/* Wallet */}
-                <div className="bg-gray-50 p-6 h-full flex flex-col">
+                <div className="p-6 h-full flex flex-col">
                   <div className="flex items-center gap-2 mb-4">
                     <Wallet className="w-5 h-5 text-primary" />
                     <h3 className="text-base font-bold text-gray-900">
@@ -669,9 +669,9 @@ export default function CheckoutPage() {
 
             {/* Order Summary - Right Side */}
             <div className="lg:col-span-1">
-              <div className="bg-primary text-white p-5 shadow-lg">
+              <div className="bg-primary text-white p-5 border border-gray-300 rounded">
                 {/* Timer */}
-                <div className="mb-4 py-1.5 px-3 border border-white/30 text-center">
+                <div className="mb-5 py-1.5 px-3 border border-white/30 rounded text-center">
                   <div className="flex items-center justify-center gap-1.5 text-white">
                     <Clock className="w-3.5 h-3.5" />
                     <p className="text-[11px]">
@@ -685,7 +685,7 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Product Summary */}
-                <div className="space-y-3 mb-4">
+                <div className="space-y-3 mb-5">
                   {cartItems.map((item, index) => (
                     <div key={item._id}>
                       <div className="py-2">
@@ -704,10 +704,12 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Divider */}
-                <div className="h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent mb-4" />
+                <div className="py-2">
+                  <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                </div>
 
                 {/* Price Summary */}
-                <div className="space-y-3 mb-6">
+                <div className="space-y-3 mb-5">
                   <div className="flex items-center justify-between text-sm">
                     <span>مبلغ کل:</span>
                     <span className="font-medium">
@@ -735,10 +737,12 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Divider */}
-                <div className="h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent mb-4" />
+                <div className="py-2">
+                  <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                </div>
 
                 {/* Final Amount */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between pt-2">
                   <span className="text-base font-bold">مبلغ نهایی:</span>
                   <span className="text-xl font-bold">
                     {finalTotal.toLocaleString("fa-IR")} تومان
@@ -746,7 +750,7 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Terms Checkbox */}
-                <label className="flex items-start gap-3 mb-4 cursor-pointer">
+                <label className="flex items-start gap-3 mt-3 mb-3 cursor-pointer">
                   <input
                     type="checkbox"
                     className="w-4 h-4 mt-0.5 text-primary focus:ring-primary border-gray-300 bg-white"
@@ -757,7 +761,7 @@ export default function CheckoutPage() {
                 </label>
 
                 {/* Action Button */}
-                <button className="w-full py-2 bg-white text-primary hover:bg-gray-100 text-sm font-medium transition-colors">
+                <button className="w-full py-2 bg-white text-primary hover:bg-gray-100 text-sm font-medium transition-colors rounded">
                   پرداخت آنلاین
                 </button>
               </div>
@@ -769,12 +773,12 @@ export default function CheckoutPage() {
       {/* Address Modal */}
       {isAddressModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-100 max-w-5xl w-full">
+          <div className="bg-white border border-gray-300 rounded max-w-5xl w-full">
             {/* Modal Header */}
-            <div className="flex items-center justify-end px-3 py-0.5 bg-gray-100">
+            <div className="flex items-center justify-end px-3 py-0.5 bg-white">
               <button
                 onClick={() => setIsAddressModalOpen(false)}
-                className="p-0.5 hover:bg-gray-200 transition-colors"
+                className="p-0.5 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
                 aria-label="بستن"
               >
                 <span className="text-3xl text-gray-600">×</span>
@@ -799,7 +803,7 @@ export default function CheckoutPage() {
                       </label>
                       <input
                         type="text"
-                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
+                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
                         placeholder="مثلاً: منزل، محل کار"
                       />
                     </div>
@@ -809,7 +813,7 @@ export default function CheckoutPage() {
                         <label className="block text-xs font-medium text-gray-800 mb-1">
                           استان
                         </label>
-                        <select className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 transition-colors">
+                        <select className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 transition-colors rounded">
                           <option value="" className="text-gray-400">
                             انتخاب استان
                           </option>
@@ -822,7 +826,7 @@ export default function CheckoutPage() {
                         <label className="block text-xs font-medium text-gray-800 mb-1">
                           شهر
                         </label>
-                        <select className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 transition-colors">
+                        <select className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 transition-colors rounded">
                           <option value="" className="text-gray-400">
                             انتخاب شهر
                           </option>
@@ -836,7 +840,7 @@ export default function CheckoutPage() {
                       </label>
                       <input
                         type="text"
-                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
+                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
                         placeholder="کد پستی ۱۰ رقمی"
                       />
                     </div>
@@ -847,7 +851,7 @@ export default function CheckoutPage() {
                       </label>
                       <textarea
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none resize-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
+                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none resize-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
                         placeholder="آدرس کامل خود را وارد کنید..."
                       />
                     </div>
@@ -880,7 +884,7 @@ export default function CheckoutPage() {
                         </label>
                         <input
                           type="text"
-                          className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
+                          className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
                           placeholder="نام"
                         />
                       </div>
@@ -890,7 +894,7 @@ export default function CheckoutPage() {
                         </label>
                         <input
                           type="text"
-                          className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
+                          className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
                           placeholder="نام خانوادگی"
                         />
                       </div>
@@ -903,7 +907,7 @@ export default function CheckoutPage() {
                         </label>
                         <input
                           type="text"
-                          className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
+                          className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
                           placeholder="کد ملی ۱۰ رقمی"
                         />
                       </div>
@@ -913,7 +917,7 @@ export default function CheckoutPage() {
                         </label>
                         <input
                           type="tel"
-                          className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
+                          className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
                           placeholder="۰۹۱۲۳۴۵۶۷۸۹"
                         />
                       </div>
@@ -925,7 +929,7 @@ export default function CheckoutPage() {
                       </label>
                       <input
                         type="email"
-                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
+                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
                         placeholder="example@email.com"
                       />
                     </div>
@@ -936,7 +940,7 @@ export default function CheckoutPage() {
                       </label>
                       <textarea
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none resize-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors"
+                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none resize-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
                         placeholder="توضیحات تکمیلی (اختیاری)"
                       />
                     </div>
@@ -957,7 +961,7 @@ export default function CheckoutPage() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setIsAddressModalOpen(false)}
-                  className="px-5 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors"
+                  className="px-5 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors rounded"
                 >
                   انصراف
                 </button>
@@ -966,7 +970,7 @@ export default function CheckoutPage() {
                     // Save address logic
                     setIsAddressModalOpen(false);
                   }}
-                  className="px-12 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium transition-colors shadow-sm"
+                  className="px-12 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium transition-colors rounded"
                 >
                   ذخیره آدرس
                 </button>

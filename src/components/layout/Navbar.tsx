@@ -33,6 +33,8 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProductsMenuOpen, setIsProductsMenuOpen] = useState(false);
   const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(false);
+  const [isCoinGoldMenuOpen, setIsCoinGoldMenuOpen] = useState(false);
+  const [isMobileCoinGoldOpen, setIsMobileCoinGoldOpen] = useState(false);
   const [isNavHovered, setIsNavHovered] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -147,6 +149,7 @@ const Navbar = () => {
     // Check if click is outside search box and not on search button
     const isSearchButton = target.closest("[data-search-button]");
     const isProductsButton = target.closest("[data-products-button]");
+    const isCoinGoldButton = target.closest("[data-coin-gold-button]");
 
     if (
       searchRef.current &&
@@ -164,21 +167,31 @@ const Navbar = () => {
     ) {
       setIsProductsMenuOpen(false);
     }
+
+    if (!isCoinGoldButton) {
+      setIsCoinGoldMenuOpen(false);
+    }
   }, []);
 
   useEffect(() => {
-    if (isSearchOpen || isProductsMenuOpen) {
+    if (isSearchOpen || isProductsMenuOpen || isCoinGoldMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isSearchOpen, isProductsMenuOpen, handleClickOutside]);
+  }, [
+    isSearchOpen,
+    isProductsMenuOpen,
+    isCoinGoldMenuOpen,
+    handleClickOutside,
+  ]);
 
   const menuItems = [
     { id: "home", href: "/" },
     { id: "shop", href: "/products/women" },
+    { id: "coin-gold", href: "#" },
     { id: "suggest", href: "/suggest" },
     { id: "faq", href: "/faq" },
     { id: "blog", href: "/blog" },
@@ -471,6 +484,28 @@ const Navbar = () => {
                       }`}
                     />
                   </button>
+                ) : item.id === "coin-gold" ? (
+                  <button
+                    key={item.id}
+                    data-coin-gold-button
+                    onMouseEnter={() => setIsCoinGoldMenuOpen(true)}
+                    onClick={() => setIsCoinGoldMenuOpen(!isCoinGoldMenuOpen)}
+                    className={`flex items-center gap-1 text-sm font-medium tracking-wide transition-all hover:opacity-70 relative group ${
+                      isScrolled || isNavHovered ? "text-white" : "text-primary"
+                    }`}
+                  >
+                    {t(`menu.${item.id}`)}
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-300 ${
+                        isCoinGoldMenuOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                    <span
+                      className={`absolute bottom-[-4px] left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full ${
+                        isScrolled || isNavHovered ? "bg-white" : "bg-primary"
+                      }`}
+                    />
+                  </button>
                 ) : (
                   <Link
                     key={item.id}
@@ -630,6 +665,81 @@ const Navbar = () => {
                       )}
                     </AnimatePresence>
                   </motion.div>
+                ) : item.id === "coin-gold" ? (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <button
+                      onClick={() =>
+                        setIsMobileCoinGoldOpen(!isMobileCoinGoldOpen)
+                      }
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors"
+                    >
+                      {t(`menu.${item.id}`)}
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-300 ${
+                          isMobileCoinGoldOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {/* Mobile Coin & Gold Submenu */}
+                    <AnimatePresence>
+                      {isMobileCoinGoldOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="overflow-hidden mt-1"
+                        >
+                          <div className="space-y-1 px-2 py-2">
+                            <Link
+                              href="/coin"
+                              onClick={() => {
+                                setIsMobileMenuOpen(false);
+                                setIsMobileCoinGoldOpen(false);
+                              }}
+                              className="flex items-center gap-3 py-2 px-4 text-sm text-white/80 hover:bg-white/10 rounded-lg transition-colors"
+                            >
+                              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                <Image
+                                  src="/images/products/qadimtamam.png"
+                                  alt="سکه"
+                                  width={35}
+                                  height={35}
+                                  className="object-contain"
+                                />
+                              </div>
+                              <span>سکه</span>
+                            </Link>
+                            <Link
+                              href="/melted-gold"
+                              onClick={() => {
+                                setIsMobileMenuOpen(false);
+                                setIsMobileCoinGoldOpen(false);
+                              }}
+                              className="flex items-center gap-3 py-2 px-4 text-sm text-white/80 hover:bg-white/10 rounded-lg transition-colors"
+                            >
+                              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                <Image
+                                  src="/images/products/shemsh.png"
+                                  alt="شمش طلا"
+                                  width={35}
+                                  height={35}
+                                  className="object-contain"
+                                />
+                              </div>
+                              <span>شمش طلا</span>
+                            </Link>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
                 ) : (
                   <motion.div
                     key={item.id}
@@ -681,7 +791,7 @@ const Navbar = () => {
           >
             {/* Top spacer to match navbar top bar */}
             <div className="h-8 sm:h-9 lg:h-10"></div>
-            
+
             {/* Main search bar */}
             <div className="w-full max-w-[1920px] mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-center gap-4 h-16 xs:h-18 sm:h-20">
@@ -777,7 +887,7 @@ const Navbar = () => {
                 </div>
 
                 {/* Left Side - Large Image */}
-                <div className="relative w-full h-full min-h-[400px] overflow-hidden group">
+                <div className="relative w-full h-full min-h-[400px] overflow-hidden group border border-gray-400 rounded">
                   <Image
                     src="/images/aboutUs/bridal.webp"
                     alt="محصولات فروشگاه"
@@ -787,6 +897,68 @@ const Navbar = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
                 </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Coin & Gold Menu Dropdown - Desktop Only */}
+      <AnimatePresence>
+        {isCoinGoldMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            onMouseLeave={() => setIsCoinGoldMenuOpen(false)}
+            className="hidden lg:block overflow-hidden border-t backdrop-blur-md bg-primary/95 border-white/10"
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+              <div className="flex justify-center items-center gap-8">
+                {/* سکه */}
+                <Link
+                  href="/coin"
+                  onClick={() => setIsCoinGoldMenuOpen(false)}
+                  className="group flex flex-col items-center justify-center gap-3 p-6 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300 min-w-[200px] min-h-[180px]"
+                >
+                  <div className="relative w-20 h-20 rounded-full overflow-hidden group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
+                    <Image
+                      src="/images/products/qadimtamam.png"
+                      alt="سکه طلا"
+                      width={70}
+                      height={70}
+                      className="object-contain"
+                    />
+                  </div>
+                  <span className="text-white font-semibold text-lg">سکه</span>
+                  <span className="text-white/70 text-sm text-center">
+                    انواع سکه طلا
+                  </span>
+                </Link>
+
+                {/* طلای آب شده */}
+                <Link
+                  href="/melted-gold"
+                  onClick={() => setIsCoinGoldMenuOpen(false)}
+                  className="group flex flex-col items-center justify-center gap-3 p-6 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300 min-w-[200px] min-h-[180px]"
+                >
+                  <div className="relative w-20 h-20 rounded-full overflow-hidden group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
+                    <Image
+                      src="/images/products/shemsh.png"
+                      alt="شمش طلا"
+                      width={70}
+                      height={70}
+                      className="object-contain"
+                    />
+                  </div>
+                  <span className="text-white font-semibold text-lg">
+                    شمش طلا
+                  </span>
+                  <span className="text-white/70 text-sm text-center">
+                    طلای آب شده
+                  </span>
+                </Link>
               </div>
             </div>
           </motion.div>
