@@ -30,6 +30,7 @@
 html {
   scroll-behavior: smooth;
   width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -38,7 +39,9 @@ body {
   font-family: "Vazirmatn", Arial, Helvetica, sans-serif;
   direction: rtl;
   width: 100%;
+  max-width: 100vw;
   position: relative;
+  overflow-x: hidden;
 }
 
 #__next {
@@ -147,6 +150,42 @@ body {
 }
 
 .blog-swiper .swiper-button-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Image Cards Swiper Styles */
+.image-cards-swiper .image-cards-button-prev-custom,
+.image-cards-swiper .image-cards-button-next-custom {
+  width: 36px;
+  height: 36px;
+}
+
+.image-cards-swiper .swiper-button-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Gift Products Swiper Styles */
+.gift-products-swiper .gift-swiper-button-prev-custom,
+.gift-products-swiper .gift-swiper-button-next-custom {
+  width: 36px;
+  height: 36px;
+}
+
+.gift-products-swiper .swiper-button-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* New Arrivals Swiper Styles */
+.new-arrivals-swiper .new-arrivals-button-prev-custom,
+.new-arrivals-swiper .new-arrivals-button-next-custom {
+  width: 36px;
+  height: 36px;
+}
+
+.new-arrivals-swiper .swiper-button-disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }

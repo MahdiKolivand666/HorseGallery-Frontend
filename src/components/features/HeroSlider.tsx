@@ -23,7 +23,7 @@ const HeroSlider = () => {
   };
 
   return (
-    <section className="relative h-screen w-full max-w-[100vw] overflow-hidden bg-gray-900">
+    <section className="relative h-screen w-full overflow-hidden bg-gray-900">
       {/* Desktop Slider */}
       <div className="hidden lg:block absolute inset-0 z-0">
         <Swiper
@@ -81,7 +81,7 @@ const HeroSlider = () => {
                   alt={`Mobile Slide ${index + 1}`}
                   fill
                   priority={index === 0}
-                  className="object-cover"
+                  className="object-cover object-center"
                   sizes="100vw"
                   quality={85}
                   unoptimized

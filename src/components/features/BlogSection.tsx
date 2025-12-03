@@ -62,7 +62,7 @@ const BlogSection = ({ posts }: Props) => {
   };
 
   return (
-    <section className="w-full px-4 sm:px-6 lg:px-8 pt-0 pb-12 sm:pb-16 lg:pb-24 bg-white">
+    <section className="w-full px-2 sm:px-6 lg:px-8 pt-0 pb-12 sm:pb-16 lg:pb-24 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Section Title */}
         <motion.div

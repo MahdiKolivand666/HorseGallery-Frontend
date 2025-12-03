@@ -10,7 +10,8 @@ export interface GoldInfo {
   purity?: string; // خلوص (مثال: "900" یا "999.9")
   certificate?: string; // شماره گواهی
   mintYear?: number; // سال ضرب - فقط برای سکه
-  manufacturer?: string; // تولید کننده - فقط برای شمش
+  denomination?: string; // ✨ نوع سکه (تمام، نیم، ربع، یک گرمی) - فقط برای سکه
+  // manufacturer?: string; // ❌ حذف شده
 }
 
 export interface Product {
@@ -33,6 +34,9 @@ export interface Product {
     name: string;
     slug: string;
   };
+  // ✨ فیلدهای weight و material ممکنه در root object باشند
+  weight?: string;
+  material?: string;
   specifications: {
     weight?: string;
     karat?: string;

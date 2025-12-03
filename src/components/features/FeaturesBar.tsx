@@ -39,9 +39,39 @@ const FeaturesBar = () => {
   ];
 
   return (
-    <section className="w-full bg-[#faf6f0] py-4 sm:py-5 lg:py-6 px-4 sm:px-6 lg:px-8">
+    <section className="w-full bg-[#faf6f0] py-4 sm:py-5 lg:py-6 px-2 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        {/* Mobile - فقط 2 آیتم اول */}
+        <div className="grid grid-cols-2 gap-3 lg:hidden">
+          {features.slice(0, 2).map((feature, index) => (
+            <motion.div
+              key={feature.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              className="flex flex-col items-center text-center"
+            >
+              <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-1.5 sm:mb-2">
+                <Image
+                  src={feature.icon}
+                  alt={feature.title}
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-0.5 sm:mb-1">
+                {feature.title}
+              </h3>
+              <p className="text-[10px] sm:text-xs text-gray-600 leading-tight">
+                {feature.description}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Desktop - همه 4 آیتم */}
+        <div className="hidden lg:grid lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           {features.map((feature, index) => (
             <motion.div
               key={feature.id}

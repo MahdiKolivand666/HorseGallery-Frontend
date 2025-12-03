@@ -16,6 +16,16 @@ export default function GoldInfoCard({
       </h3>
 
       <div className="grid grid-cols-2 gap-3 text-sm">
+        {/* ✨ نوع سکه (denomination) - فقط برای سکه */}
+        {productType === "coin" && goldInfo.denomination && (
+          <div className="col-span-2">
+            <span className="text-gray-600">نوع:</span>
+            <span className="font-medium mr-2 bg-amber-100 text-amber-800 px-2 py-1 rounded">
+              {goldInfo.denomination}
+            </span>
+          </div>
+        )}
+
         {goldInfo.weight && (
           <div>
             <span className="text-gray-600">وزن:</span>
@@ -34,13 +44,6 @@ export default function GoldInfoCard({
           <div>
             <span className="text-gray-600">سال ضرب:</span>
             <span className="font-medium mr-2">{goldInfo.mintYear}</span>
-          </div>
-        )}
-
-        {goldInfo.manufacturer && (
-          <div className="col-span-2">
-            <span className="text-gray-600">تولید کننده:</span>
-            <span className="font-medium mr-2">{goldInfo.manufacturer}</span>
           </div>
         )}
 

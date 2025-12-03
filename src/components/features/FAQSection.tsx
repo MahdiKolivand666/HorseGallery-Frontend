@@ -54,7 +54,7 @@ const FAQSection = ({ faqs }: Props) => {
         </div>
 
         {/* Mobile/Tablet Image */}
-        <div className="lg:hidden px-4 sm:px-6 mb-6 sm:mb-8">
+        <div className="lg:hidden px-2 sm:px-6 mb-6 sm:mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -79,7 +79,7 @@ const FAQSection = ({ faqs }: Props) => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="w-full max-w-3xl px-4 sm:px-6 lg:px-12 lg:py-12"
+            className="w-full max-w-3xl px-2 sm:px-6 lg:px-12 lg:py-12"
           >
             {/* Section Header */}
             <div className="text-right mb-4 sm:mb-6">

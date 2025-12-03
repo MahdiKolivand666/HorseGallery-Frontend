@@ -78,7 +78,7 @@ const CategoryGrid = () => {
   };
 
   return (
-    <section className="w-full px-4 sm:px-6 lg:px-8 pb-6 bg-white overflow-visible">
+    <section className="w-full px-2 sm:px-6 lg:px-8 pb-6 bg-white overflow-visible">
       <div className="max-w-7xl mx-auto overflow-visible">
         {/* Section Header */}
         <motion.div

@@ -38,7 +38,7 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <CartProviderWrapper>
             <Navbar />
-            <main className="min-h-screen">{children}</main>
+            <main className="min-h-screen overflow-x-hidden w-full">{children}</main>
             <Footer />
             <ScrollToTop />
           </CartProviderWrapper>

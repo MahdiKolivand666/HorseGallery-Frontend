@@ -102,7 +102,7 @@ export default function Home() {
     );
   }
   return (
-    <div className="bg-white w-full">
+    <div className="bg-white w-full overflow-x-hidden">
       {/* Hero Slider */}
       <HeroSlider />
 

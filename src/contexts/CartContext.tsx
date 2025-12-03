@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, ReactNode } from "react";
 
+import { GoldInfo } from "@/lib/api/products";
+
 interface CartItem {
   _id: string;
   name: string;
@@ -14,6 +16,9 @@ interface CartItem {
   slug: string;
   category: string;
   discount?: number;
+  // ✨ فیلدهای جدید برای سکه و شمش
+  productType?: "jewelry" | "coin" | "melted_gold";
+  goldInfo?: GoldInfo;
 }
 
 interface CartContextType {
@@ -37,15 +42,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = (item: CartItem) => {
     setCartItems((prev) => {
-      const existingItem = prev.find(
-        (i) => i._id === item._id && i.size === item.size
-      );
+      // ✨ برای سکه: فقط _id رو چک کن (چون size نداره)
+      // برای بقیه: _id و size رو چک کن
+      const existingItem = prev.find((i) => {
+        if (item.productType === "coin") {
+          return i._id === item._id && i.productType === "coin";
+        }
+        return i._id === item._id && i.size === item.size;
+      });
+      
       if (existingItem) {
-        return prev.map((i) =>
-          i._id === item._id && i.size === item.size
+        return prev.map((i) => {
+          if (item.productType === "coin") {
+            return i._id === item._id && i.productType === "coin"
+              ? { ...i, quantity: i.quantity + 1 }
+              : i;
+          }
+          return i._id === item._id && i.size === item.size
             ? { ...i, quantity: i.quantity + 1 }
-            : i
-        );
+            : i;
+        });
       }
       return [...prev, { ...item, quantity: 1 }];
     });

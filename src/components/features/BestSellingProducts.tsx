@@ -36,7 +36,7 @@ const BestSellingProducts = ({ products }: Props) => {
   const productsFormatted = products.slice(0, 10);
 
   return (
-    <section className="w-full px-4 sm:px-6 lg:px-8 bg-gray-50 overflow-hidden">
+    <section className="w-full px-2 sm:px-6 lg:px-8 bg-gray-50 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <motion.div

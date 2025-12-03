@@ -466,8 +466,14 @@ const Navbar = () => {
                   <button
                     key={item.id}
                     data-products-button
-                    onMouseEnter={() => setIsProductsMenuOpen(true)}
-                    onClick={() => setIsProductsMenuOpen(!isProductsMenuOpen)}
+                    onMouseEnter={() => {
+                      setIsProductsMenuOpen(true);
+                      setIsCoinGoldMenuOpen(false); // بستن dropdown سکه و شمش
+                    }}
+                    onClick={() => {
+                      setIsProductsMenuOpen(!isProductsMenuOpen);
+                      setIsCoinGoldMenuOpen(false); // بستن dropdown سکه و شمش
+                    }}
                     className={`flex items-center gap-1 text-sm font-medium tracking-wide transition-all hover:opacity-70 relative group ${
                       isScrolled || isNavHovered ? "text-white" : "text-primary"
                     }`}
@@ -488,8 +494,14 @@ const Navbar = () => {
                   <button
                     key={item.id}
                     data-coin-gold-button
-                    onMouseEnter={() => setIsCoinGoldMenuOpen(true)}
-                    onClick={() => setIsCoinGoldMenuOpen(!isCoinGoldMenuOpen)}
+                    onMouseEnter={() => {
+                      setIsCoinGoldMenuOpen(true);
+                      setIsProductsMenuOpen(false); // بستن dropdown فروشگاه
+                    }}
+                    onClick={() => {
+                      setIsCoinGoldMenuOpen(!isCoinGoldMenuOpen);
+                      setIsProductsMenuOpen(false); // بستن dropdown فروشگاه
+                    }}
                     className={`flex items-center gap-1 text-sm font-medium tracking-wide transition-all hover:opacity-70 relative group ${
                       isScrolled || isNavHovered ? "text-white" : "text-primary"
                     }`}
@@ -605,9 +617,10 @@ const Navbar = () => {
                     transition={{ delay: index * 0.05 }}
                   >
                     <button
-                      onClick={() =>
-                        setIsMobileProductsOpen(!isMobileProductsOpen)
-                      }
+                      onClick={() => {
+                        setIsMobileProductsOpen(!isMobileProductsOpen);
+                        setIsMobileCoinGoldOpen(false); // بستن dropdown سکه و شمش
+                      }}
                       className="w-full flex items-center justify-center gap-2 py-3 px-4 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors"
                     >
                       {t(`menu.${item.id}`)}
@@ -628,10 +641,10 @@ const Navbar = () => {
                           transition={{ duration: 0.3 }}
                           className="overflow-hidden mt-1"
                         >
-                          <div className="space-y-1 px-2 py-2">
+                          <div className="grid grid-cols-3 gap-2 px-2 py-2">
                             {productCategories.map((category) => (
                               <div key={category.id} className="space-y-1">
-                                <div className="text-white/60 text-xs font-semibold px-2 py-1">
+                                <div className="text-white text-xs font-semibold px-2 py-1.5 text-center bg-white/10 rounded">
                                   {category.title}
                                 </div>
                                 {category.products.map((product) => (
@@ -642,7 +655,7 @@ const Navbar = () => {
                                       setIsMobileMenuOpen(false);
                                       setIsMobileProductsOpen(false);
                                     }}
-                                    className="block py-2 px-4 text-sm text-white/80 hover:bg-white/10 rounded-lg transition-colors"
+                                    className="block py-1.5 px-2 text-xs text-white/80 rounded-lg transition-colors text-center"
                                   >
                                     {product.name}
                                   </Link>
@@ -653,10 +666,10 @@ const Navbar = () => {
                                     setIsMobileMenuOpen(false);
                                     setIsMobileProductsOpen(false);
                                   }}
-                                  className="flex items-center gap-2 py-2 px-4 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                  className="flex items-center justify-center gap-1 py-1.5 px-2 text-xs font-medium text-white/80 hover:text-white rounded-lg transition-colors"
                                 >
-                                  <span>مشاهده محصولات {category.title}</span>
-                                  <ChevronLeft className="w-3.5 h-3.5" />
+                                  <span className="text-center">مشاهده همه</span>
+                                  <ChevronLeft className="w-3 h-3" />
                                 </Link>
                               </div>
                             ))}
@@ -673,9 +686,10 @@ const Navbar = () => {
                     transition={{ delay: index * 0.05 }}
                   >
                     <button
-                      onClick={() =>
-                        setIsMobileCoinGoldOpen(!isMobileCoinGoldOpen)
-                      }
+                      onClick={() => {
+                        setIsMobileCoinGoldOpen(!isMobileCoinGoldOpen);
+                        setIsMobileProductsOpen(false); // بستن dropdown فروشگاه
+                      }}
                       className="w-full flex items-center justify-center gap-2 py-3 px-4 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors"
                     >
                       {t(`menu.${item.id}`)}

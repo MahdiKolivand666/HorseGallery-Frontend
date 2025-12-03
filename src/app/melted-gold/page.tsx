@@ -151,7 +151,7 @@ export default function MeltedGoldPage() {
 
       {/* Main Content */}
       <main className="p-4 sm:p-6 lg:p-8">
-        {/* Sort */}
+        {/* Sort - گزینه‌های مخصوص شمش */}
         <div className="flex items-center justify-end mb-6">
           <div className="relative">
             <select
@@ -161,11 +161,10 @@ export default function MeltedGoldPage() {
               dir="rtl"
             >
               <option value="">مرتب کردن</option>
-              <option value="newest">جدیدترین</option>
-              <option value="oldest">قدیمی‌ترین</option>
-              <option value="price-low">ارزان‌ترین</option>
-              <option value="price-high">گران‌ترین</option>
-              <option value="popular">محبوب‌ترین</option>
+              <option value="inStock">موجود</option>
+              <option value="outOfStock">ناموجود</option>
+              <option value="weight-desc">از بیشترین وزن به کمترین</option>
+              <option value="weight-asc">از کمترین وزن به بیشترین</option>
             </select>
             <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
           </div>

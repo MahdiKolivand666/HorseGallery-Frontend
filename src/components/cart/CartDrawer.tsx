@@ -164,7 +164,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                       <Link
                         href={`/${item.category}/${item.slug}`}
                         onClick={onClose}
-                        className="relative w-24 h-24 flex-shrink-0"
+                        className="relative w-24 h-24 flex-shrink-0 border border-gray-300 rounded overflow-hidden"
                       >
                         <Image
                           src={item.image}
@@ -197,15 +197,37 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                         <p className="text-xs text-gray-500 mb-2">
                           {item.code}
                         </p>
-                        <p className="text-xs text-gray-600 mb-1">
-                          <span className="text-gray-500">وزن: </span>
-                          <span className="font-medium">{item.weight}</span>
-                        </p>
-                        {item.size && (
-                          <p className="text-xs text-gray-600">
-                            <span className="text-gray-500">سایز: </span>
-                            <span className="font-medium">{item.size}</span>
-                          </p>
+                        
+                        {/* ✨ برای سکه: فقط نوع و وزن */}
+                        {item.productType === "coin" && item.goldInfo && (
+                          <>
+                            {item.goldInfo.denomination && (
+                              <p className="text-xs text-gray-600 mb-1">
+                                <span className="text-gray-500">نوع: </span>
+                                <span className="font-medium">{item.goldInfo.denomination}</span>
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-600 mb-1">
+                              <span className="text-gray-500">وزن: </span>
+                              <span className="font-medium">{item.weight}</span>
+                            </p>
+                          </>
+                        )}
+                        
+                        {/* برای جواهرات: وزن و سایز */}
+                        {item.productType !== "coin" && (
+                          <>
+                            <p className="text-xs text-gray-600 mb-1">
+                              <span className="text-gray-500">وزن: </span>
+                              <span className="font-medium">{item.weight}</span>
+                            </p>
+                            {item.size && (
+                              <p className="text-xs text-gray-600">
+                                <span className="text-gray-500">سایز: </span>
+                                <span className="font-medium">{item.size}</span>
+                              </p>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>

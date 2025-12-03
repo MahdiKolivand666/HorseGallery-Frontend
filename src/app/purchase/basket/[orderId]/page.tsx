@@ -15,6 +15,7 @@ import {
   Wallet,
   Truck,
 } from "lucide-react";
+import { GoldInfo } from "@/lib/api/products";
 
 interface CartItem {
   _id: string;
@@ -28,6 +29,9 @@ interface CartItem {
   slug: string;
   category: string;
   discount?: number;
+  // ✨ فیلدهای جدید برای سکه و شمش
+  productType?: "jewelry" | "coin" | "melted_gold";
+  goldInfo?: GoldInfo;
 }
 
 export default function CheckoutPage() {
@@ -223,13 +227,18 @@ export default function CheckoutPage() {
                         وزن: {item.weight}
                       </p>
 
-                      {/* Size and Price */}
+                      {/* Size/MintYear and Price */}
                       <div className="flex items-center justify-between mt-0.5">
-                        {item.size && (
+                        {/* برای سکه: سال ضرب، برای بقیه: سایز */}
+                        {item.productType === "coin" && item.goldInfo?.mintYear ? (
+                          <p className="text-xs text-gray-600">
+                            سال ضرب: {item.goldInfo.mintYear}
+                          </p>
+                        ) : item.size ? (
                           <p className="text-xs text-gray-600">
                             سایز: {item.size}
                           </p>
-                        )}
+                        ) : null}
                         <p className="text-xs text-gray-600">
                           قیمت:{" "}
                           <span className="text-base font-bold text-gray-900">
@@ -416,11 +425,16 @@ export default function CheckoutPage() {
                         <p className="text-xs text-white/80">
                           وزن: {item.weight}
                         </p>
-                        {item.size && (
+                        {/* برای سکه: سال ضرب، برای بقیه: سایز */}
+                        {item.productType === "coin" && item.goldInfo?.mintYear ? (
+                          <p className="text-xs text-white/80">
+                            سال ضرب: {item.goldInfo.mintYear}
+                          </p>
+                        ) : item.size ? (
                           <p className="text-xs text-white/80">
                             سایز: {item.size}
                           </p>
-                        )}
+                        ) : null}
                       </div>
 
                       {/* Divider between products */}
@@ -693,7 +707,12 @@ export default function CheckoutPage() {
                         <div className="space-y-0.5 text-xs">
                           <p className="text-white/80">{item.code}</p>
                           <p className="text-white/80">وزن: {item.weight}</p>
-                          <p className="text-white/80">سایز: {item.size}</p>
+                          {/* برای سکه: سال ضرب، برای بقیه: سایز */}
+                          {item.productType === "coin" && item.goldInfo?.mintYear ? (
+                            <p className="text-white/80">سال ضرب: {item.goldInfo.mintYear}</p>
+                          ) : item.size ? (
+                            <p className="text-white/80">سایز: {item.size}</p>
+                          ) : null}
                         </div>
                       </div>
                       {index < cartItems.length - 1 && (

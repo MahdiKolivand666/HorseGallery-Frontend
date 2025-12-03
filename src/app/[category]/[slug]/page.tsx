@@ -50,6 +50,8 @@ interface ProductDetail {
     brand: string;
     dimensions: string;
     warranty: string;
+    purity?: string; // ✨ خلوص - برای سکه و شمش
+    mintYear?: number; // ✨ سال ضرب - فقط برای سکه
   };
   description: string;
   features: string[];
@@ -70,7 +72,9 @@ const ProductDetailPage = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
-  const [activeRelatedProduct, setActiveRelatedProduct] = useState<string | null>(null);
+  const [activeRelatedProduct, setActiveRelatedProduct] = useState<
+    string | null
+  >(null);
   const { addToCart } = useCart();
 
   // Fetch product data from API
@@ -88,8 +92,8 @@ const ProductDetailPage = () => {
             product.productType === "coin"
               ? ["/images/products/coinphoto.webp"]
               : product.productType === "melted_gold"
-              ? ["/images/products/goldbarphoto.webp"]
-              : product.images || ["/images/products/product1.webp"];
+              ? ["/images/products/coinphoto.webp"]
+              : product.images || ["/images/products/coinphoto.webp"];
 
           setProductData({
             id: product._id,
@@ -113,12 +117,23 @@ const ProductDetailPage = () => {
             deliveryDays: "2-3",
             images: productImages,
             specifications: {
-              weight: product.specifications?.weight || "N/A",
-              karat: product.specifications?.karat || "N/A",
-              material: product.specifications?.material || "N/A",
-              brand: product.specifications?.brand || "گالری اسب",
-              dimensions: product.specifications?.dimensions || "N/A",
-              warranty: product.specifications?.warranty || "گارانتی اصالت",
+              // ✨ وزن:
+              // - برای سکه: از goldInfo.weight (عددی به گرم) استفاده کن
+              // - در غیر این صورت: از فیلد weight در root یا specifications
+              weight:
+                product.productType === "coin" && product.goldInfo?.weight
+                  ? `${product.goldInfo.weight} گرم`
+                  : product.weight ?? product.specifications?.weight ?? "N/A",
+              karat: product.specifications?.karat ?? "N/A",
+              // ✨ جنس: اول از material در root استفاده کن، بعد specifications
+              material:
+                product.material ?? product.specifications?.material ?? "N/A",
+              brand: product.specifications?.brand ?? "گالری اسب",
+              dimensions: product.specifications?.dimensions ?? "N/A",
+              warranty: product.specifications?.warranty ?? "گارانتی اصالت",
+              // ✨ خلوص و سال ضرب برای سکه و شمش
+              purity: product.goldInfo?.purity,
+              mintYear: product.goldInfo?.mintYear,
             },
             description: product.description || "",
             features: [
@@ -153,15 +168,16 @@ const ProductDetailPage = () => {
 
   // Open PhotoSwipe Gallery
   const openGallery = (startIndex: number = 0) => {
-    const items = productData?.images.map((img) => ({
-      src: img,
-      width: 1200,
-      height: 1200,
-    })) || [];
+    const items =
+      productData?.images.map((img) => ({
+        src: img,
+        width: 1200,
+        height: 1200,
+      })) || [];
 
     if (items.length === 0) return;
 
-    import('photoswipe').then((PhotoSwipeModule) => {
+    import("photoswipe").then((PhotoSwipeModule) => {
       const PhotoSwipe = PhotoSwipeModule.default;
       const pswp = new PhotoSwipe({
         dataSource: items,
@@ -183,14 +199,29 @@ const ProductDetailPage = () => {
     if (!productData) return;
 
     // محاسبه قیمت نهایی و درصد تخفیف (با fallback اگه backend نفرستاد)
-    const finalPrice = productData.onSale && productData.discountPrice 
-      ? productData.discountPrice 
-      : productData.price;
-    
-    const discountPercent = productData.discount 
-      || (productData.discountPrice && productData.discountPrice < productData.price
-        ? Math.round(((productData.price - productData.discountPrice) / productData.price) * 100)
+    const finalPrice =
+      productData.onSale && productData.discountPrice
+        ? productData.discountPrice
+        : productData.price;
+
+    const discountPercent =
+      productData.discount ||
+      (productData.discountPrice &&
+      productData.discountPrice < productData.price
+        ? Math.round(
+            ((productData.price - productData.discountPrice) /
+              productData.price) *
+              100
+          )
         : 0);
+
+    // ✨ برای سکه از coinphoto.webp استفاده کن
+    const productImage =
+      productData.productType === "coin"
+        ? "/images/products/coinphoto.webp"
+        : productData.productType === "melted_gold"
+        ? "/images/products/goldbarphoto.webp"
+        : productData.images[0];
 
     addToCart({
       _id:
@@ -198,15 +229,19 @@ const ProductDetailPage = () => {
           ? productData.id
           : String(productData.id),
       name: productData.name,
-      image: productData.images[0],
+      image: productImage,
       price: finalPrice,
       quantity: 1,
       code: productData.code,
       weight: productData.specifications.weight,
-      size: selectedSize,
+      // ✨ برای سکه size نداریم، برای بقیه selectedSize
+      size: productData.productType === "coin" ? undefined : selectedSize,
       slug: productData.slug,
       category: productData.categorySlug,
       discount: discountPercent,
+      // ✨ فیلدهای جدید برای سکه و شمش
+      productType: productData.productType,
+      goldInfo: productData.goldInfo,
     });
   };
 
@@ -266,7 +301,7 @@ const ProductDetailPage = () => {
               <span>خانه</span>
             </Link>
             <ChevronLeft className="w-4 h-4 text-primary" />
-            
+
             {/* برای سکه و شمش */}
             {(productData.productType === "coin" ||
               productData.productType === "melted_gold") && (
@@ -286,13 +321,11 @@ const ProductDetailPage = () => {
                   }
                   className="text-primary hover:text-primary/80 transition-colors"
                 >
-                  {productData.productType === "coin"
-                    ? "سکه طلا"
-                    : "شمش طلا"}
+                  {productData.productType === "coin" ? "سکه طلا" : "شمش طلا"}
                 </Link>
               </>
             )}
-            
+
             {/* برای جواهرات */}
             {productData.productType !== "coin" &&
               productData.productType !== "melted_gold" && (
@@ -317,7 +350,7 @@ const ProductDetailPage = () => {
                   )}
                 </>
               )}
-            
+
             <ChevronLeft className="w-4 h-4 text-primary" />
             <span className="text-gray-700">{productData.name}</span>
           </nav>
@@ -335,16 +368,34 @@ const ProductDetailPage = () => {
                 {/* Badges */}
                 <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
                   {/* Discount Badge - اولویت اول */}
-                  {productData.discountPrice && productData.discountPrice < productData.price && (
-                    <div className="bg-red-500 text-white px-4 py-2 rounded text-sm font-bold">
-                      {productData.discount || Math.round(((productData.price - productData.discountPrice) / productData.price) * 100)}٪ تخفیف
-                    </div>
-                  )}
-                  
+                  {productData.discountPrice &&
+                    productData.discountPrice < productData.price && (
+                      <div className="bg-red-500 text-white px-4 py-2 rounded text-sm font-bold">
+                        {productData.discount ||
+                          Math.round(
+                            ((productData.price - productData.discountPrice) /
+                              productData.price) *
+                              100
+                          )}
+                        ٪ تخفیف
+                      </div>
+                    )}
+
                   {/* Low Commission Badge - پیشنهاد ویژه (کم اجرت) */}
                   {productData.lowCommission && (
                     <div className="bg-primary text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 fill-white">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-4 h-4 fill-white"
+                      >
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                       </svg>
                       پیشنهاد ویژه (کم اجرت)
@@ -365,8 +416,8 @@ const ProductDetailPage = () => {
 
                 {/* Zoom Icon */}
                 <div className="absolute top-4 left-4 p-2 bg-white/80 hover:bg-white transition-colors opacity-0 group-hover:opacity-100 pointer-events-none z-20">
-                      <ZoomIn className="w-5 h-5 text-gray-700" />
-                    </div>
+                  <ZoomIn className="w-5 h-5 text-gray-700" />
+                </div>
 
                 {/* Click Overlay to Open Gallery */}
                 <div
@@ -401,28 +452,28 @@ const ProductDetailPage = () => {
                 productData.productType !== "melted_gold" && (
                   <div className="grid grid-cols-5 gap-2">
                     {productData.images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      setSelectedImage(index);
-                      openGallery(index);
-                    }}
-                    className={`relative aspect-square border transition-all cursor-pointer rounded overflow-hidden ${
-                      selectedImage === index
-                        ? "opacity-100 border-primary border-2"
-                        : "opacity-70 hover:opacity-100 border-gray-300 hover:border-primary/50"
-                    }`}
-                  >
-                    <Image
-                      src={image}
-                      alt={`${productData.name} - تصویر ${index + 1}`}
-                      fill
-                      className="object-cover"
-                    />
-                    </button>
-                  ))}
-                </div>
-              )}
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setSelectedImage(index);
+                          openGallery(index);
+                        }}
+                        className={`relative aspect-square border transition-all cursor-pointer rounded overflow-hidden ${
+                          selectedImage === index
+                            ? "opacity-100 border-primary border-2"
+                            : "opacity-70 hover:opacity-100 border-gray-300 hover:border-primary/50"
+                        }`}
+                      >
+                        <Image
+                          src={image}
+                          alt={`${productData.name} - تصویر ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
             </div>
           </div>
 
@@ -442,38 +493,55 @@ const ProductDetailPage = () => {
               {/* Divider */}
               <div className="h-px bg-gray-200 mb-4" />
 
-              {/* Size Selection */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-gray-900">
-                    سایزهای موجود:
-                  </span>
-                  <Link
-                    href="#"
-                    className="text-xs text-primary hover:text-primary/80 transition-colors border border-primary rounded px-3 py-1.5"
-                  >
-                    راهنمای انتخاب سایز
-                  </Link>
-                </div>
-                <div className="flex gap-2 justify-start">
-                  {productData.sizes.map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`px-4 py-2 text-sm border rounded transition-colors ${
-                        selectedSize === size
-                          ? "bg-primary text-white border-primary"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                      }`}
+              {/* Size Selection – فقط برای جواهرات، نه سکه */}
+              {productData.productType !== "coin" && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-900">
+                      سایزهای موجود:
+                    </span>
+                    <Link
+                      href="#"
+                      className="text-xs text-primary hover:text-primary/80 transition-colors border border-primary rounded px-3 py-1.5"
                     >
-                      {size}
-                    </button>
-                  ))}
+                      راهنمای انتخاب سایز
+                    </Link>
+                  </div>
+                  <div className="flex gap-2 justify-start">
+                    {productData.sizes.map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        className={`px-4 py-2 text-sm border rounded transition-colors ${
+                          selectedSize === size
+                            ? "bg-primary text-white border-primary"
+                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Product Specifications */}
               <div className="mb-4 space-y-2 text-sm">
+                {/* نوع سکه (denomination) - فقط برای سکه */}
+                {productData.productType === "coin" &&
+                  productData.goldInfo?.denomination && (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-gray-900 font-medium whitespace-nowrap">
+                        نوع
+                      </span>
+                      <div className="flex-1 border-b border-dotted border-gray-300" />
+                      <span className="text-gray-700 whitespace-nowrap">
+                        {productData.goldInfo.denomination}
+                      </span>
+                    </div>
+                  )}
+
+                {/* وزن – همیشه نمایش داده می‌شود */}
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-gray-900 font-medium whitespace-nowrap">
                     وزن
@@ -483,15 +551,8 @@ const ProductDetailPage = () => {
                     {productData.specifications.weight}
                   </span>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-gray-900 font-medium whitespace-nowrap">
-                    اجرت
-                  </span>
-                  <div className="flex-1 border-b border-dotted border-gray-300" />
-                  <span className="text-gray-700 whitespace-nowrap">
-                    ۲۵۰,۰۰۰ تومان
-                  </span>
-                </div>
+
+                {/* جنس – همیشه نمایش داده می‌شود */}
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-gray-900 font-medium whitespace-nowrap">
                     جنس
@@ -501,74 +562,138 @@ const ProductDetailPage = () => {
                     {productData.specifications.material}
                   </span>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-gray-900 font-medium whitespace-nowrap">
-                    نوع پوشش
-                  </span>
-                  <div className="flex-1 border-b border-dotted border-gray-300" />
-                  <span className="text-gray-700 whitespace-nowrap">
-                    آبکاری طلا
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-gray-900 font-medium whitespace-nowrap">
-                    مناسب برای
-                  </span>
-                  <div className="flex-1 border-b border-dotted border-gray-300" />
-                  <span className="text-gray-700 whitespace-nowrap">
-                    خانم‌ها
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-gray-900 font-medium whitespace-nowrap">
-                    قیمت روز طلای 18 عیار
-                  </span>
-                  <div className="flex-1 border-b border-dotted border-gray-300" />
-                  <span className="text-gray-700 whitespace-nowrap">
-                    {productData.goldPrice.toLocaleString("fa-IR")} تومان
-                  </span>
-                </div>
+
+                {/* خلوص و سال ضرب - فقط برای سکه */}
+                {productData.productType === "coin" && (
+                  <>
+                    {productData.specifications.purity && (
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-gray-900 font-medium whitespace-nowrap">
+                          خلوص
+                        </span>
+                        <div className="flex-1 border-b border-dotted border-gray-300" />
+                        <span className="text-gray-700 whitespace-nowrap">
+                          {productData.specifications.purity}
+                        </span>
+                      </div>
+                    )}
+                    {productData.specifications.mintYear && (
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-gray-900 font-medium whitespace-nowrap">
+                          سال ضرب
+                        </span>
+                        <div className="flex-1 border-b border-dotted border-gray-300" />
+                        <span className="text-gray-700 whitespace-nowrap">
+                          {productData.specifications.mintYear}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* برای جواهرات: اجرت، نوع پوشش، مناسب برای، قیمت روز طلا */}
+                {productData.productType !== "coin" && (
+                  <>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-gray-900 font-medium whitespace-nowrap">
+                        اجرت
+                      </span>
+                      <div className="flex-1 border-b border-dotted border-gray-300" />
+                      <span className="text-gray-700 whitespace-nowrap">
+                        ۲۵۰,۰۰۰ تومان
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-gray-900 font-medium whitespace-nowrap">
+                        نوع پوشش
+                      </span>
+                      <div className="flex-1 border-b border-dotted border-gray-300" />
+                      <span className="text-gray-700 whitespace-nowrap">
+                        آبکاری طلا
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-gray-900 font-medium whitespace-nowrap">
+                        مناسب برای
+                      </span>
+                      <div className="flex-1 border-b border-dotted border-gray-300" />
+                      <span className="text-gray-700 whitespace-nowrap">
+                        خانم‌ها
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-gray-900 font-medium whitespace-nowrap">
+                        قیمت روز طلای 18 عیار
+                      </span>
+                      <div className="flex-1 border-b border-dotted border-gray-300" />
+                      <span className="text-gray-700 whitespace-nowrap">
+                        {productData.goldPrice.toLocaleString("fa-IR")} تومان
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Price */}
               <div className="bg-primary/5 border border-gray-300 rounded p-4 mb-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col gap-2">
-                    {productData.discountPrice && productData.discountPrice < productData.price ? (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex flex-col gap-2 flex-1">
+                    {productData.discountPrice &&
+                    productData.discountPrice < productData.price ? (
                       <>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600">قیمت اصلی:</span>
+                        {/* Badge تخفیف - بالای قیمت */}
+                        {(productData.discount ||
+                          (productData.discountPrice &&
+                            productData.discountPrice < productData.price)) && (
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+                              {productData.discount ||
+                                Math.round(
+                                  ((productData.price -
+                                    productData.discountPrice) /
+                                    productData.price) *
+                                    100
+                                )}
+                              ٪ تخفیف
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm text-gray-600">
+                            قیمت اصلی:
+                          </span>
                           <span className="text-lg text-gray-400 line-through">
                             {productData.price.toLocaleString("fa-IR")} تومان
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600">قیمت با تخفیف:</span>
-                          <span className="text-2xl font-bold text-red-600">
-                            {productData.discountPrice.toLocaleString("fa-IR")} تومان
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm text-gray-600">
+                            قیمت با تخفیف:
                           </span>
-                          {(productData.discount || (productData.discountPrice && productData.discountPrice < productData.price)) && (
-                            <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
-                              {productData.discount || Math.round(((productData.price - productData.discountPrice) / productData.price) * 100)}٪ تخفیف
-                            </span>
-                          )}
+                          <span className="text-2xl font-bold text-red-600">
+                            {productData.discountPrice.toLocaleString("fa-IR")}{" "}
+                            تومان
+                          </span>
                         </div>
                       </>
                     ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">قیمت:</span>
-                    <span className="text-2xl font-bold text-gray-900">
-                      {productData.price.toLocaleString("fa-IR")} تومان
-                    </span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm text-gray-600">قیمت:</span>
+                        <span className="text-2xl font-bold text-gray-900">
+                          {productData.price.toLocaleString("fa-IR")} تومان
+                        </span>
                       </div>
                     )}
                   </div>
-                  <Link
-                    href="#"
-                    className="text-xs text-primary hover:text-primary/80 transition-colors border border-primary rounded px-3 py-1.5"
-                  >
-                    نحوه محاسبه قیمت
-                  </Link>
+                  {/* نحوه محاسبه قیمت – فقط برای جواهرات */}
+                  {productData.productType !== "coin" && (
+                    <Link
+                      href="#"
+                      className="text-xs text-primary hover:text-primary/80 transition-colors border border-primary rounded px-3 py-1.5 whitespace-nowrap self-start sm:self-center"
+                    >
+                      نحوه محاسبه قیمت
+                    </Link>
+                  )}
                 </div>
               </div>
 
@@ -664,7 +789,7 @@ const ProductDetailPage = () => {
                   تضمین اصل بودن کالا
                 </p>
               </div>
-              <div className="flex flex-col items-center text-center">
+              <div className="hidden lg:flex flex-col items-center text-center">
                 <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-1.5 sm:mb-2">
                   <Image
                     src="/images/icons/payment.webp"
@@ -680,7 +805,7 @@ const ProductDetailPage = () => {
                   درگاه پرداخت معتبر و امن
                 </p>
               </div>
-              <div className="flex flex-col items-center text-center">
+              <div className="hidden lg:flex flex-col items-center text-center">
                 <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-1.5 sm:mb-2">
                   <Image
                     src="/images/icons/warranty.webp"
@@ -711,15 +836,12 @@ const ProductDetailPage = () => {
             ))}
           </div>
 
-          {/* ✨ Gold Info Card - برای سکه و شمش */}
+          {/* ✨ Gold Info Card - فقط برای شمش (سکه در specifications نمایش داده می‌شود) */}
           {productData.goldInfo &&
-            (productData.productType === "coin" ||
-              productData.productType === "melted_gold") && (
+            productData.productType === "melted_gold" && (
               <GoldInfoCard
                 goldInfo={productData.goldInfo}
-                productType={
-                  productData.productType as "coin" | "melted_gold"
-                }
+                productType="melted_gold"
               />
             )}
         </div>
@@ -773,8 +895,9 @@ const ProductDetailPage = () => {
               >
                 {productData.relatedProducts.map((product) => {
                   const isActive = activeRelatedProduct === product._id;
-                  const productImage = product.images[0] || "/images/products/product1.webp";
-                  const productHoverImage = product.images[1] || product.images[0] || "/images/products/product1-1.webp";
+                  // ✨ برای همه محصولات مشابه از coinphoto.webp استفاده کن
+                  const productImage = "/images/products/coinphoto.webp";
+                  const productHoverImage = "/images/products/coinphoto.webp";
                   const productHref = `/${productData.categorySlug}/${product.slug}`;
 
                   return (
@@ -794,10 +917,10 @@ const ProductDetailPage = () => {
                         <Link href={productHref}>
                           <div
                             className="relative"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setActiveRelatedProduct(isActive ? null : product._id);
-                            }}
+                            onMouseEnter={() =>
+                              setActiveRelatedProduct(product._id)
+                            }
+                            onMouseLeave={() => setActiveRelatedProduct(null)}
                           >
                             <motion.div
                               whileHover={{ scale: 1.05, y: -8 }}
@@ -843,6 +966,7 @@ const ProductDetailPage = () => {
                                         width: "340px",
                                         height: "439px",
                                       }}
+                                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 340px"
                                     />
                                   </motion.div>
                                 </motion.div>
@@ -878,6 +1002,7 @@ const ProductDetailPage = () => {
                                         width: "340px",
                                         height: "439px",
                                       }}
+                                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 340px"
                                     />
                                   </motion.div>
                                 </motion.div>
@@ -889,14 +1014,19 @@ const ProductDetailPage = () => {
                                   whileHover={{ opacity: 1 }}
                                   transition={{ duration: 0.3 }}
                                 />
-          </div>
+                              </div>
                             </motion.div>
                           </div>
 
-                          {/* Product Name Below Image */}
-                          <p className="mt-3 text-center text-sm font-medium text-gray-800 truncate">
-                            {product.name}
-                          </p>
+                          {/* Product Info */}
+                          <div className="mt-2 text-center">
+                            <h3 className="text-xs font-medium text-gray-800 truncate">
+                              {product.name}
+                            </h3>
+                            <p className="text-xs text-gray-600 mt-0.5">
+                              {product.price.toLocaleString("fa-IR")} تومان
+                            </p>
+                          </div>
                         </Link>
                       </motion.div>
                     </SwiperSlide>
@@ -904,15 +1034,15 @@ const ProductDetailPage = () => {
                 })}
               </Swiper>
 
-              {/* Navigation Arrows */}
+              {/* Custom Navigation Buttons */}
               <button
-                className="related-swiper-button-prev-custom absolute left-2 sm:left-4 top-[45%] -translate-y-1/2 z-10 bg-white/90 hover:bg-white p-2 sm:p-3 border border-gray-300 rounded transition-all hover:scale-110 flex items-center justify-center"
+                className="related-swiper-button-prev-custom absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white p-1.5 sm:p-2 rounded-full shadow-lg transition-all hover:scale-110 flex items-center justify-center"
                 aria-label="Previous"
               >
                 <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               </button>
               <button
-                className="related-swiper-button-next-custom absolute right-2 sm:right-4 top-[45%] -translate-y-1/2 z-10 bg-white/90 hover:bg-white p-2 sm:p-3 border border-gray-300 rounded transition-all hover:scale-110 flex items-center justify-center"
+                className="related-swiper-button-next-custom absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white p-1.5 sm:p-2 rounded-full shadow-lg transition-all hover:scale-110 flex items-center justify-center"
                 aria-label="Next"
               >
                 <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />

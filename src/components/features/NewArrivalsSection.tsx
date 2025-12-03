@@ -4,6 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Autoplay } from "swiper/modules";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Product {
   _id: string;
@@ -105,7 +108,7 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
                     تازه‌ها
                   </h3>
                   <Link
-                    href="/products"
+                    href="/products/women"
                     className="inline-flex items-center px-12 py-4 bg-transparent border border-white text-white font-medium hover:bg-white hover:text-primary transition-all duration-300 text-base"
                   >
                     <span>سایر محصولات</span>
@@ -116,7 +119,7 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
           </div>
 
           {/* Right Side - Products Grid (Scrollable) */}
-          <div className="w-full lg:w-1/2 px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-16 relative z-10 lg:order-1">
+          <div className="w-full lg:w-1/2 px-2 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-16 relative z-10 lg:order-1">
             <div className="max-w-3xl mx-auto">
               {/* Large Image for Mobile/Tablet (Above Products) */}
               <div className="lg:hidden mb-6 sm:mb-8">
@@ -138,7 +141,7 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
                       تازه‌ها
                     </h3>
                     <Link
-                      href="/products"
+                      href="/products/women"
                       className="inline-flex items-center px-8 sm:px-10 py-3 sm:py-4 bg-transparent border border-white text-white font-medium hover:bg-white hover:text-primary transition-all duration-300"
                     >
                       <span className="text-sm sm:text-base">سایر محصولات</span>
@@ -147,8 +150,165 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
                 </div>
               </div>
 
-              {/* Products Grid - 2 columns on mobile/tablet, 2 columns on desktop */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6 mb-6">
+              {/* Mobile Slider */}
+              <div className="block lg:hidden relative new-arrivals-swiper mb-6">
+                <Swiper
+                  modules={[Navigation, Autoplay]}
+                  spaceBetween={12}
+                  slidesPerView={2}
+                  navigation={{
+                    nextEl: ".new-arrivals-button-next-custom",
+                    prevEl: ".new-arrivals-button-prev-custom",
+                  }}
+                  autoplay={{
+                    delay: 3000,
+                    disableOnInteraction: false,
+                    pauseOnMouseEnter: true,
+                  }}
+                  className="!pb-4"
+                >
+                  {products.map((product) => {
+                    const isActive = activeProduct === product._id;
+                    const productImage = product.images[0] || "/images/products/product1.webp";
+                    const productHoverImage = product.images[1] || product.images[0] || "/images/products/product1-1.webp";
+                    const productHref = `/${product.category.slug}/${product.slug}`;
+
+                    return (
+                      <SwiperSlide key={product._id}>
+                        <motion.div
+                          initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                          viewport={{ once: true }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 100,
+                            damping: 15,
+                            mass: 0.8,
+                          }}
+                          className="relative"
+                        >
+                          <Link href={productHref}>
+                            <div
+                              className="relative"
+                              onMouseEnter={() => setActiveProduct(product._id)}
+                              onMouseLeave={() => setActiveProduct(null)}
+                            >
+                              <motion.div
+                                whileHover={{ scale: 1.05, y: -8 }}
+                                whileTap={{ scale: 0.98 }}
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 300,
+                                  damping: 20,
+                                }}
+                                className="relative overflow-visible cursor-pointer w-full"
+                              >
+                                <div className="relative overflow-hidden w-full aspect-square border border-gray-300 rounded">
+                                  {/* Default Image */}
+                                  <motion.div
+                                    className="absolute inset-0"
+                                    initial={false}
+                                    animate={{
+                                      opacity: isActive ? 0 : 1,
+                                    }}
+                                    whileHover={{
+                                      opacity: 0,
+                                    }}
+                                    transition={{
+                                      duration: 0.4,
+                                      ease: "easeInOut",
+                                    }}
+                                  >
+                                    <motion.div
+                                      className="w-full h-full"
+                                      whileHover={{ scale: 1.1 }}
+                                      transition={{ duration: 0.4 }}
+                                    >
+                                      <Image
+                                        src={productImage}
+                                        alt={product.name}
+                                        fill
+                                        className="object-cover w-full h-full"
+                                        sizes="(max-width: 640px) 45vw, 303px"
+                                      />
+                                    </motion.div>
+                                  </motion.div>
+
+                                  {/* Hover Image */}
+                                  <motion.div
+                                    className="absolute inset-0"
+                                    initial={false}
+                                    animate={{
+                                      opacity: isActive ? 1 : 0,
+                                    }}
+                                    whileHover={{
+                                      opacity: 1,
+                                    }}
+                                    transition={{
+                                      duration: 0.4,
+                                      ease: "easeInOut",
+                                    }}
+                                  >
+                                    <motion.div
+                                      className="w-full h-full"
+                                      initial={{ scale: 0.9 }}
+                                      whileHover={{ scale: 1 }}
+                                      transition={{ duration: 0.4 }}
+                                    >
+                                      <Image
+                                        src={productHoverImage}
+                                        alt={product.name}
+                                        fill
+                                        className="object-cover w-full h-full"
+                                        sizes="(max-width: 640px) 45vw, 303px"
+                                      />
+                                    </motion.div>
+                                  </motion.div>
+
+                                  {/* Gradient Overlay on Hover */}
+                                  <motion.div
+                                    className="absolute inset-0 bg-gradient-to-t from-primary/30 to-transparent pointer-events-none"
+                                    initial={{ opacity: 0 }}
+                                    whileHover={{ opacity: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                  />
+                                </div>
+                              </motion.div>
+                            </div>
+
+                            {/* Product Info */}
+                            <div className="mt-2 text-center">
+                              <h3 className="text-xs font-medium text-gray-800 truncate">
+                                {product.name}
+                              </h3>
+                              <p className="text-xs text-gray-600 mt-0.5">
+                                {product.price.toLocaleString("fa-IR")} تومان
+                              </p>
+                            </div>
+                          </Link>
+                        </motion.div>
+                      </SwiperSlide>
+                    );
+                  })}
+                </Swiper>
+
+                {/* Custom Navigation Buttons */}
+                <button
+                  className="new-arrivals-button-prev-custom absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white p-1.5 rounded-full shadow-lg transition-all hover:scale-110 flex items-center justify-center"
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="w-5 h-5 text-primary" />
+                </button>
+                <button
+                  className="new-arrivals-button-next-custom absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white p-1.5 rounded-full shadow-lg transition-all hover:scale-110 flex items-center justify-center"
+                  aria-label="Next"
+                >
+                  <ChevronRight className="w-5 h-5 text-primary" />
+                </button>
+              </div>
+
+              {/* Desktop Grid - 2 columns */}
+              <div className="hidden lg:grid lg:grid-cols-2 gap-6 mb-6">
                 {products.map((product) => {
                   const isActive = activeProduct === product._id;
                   const productImage = product.images[0] || "/images/products/product1.webp";
@@ -202,7 +362,7 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
                                   alt={product.name}
                                   fill
                                   className="object-cover w-full h-full"
-                                  sizes="(max-width: 640px) 45vw, (max-width: 1024px) 40vw, 303px"
+                                  sizes="(max-width: 1024px) 40vw, 303px"
                                 />
                               </motion.div>
                             </motion.div>
@@ -233,7 +393,7 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
                                   alt={product.name}
                                   fill
                                   className="object-cover w-full h-full"
-                                  sizes="(max-width: 640px) 45vw, (max-width: 1024px) 40vw, 303px"
+                                  sizes="(max-width: 1024px) 40vw, 303px"
                                 />
                               </motion.div>
                             </motion.div>
