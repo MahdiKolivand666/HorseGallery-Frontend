@@ -28,11 +28,18 @@ interface FilterSidebarProps {
   onClearAll?: () => void;
 }
 
-const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSidebarProps) => {
+const FilterSidebar = ({
+  onFilterChange,
+  initialFilters,
+  onClearAll,
+}: FilterSidebarProps) => {
   // Filter states
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState([0, 900000000]);
-  const [priceInputs, setPriceInputs] = useState({ min: "0", max: "900000000" });
+  const [priceInputs, setPriceInputs] = useState({
+    min: "0",
+    max: "900000000",
+  });
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedKarats, setSelectedKarats] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -47,10 +54,10 @@ const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSid
   const [onSale, setOnSale] = useState(false);
 
   // Initialize filters from props (فقط یکبار در mount)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (initialFilters) {
-      if (initialFilters.selectedCategories) setSelectedCategories(initialFilters.selectedCategories);
+      if (initialFilters.selectedCategories)
+        setSelectedCategories(initialFilters.selectedCategories);
       if (initialFilters.priceRange) {
         setPriceRange(initialFilters.priceRange);
         setPriceInputs({
@@ -58,13 +65,20 @@ const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSid
           max: initialFilters.priceRange[1].toString(),
         });
       }
-      if (initialFilters.selectedColors) setSelectedColors(initialFilters.selectedColors);
-      if (initialFilters.selectedKarats) setSelectedKarats(initialFilters.selectedKarats);
-      if (initialFilters.selectedBrands) setSelectedBrands(initialFilters.selectedBrands);
-      if (initialFilters.selectedBranches) setSelectedBranches(initialFilters.selectedBranches);
-      if (initialFilters.selectedWages) setSelectedWages(initialFilters.selectedWages);
-      if (initialFilters.selectedSizes) setSelectedSizes(initialFilters.selectedSizes);
-      if (initialFilters.selectedCoatings) setSelectedCoatings(initialFilters.selectedCoatings);
+      if (initialFilters.selectedColors)
+        setSelectedColors(initialFilters.selectedColors);
+      if (initialFilters.selectedKarats)
+        setSelectedKarats(initialFilters.selectedKarats);
+      if (initialFilters.selectedBrands)
+        setSelectedBrands(initialFilters.selectedBrands);
+      if (initialFilters.selectedBranches)
+        setSelectedBranches(initialFilters.selectedBranches);
+      if (initialFilters.selectedWages)
+        setSelectedWages(initialFilters.selectedWages);
+      if (initialFilters.selectedSizes)
+        setSelectedSizes(initialFilters.selectedSizes);
+      if (initialFilters.selectedCoatings)
+        setSelectedCoatings(initialFilters.selectedCoatings);
       if (initialFilters.weightRange) {
         setWeightRange(initialFilters.weightRange);
         setWeightInputs({
@@ -72,11 +86,13 @@ const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSid
           max: initialFilters.weightRange[1].toString(),
         });
       }
-      if (initialFilters.lowCommission !== undefined) setLowCommission(initialFilters.lowCommission);
-      if (initialFilters.inStock !== undefined) setInStock(initialFilters.inStock);
+      if (initialFilters.lowCommission !== undefined)
+        setLowCommission(initialFilters.lowCommission);
+      if (initialFilters.inStock !== undefined)
+        setInStock(initialFilters.inStock);
       if (initialFilters.onSale !== undefined) setOnSale(initialFilters.onSale);
     }
-  }, []); // فقط یکبار در mount اجرا بشه
+  }, [initialFilters]);
 
   // Notify parent component when filters change (with debounce to avoid infinite loop)
   useEffect(() => {
@@ -103,6 +119,7 @@ const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSid
 
     // Cleanup: اگه قبل از 500ms دوباره تغییر کرد، timeout قبلی رو cancel کن
     return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedCategories,
     priceRange,
@@ -117,7 +134,6 @@ const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSid
     lowCommission,
     inStock,
     onSale,
-    // IMPORTANT: onFilterChange رو از dependency ها حذف کردیم
   ]);
 
   // Convert to Persian digits
@@ -129,7 +145,9 @@ const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSid
   const formatPersianNumber = (num: string): string => {
     if (!num) return "";
     // Convert Persian to English first
-    const english = num.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+    const english = num.replace(/[۰-۹]/g, (d) =>
+      "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString()
+    );
     // Remove non-digits
     const digits = english.replace(/\D/g, "");
     if (!digits) return "";
@@ -318,7 +336,7 @@ const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSid
   };
 
   return (
-    <div className="sticky top-[104px] right-0 w-80 h-[calc(100vh-104px)] bg-white shadow-2xl flex flex-col border-l border-gray-200">
+    <div className="h-full bg-white shadow-2xl flex flex-col border-l border-gray-200 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-2 border-b border-gray-200 bg-primary flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -388,7 +406,9 @@ const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSid
                   onChange={(e) => {
                     const value = e.target.value;
                     // Convert Persian to English and remove non-digits
-                    const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                    const english = value.replace(/[۰-۹]/g, (d) =>
+                      "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString()
+                    );
                     const cleanValue = english.replace(/[^0-9]/g, "");
                     const numValue = parseInt(cleanValue) || 0;
                     setPriceInputs({ ...priceInputs, min: cleanValue });
@@ -411,7 +431,9 @@ const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSid
                   onChange={(e) => {
                     const value = e.target.value;
                     // Convert Persian to English and remove non-digits
-                    const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                    const english = value.replace(/[۰-۹]/g, (d) =>
+                      "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString()
+                    );
                     const cleanValue = english.replace(/[^0-9]/g, "");
                     const numValue = parseInt(cleanValue) || 900000000;
                     setPriceInputs({ ...priceInputs, max: cleanValue });
@@ -480,7 +502,9 @@ const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSid
                         onChange={(e) => {
                           const value = e.target.value;
                           // Convert Persian to English and remove non-digits
-                          const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                          const english = value.replace(/[۰-۹]/g, (d) =>
+                            "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString()
+                          );
                           const cleanValue = english.replace(/[^0-9]/g, "");
                           const numValue = parseInt(cleanValue) || 0;
                           setWeightInputs({ ...weightInputs, min: cleanValue });
@@ -503,7 +527,9 @@ const FilterSidebar = ({ onFilterChange, initialFilters, onClearAll }: FilterSid
                         onChange={(e) => {
                           const value = e.target.value;
                           // Convert Persian to English and remove non-digits
-                          const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                          const english = value.replace(/[۰-۹]/g, (d) =>
+                            "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString()
+                          );
                           const cleanValue = english.replace(/[^0-9]/g, "");
                           const numValue = parseInt(cleanValue) || 100;
                           setWeightInputs({ ...weightInputs, max: cleanValue });

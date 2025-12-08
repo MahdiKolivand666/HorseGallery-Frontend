@@ -3,6 +3,7 @@
 @import "swiper/css/effect-fade";
 @import "swiper/css/pagination";
 
+/* @tailwind directives are valid in Tailwind CSS projects */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

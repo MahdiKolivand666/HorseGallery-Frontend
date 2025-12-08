@@ -1,31 +1,36 @@
 "use client";
 
-import { useState, use, useEffect } from "react";
+import { useState, use, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
-  Home,
   ChevronDown,
+  Home,
 } from "lucide-react";
 import FilterDrawer from "@/components/shop/FilterDrawer";
-import FilterSidebar, { FilterState } from "@/components/shop/FilterSidebar";
+import FilterSidebar from "@/components/shop/FilterSidebar";
+import ProductCard from "@/components/shop/ProductCard";
 import { getCategoryData, getSubcategoryData } from "@/constants/categories";
 import { notFound } from "next/navigation";
-import { getProducts, ProductFilters } from "@/lib/api/products";
+import { getProducts } from "@/lib/api/products";
 
 interface Product {
   _id: string;
   name: string;
   price: number;
+  discountPrice?: number;
   images: string[];
   slug: string;
   category: {
     slug: string;
   };
+  onSale?: boolean;
+  discount?: number;
+  lowCommission?: boolean;
 }
 
 interface SubcategoryPageProps {
@@ -50,158 +55,99 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
   const [sortBy, setSortBy] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const productsPerPage = 18;
-  const [filters, setFilters] = useState<FilterState>({
-    selectedCategories: [],
-    priceRange: [0, 900000000],
-    selectedColors: [],
-    selectedKarats: [],
-    selectedBrands: [],
-    selectedBranches: [],
-    selectedWages: [],
-    selectedSizes: [],
-    selectedCoatings: [],
-    weightRange: [0, 100],
-    lowCommission: false,
-    inStock: false,
-    onSale: false,
-  });
+  const productsPerPage = 12;
 
-  // Extract filter values for dependency array
-  const minPrice = filters.priceRange[0];
-  const maxPrice = filters.priceRange[1];
-  const minWeight = filters.weightRange[0];
-  const maxWeight = filters.weightRange[1];
-  const colorsStr = JSON.stringify(filters.selectedColors);
-  const karatsStr = JSON.stringify(filters.selectedKarats);
-  const brandsStr = JSON.stringify(filters.selectedBrands);
-  const branchesStr = JSON.stringify(filters.selectedBranches);
-  const wagesStr = JSON.stringify(filters.selectedWages);
-  const sizesStr = JSON.stringify(filters.selectedSizes);
-  const coatingsStr = JSON.stringify(filters.selectedCoatings);
+  // Filter positioning (like GiftSection)
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [filterStyle, setFilterStyle] = useState<React.CSSProperties>({});
+  const navbarHeight = 105;
 
+  // Fetch products from API
   useEffect(() => {
-    let isMounted = true;
-
     const fetchProducts = async () => {
       try {
         setLoading(true);
-
-        // Build filter parameters for API
-        const apiFilters: ProductFilters = {
-          category: category,
-          subcategory: subcategory,
-          page: currentPage,
-          limit: productsPerPage,
+        const fetchedProducts = await getProducts({
+          category,
+          subcategory,
+          limit: 100,
           sortBy: sortBy || undefined,
-          // Price range
-          minPrice: minPrice,
-          maxPrice: maxPrice,
-          // Colors
-          colors:
-            filters.selectedColors.length > 0
-              ? filters.selectedColors
-              : undefined,
-          // Karats
-          karats:
-            filters.selectedKarats.length > 0
-              ? filters.selectedKarats
-              : undefined,
-          // Brands
-          brands:
-            filters.selectedBrands.length > 0
-              ? filters.selectedBrands
-              : undefined,
-          // Branches
-          branches:
-            filters.selectedBranches.length > 0
-              ? filters.selectedBranches
-              : undefined,
-          // Wages
-          wages:
-            filters.selectedWages.length > 0
-              ? filters.selectedWages
-              : undefined,
-          // Sizes
-          sizes:
-            filters.selectedSizes.length > 0
-              ? filters.selectedSizes
-              : undefined,
-          // Coatings
-          coatings:
-            filters.selectedCoatings.length > 0
-              ? filters.selectedCoatings
-              : undefined,
-          // Weight range
-          minWeight: minWeight,
-          maxWeight: maxWeight,
-          // Stock and sale
-          inStock: filters.inStock || undefined,
-          onSale: filters.onSale || undefined,
-          lowCommission: filters.lowCommission || undefined,
-        };
-
-        const apiProducts = await getProducts(apiFilters);
-
-        if (isMounted) {
-          setProducts(apiProducts);
-        }
+        });
+        setProducts(fetchedProducts);
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
     fetchProducts();
+  }, [category, subcategory, sortBy]);
 
-    return () => {
-      isMounted = false;
+  // Filter positioning
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!sectionRef.current) return;
+
+      const section = sectionRef.current;
+      const rect = section.getBoundingClientRect();
+      const sectionTop = rect.top;
+      const sectionBottom = rect.bottom;
+      const windowHeight = window.innerHeight;
+
+      if (sectionTop <= navbarHeight && sectionBottom > windowHeight) {
+        // Section is being scrolled through - fix the filter
+        setFilterStyle({
+          position: "fixed",
+          top: navbarHeight,
+          right: 0,
+        });
+      } else if (sectionBottom <= windowHeight) {
+        // Section is scrolled past - position at bottom
+        setFilterStyle({
+          position: "absolute",
+          bottom: 0,
+          right: 0,
+        });
+      } else {
+        // Section hasn't reached top yet - position at top
+        setFilterStyle({
+          position: "absolute",
+          top: 0,
+          right: 0,
+        });
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    category,
-    subcategory,
-    currentPage,
-    sortBy,
-    minPrice,
-    maxPrice,
-    minWeight,
-    maxWeight,
-    colorsStr,
-    karatsStr,
-    brandsStr,
-    branchesStr,
-    wagesStr,
-    sizesStr,
-    coatingsStr,
-    filters.lowCommission,
-    filters.inStock,
-    filters.onSale,
-  ]);
 
-  const currentProducts = products;
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // Initial call
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const totalPages = Math.ceil(products.length / productsPerPage);
+  const startIndex = (currentPage - 1) * productsPerPage;
+  const currentProducts = products.slice(
+    startIndex,
+    startIndex + productsPerPage
+  );
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const getPageNumbers = () => {
+  const getPaginationNumbers = () => {
     const pages = [];
-    const showPages = 5;
+    const maxVisible = 5;
 
-    if (totalPages <= showPages) {
+    if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
       if (currentPage <= 3) {
-        for (let i = 1; i <= showPages; i++) {
+        for (let i = 1; i <= 4; i++) {
           pages.push(i);
         }
         pages.push("...");
@@ -209,7 +155,7 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
         pages.push("...");
-        for (let i = totalPages - showPages + 1; i <= totalPages; i++) {
+        for (let i = totalPages - 3; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
@@ -256,17 +202,6 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
     };
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">در حال بارگذاری محصولات...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 pt-[110px] sm:pt-[105px] lg:pt-[105px]">
       {/* Hero Image */}
@@ -279,7 +214,7 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
           priority
         />
         <div className="absolute inset-0 flex items-end justify-start p-6 sm:p-8 lg:p-12">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#e8f5e9] drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] tracking-wide">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white drop-shadow-lg">
             {subcategoryData.name} {categoryData.title}
           </h1>
         </div>
@@ -311,19 +246,18 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex">
+      {/* Main Content with Sidebar */}
+      <div ref={sectionRef} className="relative min-h-[calc(100vh-105px)]">
         {/* Filter Sidebar - Desktop Only */}
-        <aside className="hidden lg:block">
-          <FilterSidebar
-            onFilterChange={setFilters}
-            initialFilters={filters}
-            onClearAll={() => setSortBy("")}
-          />
+        <aside
+          className="hidden lg:block w-80 h-[calc(100vh-105px)] z-40"
+          style={filterStyle}
+        >
+          <FilterSidebar />
         </aside>
 
         {/* Products Section */}
-        <main className="flex-1 px-4 sm:px-6 pt-[5px] pb-6 lg:pb-8">
+        <main className="px-4 sm:px-6 pt-[5px] pb-6 lg:pb-8 lg:mr-80">
           {/* Filter Button & Sort */}
           <div className="flex items-center justify-between lg:justify-end gap-4 my-[1.25rem]">
             {/* Filter Button - Mobile/Tablet */}
@@ -336,126 +270,112 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
             </button>
 
             {/* Sort Dropdown */}
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="appearance-none bg-white border border-gray-300 px-3 py-2 pl-10 pr-3 text-sm text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer text-right"
-                dir="rtl"
-              >
-                <option value="">مرتب کردن</option>
-                <option value="newest">جدیدترین</option>
-                <option value="oldest">قدیمی‌ترین</option>
-                <option value="price-low">ارزان‌ترین</option>
-                <option value="price-high">گران‌ترین</option>
-                <option value="popular">محبوب‌ترین</option>
-              </select>
-              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            <div className="flex items-center">
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="appearance-none bg-white border border-gray-300 pr-4 py-1 pl-8 text-xs text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer text-right"
+                  dir="rtl"
+                >
+                  <option value="" disabled>
+                    مرتب‌سازی
+                  </option>
+                  <option value="newest">جدیدترین</option>
+                  <option value="oldest">قدیمی‌ترین</option>
+                  <option value="price-low">ارزان‌ترین</option>
+                  <option value="price-high">گران‌ترین</option>
+                  <option value="popular">محبوب‌ترین</option>
+                </select>
+                <ChevronDown className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
+              </div>
             </div>
           </div>
 
-          {/* Products Grid with Loading Overlay */}
-          <div className="relative min-h-[600px]">
-            {/* Loading Overlay with Animation */}
-            <AnimatePresence>
-              {loading && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center"
-                >
-                  <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-primary"></div>
-                    <p className="mt-4 text-gray-700 font-medium text-lg">
-                      در حال بارگذاری محصولات...
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Empty State */}
-            {currentProducts.length === 0 && !loading && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="py-20 text-center"
-              >
+          {/* Products Grid */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-gray-600">در حال بارگذاری محصولات...</p>
+                </div>
+              </div>
+            ) : currentProducts.length === 0 ? (
+              <div className="text-center py-20">
                 <p className="text-gray-600 text-lg">
-                  هیچ محصولی با این فیلترها یافت نشد.
+                  هیچ محصولی در این دسته‌بندی یافت نشد.
                 </p>
-                <p className="text-gray-500 text-sm mt-2">
-                  لطفاً فیلترهای دیگری را امتحان کنید.
-                </p>
-              </motion.div>
-            )}
-
-            {/* Products Grid */}
-            {currentProducts.length > 0 && (
-              <div
-                className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6 transition-opacity duration-300 ${
-                  loading ? "opacity-50" : "opacity-100"
-                }`}
-              >
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-6 justify-center">
                 {currentProducts.map((product) => (
-                  <ProductCard key={product._id} product={product} />
+                  <ProductCard
+                    key={product._id}
+                    product={{
+                      name: product.name,
+                      price: `${product.price.toLocaleString("fa-IR")} تومان`,
+                      image:
+                        product.images[0] || "/images/products/product1.webp",
+                      hoverImage:
+                        product.images[1] ||
+                        product.images[0] ||
+                        "/images/products/product1-1.webp",
+                      slug: product.slug,
+                    }}
+                    category={product.category.slug}
+                  />
                 ))}
               </div>
             )}
           </div>
 
           {/* Pagination */}
-          {!loading && currentProducts.length > 0 && totalPages > 1 && (
-            <div className="mt-8 flex justify-center">
-              <nav className="flex items-center gap-1 sm:gap-2" dir="ltr">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`p-2 rounded-lg border transition-colors ${
-                    currentPage === 1
-                      ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                  }`}
-                  aria-label="صفحه قبل"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <div className="flex items-center gap-1">
-                  {getPageNumbers().map((page, index) =>
-                    typeof page === "number" ? (
-                      <button
-                        key={index}
-                        onClick={() => handlePageChange(page)}
-                        className={`min-w-[36px] h-9 px-3 rounded-lg border font-medium text-sm transition-colors ${
-                          currentPage === page
-                            ? "bg-primary text-white border-primary"
-                            : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        {page.toLocaleString("fa-IR")}
-                      </button>
-                    ) : (
-                      <span key={index} className="px-2 text-gray-400">
-                        ...
-                      </span>
-                    )
-                  )}
-                </div>
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`p-2 rounded-lg border transition-colors ${
-                    currentPage === totalPages
-                      ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                  }`}
-                  aria-label="صفحه بعد"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </nav>
+          {totalPages > 1 && (
+            <div className="mt-12 flex items-center justify-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
+                aria-label="صفحه قبل"
+              >
+                <ChevronRight className="w-5 h-5 text-gray-600" />
+              </button>
+
+              {getPaginationNumbers().map((page, index) =>
+                page === "..." ? (
+                  <span
+                    key={`ellipsis-${index}`}
+                    className="px-3 text-gray-500"
+                  >
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page as number)}
+                    className={`min-w-[40px] h-10 px-3 border transition-colors rounded ${
+                      currentPage === page
+                        ? "bg-primary text-white border-primary"
+                        : "border-gray-300 hover:bg-gray-50 text-gray-700"
+                    }`}
+                  >
+                    {String(page)
+                      .split("")
+                      .map((digit) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(digit)])
+                      .join("")}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
+                aria-label="صفحه بعد"
+              >
+                <ChevronLeft className="w-5 h-5 text-gray-600" />
+              </button>
             </div>
           )}
         </main>
@@ -497,64 +417,7 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
       <FilterDrawer
         isOpen={isFilterDrawerOpen}
         onClose={() => setIsFilterDrawerOpen(false)}
-        onFilterChange={setFilters}
-        initialFilters={filters}
-        onClearAll={() => setSortBy("")}
       />
     </div>
   );
 }
-
-// Product Card Component
-const ProductCard = ({ product }: { product: Product }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const productImage = product.images[0] || "/images/products/product1.webp";
-  const productHoverImage =
-    product.images[1] ||
-    product.images[0] ||
-    "/images/products/product1-1.webp";
-  const productHref = `/${product.category.slug}/${product.slug}`;
-
-  return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      className="bg-white overflow-hidden border border-gray-300 rounded"
-    >
-      <Link href={productHref}>
-        <div
-          className="relative aspect-[3/4] overflow-hidden cursor-pointer"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          <Image
-            src={productImage}
-            alt={product.name}
-            fill
-            className={`object-cover transition-opacity duration-300 ${
-              isHovered ? "opacity-0" : "opacity-100"
-            }`}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          />
-          <Image
-            src={productHoverImage}
-            alt={product.name}
-            fill
-            className={`object-cover transition-opacity duration-300 ${
-              isHovered ? "opacity-100" : "opacity-0"
-            }`}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          />
-        </div>
-
-        <div className="p-3 sm:p-4 text-center">
-          <h3 className="text-sm font-medium text-gray-800 truncate mb-1">
-            {product.name}
-          </h3>
-          <p className="text-xs text-gray-600">
-            {product.price.toLocaleString("fa-IR")} تومان
-          </p>
-        </div>
-      </Link>
-    </motion.div>
-  );
-};

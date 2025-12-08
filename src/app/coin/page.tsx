@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronLeft, ChevronRight, Home } from "lucide-react";
 import { getProducts } from "@/lib/api/products";
+import CoinGoldProductCard from "@/components/shop/CoinGoldProductCard";
 
 interface Product {
   _id: string;
@@ -27,7 +27,7 @@ export default function CoinPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("");
-  const productsPerPage = 18;
+  const productsPerPage = 12;
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -150,115 +150,89 @@ export default function CoinPage() {
       </div>
 
       {/* Main Content */}
-      <main className="p-4 sm:p-6 lg:p-8">
-        {/* Sort - گزینه‌های مخصوص سکه */}
-        <div className="flex items-center justify-end mb-6">
+      <main className="px-4 sm:px-6 pt-[5px] pb-6 lg:pb-8">
+        {/* Sort */}
+        <div className="flex items-center justify-end gap-4 my-[1.25rem]">
           <div className="relative">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 px-3 py-2 pl-10 pr-3 text-sm text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer text-right rounded"
+              className="appearance-none bg-white border border-gray-300 pr-4 py-1 pl-8 text-xs text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer text-right"
               dir="rtl"
             >
-              <option value="">مرتب کردن</option>
+              <option value="" disabled>
+                مرتب‌سازی
+              </option>
               <option value="inStock">موجود</option>
               <option value="outOfStock">ناموجود</option>
               <option value="weight-desc">از بیشترین وزن به کمترین</option>
               <option value="weight-asc">از کمترین وزن به بیشترین</option>
             </select>
-            <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            <ChevronDown className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
           </div>
         </div>
 
-        {/* Products Grid */}
-        <div className="relative min-h-[600px]">
-          <AnimatePresence>
-            {loading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center"
-              >
-                <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-primary"></div>
-                  <p className="mt-4 text-gray-700 font-medium text-lg">
-                    در حال بارگذاری محصولات...
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Empty State */}
-          {currentProducts.length === 0 && !loading && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="py-20 text-center"
-            >
-              <p className="text-gray-600 text-lg">
-                هیچ محصولی با این فیلترها یافت نشد.
-              </p>
-              <p className="text-gray-500 text-sm mt-2">
-                لطفاً فیلترهای دیگری را امتحان کنید.
-              </p>
-            </motion.div>
-          )}
-
-          {/* Products Grid */}
-          {currentProducts.length > 0 && (
-            <div
-              className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6 transition-opacity duration-300 ${
-                loading ? "opacity-50" : "opacity-100"
-              }`}
-            >
-              {currentProducts.map((product) => (
-                <ProductCard key={product._id} product={product} />
-              ))}
-            </div>
-          )}
+        {/* Products Grid - 4 columns */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {currentProducts.map((product) => (
+              <CoinGoldProductCard
+                key={product._id}
+                product={{
+                  name: product.name,
+                  price: `${product.price.toLocaleString("fa-IR")} تومان`,
+                  image: "/images/products/coinphoto.webp",
+                  hoverImage: "/images/products/coinphoto.webp",
+                  slug: product.slug,
+                }}
+                category={product.category.slug}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-12">
+          <div className="mt-12 flex items-center justify-center gap-2">
             <button
-              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+              onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
+              aria-label="صفحه قبل"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-5 h-5 text-gray-600" />
             </button>
 
             {getPaginationNumbers().map((page, index) =>
               page === "..." ? (
-                <span key={`ellipsis-${index}`} className="px-2 text-gray-500">
+                <span key={`ellipsis-${index}`} className="px-3 text-gray-500">
                   ...
                 </span>
               ) : (
                 <button
                   key={page}
                   onClick={() => handlePageChange(page as number)}
-                  className={`min-w-[40px] h-10 px-3 border rounded transition-colors ${
+                  className={`min-w-[40px] h-10 px-3 border transition-colors rounded ${
                     currentPage === page
                       ? "bg-primary text-white border-primary"
-                      : "border-gray-300 hover:bg-gray-50"
+                      : "border-gray-300 hover:bg-gray-50 text-gray-700"
                   }`}
                 >
-                  {page}
+                  {String(page)
+                    .split("")
+                    .map((digit) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(digit)])
+                    .join("")}
                 </button>
               )
             )}
 
             <button
-              onClick={() =>
-                handlePageChange(Math.min(totalPages, currentPage + 1))
-              }
+              onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
+              aria-label="صفحه بعد"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
           </div>
         )}
@@ -266,54 +240,3 @@ export default function CoinPage() {
     </div>
   );
 }
-
-// Product Card Component
-const ProductCard = ({ product }: { product: Product }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const productImage = "/images/products/coinphoto.webp";
-  const productHoverImage = "/images/products/coinphoto.webp";
-  const productHref = `/${product.category.slug}/${product.slug}`;
-
-  return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      className="bg-white overflow-hidden border border-gray-300 rounded"
-    >
-      <Link href={productHref}>
-        <div
-          className="relative aspect-[3/4] overflow-hidden cursor-pointer"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          <Image
-            src={productImage}
-            alt={product.name}
-            fill
-            className={`object-cover transition-opacity duration-300 ${
-              isHovered ? "opacity-0" : "opacity-100"
-            }`}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          />
-          <Image
-            src={productHoverImage}
-            alt={product.name}
-            fill
-            className={`object-cover transition-opacity duration-300 ${
-              isHovered ? "opacity-100" : "opacity-0"
-            }`}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          />
-        </div>
-
-        <div className="p-3 sm:p-4 text-center">
-          <h3 className="text-sm font-medium text-gray-800 truncate mb-1">
-            {product.name}
-          </h3>
-          <p className="text-xs text-gray-600">
-            {product.price.toLocaleString("fa-IR")} تومان
-          </p>
-        </div>
-      </Link>
-    </motion.div>
-  );
-};
