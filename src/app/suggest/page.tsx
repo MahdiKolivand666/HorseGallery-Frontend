@@ -100,16 +100,28 @@ export default function SuggestPage() {
         setLoading(true);
 
         // محصولات تخفیف‌دار
-        const sale = await getProducts({ onSale: true, limit: 12 });
-        setSaleProducts(sale);
+        const saleResponse = await getProducts({
+          productType: "jewelry",
+          onSale: true,
+          limit: 12,
+        });
+        setSaleProducts(saleResponse.data);
 
         // محصولات با اجرت کم
-        const special = await getProducts({ lowCommission: true, limit: 12 });
-        setSpecialProducts(special);
+        const specialResponse = await getProducts({
+          productType: "jewelry",
+          lowCommission: true,
+          limit: 12,
+        });
+        setSpecialProducts(specialResponse.data);
 
         // محصولات پرفروش
-        const popular = await getProducts({ sortBy: "popular", limit: 8 });
-        setPopularProducts(popular);
+        const popularResponse = await getProducts({
+          productType: "jewelry",
+          sortBy: "popular",
+          limit: 8,
+        });
+        setPopularProducts(popularResponse.data);
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
@@ -297,10 +309,19 @@ export default function SuggestPage() {
                                   key={product._id}
                                   product={{
                                     name: product.name,
-                                    price: priceText,
+                                    price: `${product.price.toLocaleString(
+                                      "fa-IR"
+                                    )} تومان`,
+                                    discountPrice: product.discountPrice
+                                      ? `${product.discountPrice.toLocaleString(
+                                          "fa-IR"
+                                        )} تومان`
+                                      : undefined,
                                     image: productImage,
                                     hoverImage: productHoverImage,
                                     slug: product.slug,
+                                    onSale: product.onSale,
+                                    discount: product.discount,
                                   }}
                                   category={product.category.slug}
                                 />
@@ -349,9 +370,17 @@ export default function SuggestPage() {
                                     price: `${product.price.toLocaleString(
                                       "fa-IR"
                                     )} تومان`,
+                                    discountPrice: product.discountPrice
+                                      ? `${product.discountPrice.toLocaleString(
+                                          "fa-IR"
+                                        )} تومان`
+                                      : undefined,
                                     image: productImage,
                                     hoverImage: productHoverImage,
                                     slug: product.slug,
+                                    onSale: product.onSale,
+                                    discount: product.discount,
+                                    lowCommission: product.lowCommission, // ✅ از backend
                                   }}
                                   category={product.category.slug}
                                 />
@@ -500,9 +529,14 @@ const PopularProductCard = ({ product }: { product: Product }) => {
       product={{
         name: product.name,
         price: `${product.price.toLocaleString("fa-IR")} تومان`,
+        discountPrice: product.discountPrice
+          ? `${product.discountPrice.toLocaleString("fa-IR")} تومان`
+          : undefined,
         image: productImage,
         hoverImage: productHoverImage,
         slug: product.slug,
+        onSale: product.onSale,
+        discount: product.discount,
       }}
       category={product.category.slug}
     />

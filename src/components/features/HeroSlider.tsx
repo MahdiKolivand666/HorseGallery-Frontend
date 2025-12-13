@@ -23,7 +23,7 @@ const HeroSlider = () => {
   };
 
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-gray-900">
+    <section className="relative h-[60vh] sm:h-[70vh] md:h-[80vh] lg:min-h-screen min-h-[400px] sm:min-h-[500px] w-full overflow-hidden bg-gray-900">
       {/* Desktop Slider */}
       <div className="hidden lg:block absolute inset-0 z-0">
         <Swiper
@@ -47,7 +47,7 @@ const HeroSlider = () => {
                   alt={`Desktop Slide ${index + 1}`}
                   fill
                   priority={index === 0}
-                  className="object-cover"
+                  className="object-cover object-center sm:object-top"
                   sizes="100vw"
                   quality={85}
                   unoptimized

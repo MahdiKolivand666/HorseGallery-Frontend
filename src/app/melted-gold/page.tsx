@@ -33,12 +33,12 @@ export default function MeltedGoldPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const goldBarProducts = await getProducts({
+        const response = await getProducts({
           productType: "melted_gold",
           limit: 100,
           sortBy: sortBy || undefined,
         });
-        setProducts(goldBarProducts);
+        setProducts(response.data);
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
@@ -98,7 +98,7 @@ export default function MeltedGoldPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-gray-600">در حال بارگذاری محصولات...</p>
@@ -108,7 +108,7 @@ export default function MeltedGoldPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-[110px] sm:pt-[105px] lg:pt-[105px]">
+    <div className="min-h-screen bg-white pt-[110px] sm:pt-[105px] lg:pt-[105px]">
       {/* Hero Image */}
       <div className="relative w-full h-64 sm:h-80 lg:h-96">
         <Image
@@ -135,13 +135,6 @@ export default function MeltedGoldPage() {
             >
               <Home className="w-4 h-4" />
               <span>خانه</span>
-            </Link>
-            <ChevronLeft className="w-4 h-4 text-primary" />
-            <Link
-              href="/category/gold-investment"
-              className="text-primary hover:text-primary/80 transition-colors"
-            >
-              سرمایه‌گذاری طلا
             </Link>
             <ChevronLeft className="w-4 h-4 text-primary" />
             <span className="text-primary font-medium">شمش طلا</span>

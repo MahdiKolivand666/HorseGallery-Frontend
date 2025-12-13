@@ -154,9 +154,8 @@ const CategoryGrid = () => {
                             <Image
                               src={category.image}
                               alt={category.name}
-                              width={360}
-                              height={360}
-                              className="object-cover w-full h-full"
+                              fill
+                              className="object-cover"
                               sizes="(max-width: 1024px) 50vw, 360px"
                             />
                           </motion.div>
@@ -186,9 +185,8 @@ const CategoryGrid = () => {
                             <Image
                               src={category.hoverImage}
                               alt={category.name}
-                              width={360}
-                              height={360}
-                              className="object-cover w-full h-full"
+                              fill
+                              className="object-cover"
                               sizes="(max-width: 1024px) 50vw, 360px"
                             />
                           </motion.div>

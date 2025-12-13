@@ -126,7 +126,21 @@ export interface ProductFilters {
   sortBy?: string;
 }
 
-export async function getProducts(params?: ProductFilters): Promise<Product[]> {
+// ✨ Interface جدید برای Response با Pagination
+export interface ProductResponse {
+  data: Product[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+// ✨ تابع جدید که ProductResponse برمی‌گرداند (طبق مستندات API)
+export async function getProducts(
+  params?: ProductFilters
+): Promise<ProductResponse> {
   try {
     const queryParams = new URLSearchParams();
     if (params) {
@@ -158,36 +172,110 @@ export async function getProducts(params?: ProductFilters): Promise<Product[]> {
 
     const res = await fetch(url, fetchOptions);
 
+    // Check content type first
+    const contentType = res.headers.get("content-type");
+    const isJson = contentType && contentType.includes("application/json");
+
+    // Handle non-OK responses
     if (!res.ok) {
-      const errorText = await res.text();
-      console.error(
-        `Failed to fetch products: ${res.status}`,
-        errorText.substring(0, 200)
-      );
-      throw new Error(`Failed to fetch products: ${res.status}`);
+      let errorMessage = `Failed to fetch products: ${res.status}`;
+      try {
+        if (isJson) {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } else {
+          const errorText = await res.text();
+          errorMessage = errorText || errorMessage;
+        }
+      } catch {
+        // If we can't parse error, use default message
+      }
+      throw new Error(errorMessage);
     }
 
-    // Check content type
-    const contentType = res.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
+    // Check if response is JSON (even if status is OK, content might not be JSON)
+    if (!isJson) {
+      // Read the text response (could be rate limiting message, etc.)
       const text = await res.text();
-      console.error("Response is not JSON:", text.substring(0, 200));
-      return [];
+      const errorMessage =
+        text.trim() || "Response is not JSON. Please try again later.";
+      // Throw error - it will be caught and handled in catch block
+      throw new Error(errorMessage);
     }
 
     const data = await res.json();
 
-    // اگه response یک object با data property باشه، اون رو extract کن
+    // ✨ طبق مستندات API، response باید شامل data و pagination باشد
     if (data && typeof data === "object" && "data" in data) {
-      return data.data || [];
+      return {
+        data: Array.isArray(data.data) ? data.data : [],
+        pagination: data.pagination || {
+          total: data.data?.length || 0,
+          page: params?.page || 1,
+          limit: params?.limit || 18,
+          totalPages: Math.ceil(
+            (data.data?.length || 0) / (params?.limit || 18)
+          ),
+        },
+      };
     }
 
-    // اگه مستقیم array باشه، برگردون
-    return Array.isArray(data) ? data : [];
+    // ✨ Fallback: اگر response مستقیم array باشد (backward compatibility)
+    if (Array.isArray(data)) {
+      return {
+        data: data,
+        pagination: {
+          total: data.length,
+          page: params?.page || 1,
+          limit: params?.limit || 18,
+          totalPages: Math.ceil(data.length / (params?.limit || 18)),
+        },
+      };
+    }
+
+    // ✨ Fallback: اگر response خالی باشد
+    return {
+      data: [],
+      pagination: {
+        total: 0,
+        page: params?.page || 1,
+        limit: params?.limit || 18,
+        totalPages: 0,
+      },
+    };
   } catch (error) {
-    console.error("Error fetching products:", error);
-    return [];
+    const errorMessage =
+      error instanceof Error ? error.message : "خطا در دریافت محصولات";
+
+    // Only log errors that are not rate limiting or expected errors
+    if (
+      !errorMessage.includes("درخواست") &&
+      !errorMessage.includes("rate limit") &&
+      !errorMessage.includes("limit")
+    ) {
+      console.error("Error fetching products:", errorMessage);
+    }
+
+    // Return empty response instead of throwing to prevent breaking the UI
+    // Components should handle empty data gracefully
+    return {
+      data: [],
+      pagination: {
+        total: 0,
+        page: params?.page || 1,
+        limit: params?.limit || 18,
+        totalPages: 0,
+      },
+    };
   }
+}
+
+// ✨ تابع helper برای backward compatibility (برمی‌گرداند فقط array)
+export async function getProductsArray(
+  params?: ProductFilters
+): Promise<Product[]> {
+  const response = await getProducts(params);
+  return response.data;
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {

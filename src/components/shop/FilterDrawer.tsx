@@ -15,13 +15,22 @@ interface FilterDrawerProps {
   onClearAll?: () => void;
 }
 
-const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClearAll }: FilterDrawerProps) => {
+const FilterDrawer = ({
+  isOpen,
+  onClose,
+  onFilterChange,
+  initialFilters,
+  onClearAll,
+}: FilterDrawerProps) => {
   const [mounted, setMounted] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([
     0, 900000000,
   ]);
-  const [priceInputs, setPriceInputs] = useState({ min: "0", max: "900000000" });
+  const [priceInputs, setPriceInputs] = useState({
+    min: "0",
+    max: "900000000",
+  });
   const [weightRange, setWeightRange] = useState<[number, number]>([0, 100]);
   const [weightInputs, setWeightInputs] = useState({ min: "0", max: "100" });
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
@@ -44,7 +53,9 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
   const formatPersianNumber = (num: string): string => {
     if (!num) return "";
     // Convert Persian to English first
-    const english = num.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+    const english = num.replace(/[۰-۹]/g, (d) =>
+      "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString()
+    );
     // Remove non-digits
     const digits = english.replace(/\D/g, "");
     if (!digits) return "";
@@ -104,13 +115,20 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
           max: initialFilters.priceRange[1].toString(),
         });
       }
-      if (initialFilters.selectedColors) setSelectedColors(initialFilters.selectedColors);
-      if (initialFilters.selectedKarats) setSelectedKarats(initialFilters.selectedKarats);
-      if (initialFilters.selectedBrands) setSelectedBrands(initialFilters.selectedBrands);
-      if (initialFilters.selectedBranches) setSelectedBranches(initialFilters.selectedBranches);
-      if (initialFilters.selectedWages) setSelectedWages(initialFilters.selectedWages);
-      if (initialFilters.selectedSizes) setSelectedSizes(initialFilters.selectedSizes);
-      if (initialFilters.selectedCoatings) setSelectedCoatings(initialFilters.selectedCoatings);
+      if (initialFilters.selectedColors)
+        setSelectedColors(initialFilters.selectedColors);
+      if (initialFilters.selectedKarats)
+        setSelectedKarats(initialFilters.selectedKarats);
+      if (initialFilters.selectedBrands)
+        setSelectedBrands(initialFilters.selectedBrands);
+      if (initialFilters.selectedBranches)
+        setSelectedBranches(initialFilters.selectedBranches);
+      if (initialFilters.selectedWages)
+        setSelectedWages(initialFilters.selectedWages);
+      if (initialFilters.selectedSizes)
+        setSelectedSizes(initialFilters.selectedSizes);
+      if (initialFilters.selectedCoatings)
+        setSelectedCoatings(initialFilters.selectedCoatings);
       if (initialFilters.weightRange) {
         setWeightRange(initialFilters.weightRange);
         setWeightInputs({
@@ -118,8 +136,10 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
           max: initialFilters.weightRange[1].toString(),
         });
       }
-      if (initialFilters.lowCommission !== undefined) setLowCommission(initialFilters.lowCommission);
-      if (initialFilters.inStock !== undefined) setInStock(initialFilters.inStock);
+      if (initialFilters.lowCommission !== undefined)
+        setLowCommission(initialFilters.lowCommission);
+      if (initialFilters.inStock !== undefined)
+        setInStock(initialFilters.inStock);
       if (initialFilters.onSale !== undefined) setOnSale(initialFilters.onSale);
     }
   }, []); // فقط یکبار در mount اجرا بشه
@@ -154,17 +174,13 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
 
   const toggleKarat = (karat: string) => {
     setSelectedKarats((prev) =>
-      prev.includes(karat)
-        ? prev.filter((k) => k !== karat)
-        : [...prev, karat]
+      prev.includes(karat) ? prev.filter((k) => k !== karat) : [...prev, karat]
     );
   };
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) =>
-      prev.includes(brand)
-        ? prev.filter((b) => b !== brand)
-        : [...prev, brand]
+      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
     );
   };
 
@@ -357,7 +373,9 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
                         onChange={(e) => {
                           const value = e.target.value;
                           // Convert Persian to English and remove non-digits
-                          const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                          const english = value.replace(/[۰-۹]/g, (d) =>
+                            "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString()
+                          );
                           const cleanValue = english.replace(/[^0-9]/g, "");
                           const numValue = parseInt(cleanValue) || 0;
                           setPriceInputs({ ...priceInputs, min: cleanValue });
@@ -380,7 +398,9 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
                         onChange={(e) => {
                           const value = e.target.value;
                           // Convert Persian to English and remove non-digits
-                          const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                          const english = value.replace(/[۰-۹]/g, (d) =>
+                            "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString()
+                          );
                           const cleanValue = english.replace(/[^0-9]/g, "");
                           const numValue = parseInt(cleanValue) || 900000000;
                           setPriceInputs({ ...priceInputs, max: cleanValue });
@@ -443,10 +463,15 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
                           onChange={(e) => {
                             const value = e.target.value;
                             // Convert Persian to English and remove non-digits
-                            const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                            const english = value.replace(/[۰-۹]/g, (d) =>
+                              "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString()
+                            );
                             const cleanValue = english.replace(/[^0-9]/g, "");
                             const numValue = parseInt(cleanValue) || 0;
-                            setWeightInputs({ ...weightInputs, min: cleanValue });
+                            setWeightInputs({
+                              ...weightInputs,
+                              min: cleanValue,
+                            });
                             setWeightRange([
                               Math.min(numValue, weightRange[1]),
                               weightRange[1],
@@ -466,10 +491,15 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
                           onChange={(e) => {
                             const value = e.target.value;
                             // Convert Persian to English and remove non-digits
-                            const english = value.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
+                            const english = value.replace(/[۰-۹]/g, (d) =>
+                              "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString()
+                            );
                             const cleanValue = english.replace(/[^0-9]/g, "");
                             const numValue = parseInt(cleanValue) || 100;
-                            setWeightInputs({ ...weightInputs, max: cleanValue });
+                            setWeightInputs({
+                              ...weightInputs,
+                              max: cleanValue,
+                            });
                             setWeightRange([
                               weightRange[0],
                               Math.max(numValue, weightRange[0]),
@@ -490,9 +520,7 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
                   onClick={() => toggleSection("color")}
                   className="w-full flex items-center justify-between py-1"
                 >
-                  <h3 className="text-sm font-medium text-gray-900">
-                    رنگ
-                  </h3>
+                  <h3 className="text-sm font-medium text-gray-900">رنگ</h3>
                   {openSections.includes("color") ? (
                     <ChevronUp className="w-4 h-4 text-gray-600" />
                   ) : (
@@ -568,9 +596,7 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
                   onClick={() => toggleSection("brand")}
                   className="w-full flex items-center justify-between py-1"
                 >
-                  <h3 className="text-sm font-medium text-gray-900">
-                    برند
-                  </h3>
+                  <h3 className="text-sm font-medium text-gray-900">برند</h3>
                   {openSections.includes("brand") ? (
                     <ChevronUp className="w-4 h-4 text-gray-600" />
                   ) : (
@@ -603,9 +629,7 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
                   onClick={() => toggleSection("branch")}
                   className="w-full flex items-center justify-between py-1"
                 >
-                  <h3 className="text-sm font-medium text-gray-900">
-                    شعبه
-                  </h3>
+                  <h3 className="text-sm font-medium text-gray-900">شعبه</h3>
                   {openSections.includes("branch") ? (
                     <ChevronUp className="w-4 h-4 text-gray-600" />
                   ) : (
@@ -741,11 +765,17 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
                     type="checkbox"
                     checked={inStock}
                     onChange={(e) => setInStock(e.target.checked)}
-                    className={`toggle toggle-sm ${inStock ? 'toggle-primary' : ''}`}
-                    style={!inStock ? {
-                      backgroundColor: '#d1d5db',
-                      borderColor: '#d1d5db'
-                    } : undefined}
+                    className={`toggle toggle-sm ${
+                      inStock ? "toggle-primary" : ""
+                    }`}
+                    style={
+                      !inStock
+                        ? {
+                            backgroundColor: "#d1d5db",
+                            borderColor: "#d1d5db",
+                          }
+                        : undefined
+                    }
                   />
                 </label>
               </div>
@@ -760,11 +790,17 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
                     type="checkbox"
                     checked={onSale}
                     onChange={(e) => setOnSale(e.target.checked)}
-                    className={`toggle toggle-sm ${onSale ? 'toggle-primary' : ''}`}
-                    style={!onSale ? {
-                      backgroundColor: '#d1d5db',
-                      borderColor: '#d1d5db'
-                    } : undefined}
+                    className={`toggle toggle-sm ${
+                      onSale ? "toggle-primary" : ""
+                    }`}
+                    style={
+                      !onSale
+                        ? {
+                            backgroundColor: "#d1d5db",
+                            borderColor: "#d1d5db",
+                          }
+                        : undefined
+                    }
                   />
                 </label>
               </div>
@@ -779,11 +815,17 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
                     type="checkbox"
                     checked={lowCommission}
                     onChange={(e) => setLowCommission(e.target.checked)}
-                    className={`toggle toggle-sm ${lowCommission ? 'toggle-primary' : ''}`}
-                    style={!lowCommission ? {
-                      backgroundColor: '#d1d5db',
-                      borderColor: '#d1d5db'
-                    } : undefined}
+                    className={`toggle toggle-sm ${
+                      lowCommission ? "toggle-primary" : ""
+                    }`}
+                    style={
+                      !lowCommission
+                        ? {
+                            backgroundColor: "#d1d5db",
+                            borderColor: "#d1d5db",
+                          }
+                        : undefined
+                    }
                   />
                 </label>
               </div>
@@ -814,4 +856,3 @@ const FilterDrawer = ({ isOpen, onClose, onFilterChange, initialFilters, onClear
 };
 
 export default FilterDrawer;
-

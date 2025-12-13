@@ -1,97 +1,180 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
-
-import { GoldInfo } from "@/lib/api/products";
-
-interface CartItem {
-  _id: string;
-  name: string;
-  image: string;
-  price: number;
-  quantity: number;
-  code: string;
-  weight: string;
-  size?: string;
-  slug: string;
-  category: string;
-  discount?: number;
-  // ✨ فیلدهای جدید برای سکه و شمش
-  productType?: "jewelry" | "coin" | "melted_gold";
-  goldInfo?: GoldInfo;
-}
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from "react";
+import {
+  CartResponse,
+  CartItem,
+  getCart,
+  addToCart as addToCartAPI,
+  updateCartItem,
+  removeFromCart as removeFromCartAPI,
+  mergeCart as mergeCartAPI,
+} from "@/lib/api/cart";
 
 interface CartContextType {
+  cart: CartResponse | null;
+  loading: boolean;
+  error: string | null;
   isCartOpen: boolean;
-  cartItems: CartItem[];
   openCart: () => void;
   closeCart: () => void;
-  addToCart: (item: CartItem) => void;
-  removeFromCart: (_id: string) => void;
-  updateQuantity: (_id: string, quantity: number) => void;
+  reloadCart: () => Promise<void>;
+  addToCart: (
+    productId: string,
+    quantity?: number,
+    size?: string
+  ) => Promise<void>;
+  removeFromCart: (itemId: string) => Promise<void>;
+  updateQuantity: (itemId: string, quantity: number) => Promise<void>;
+  mergeCart: () => Promise<void>;
+  // Helper values
+  totalItems: number;
+  totalPrice: number;
+  itemCount: number;
+  remainingSeconds: number;
+  isGuest: boolean; // آیا کاربر مهمان است؟
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const [cart, setCart] = useState<CartResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+  const loadCart = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const cartData = await getCart();
+      setCart(cartData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "خطا در دریافت سبد خرید";
+      setError(errorMessage);
+      setCart(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load cart on mount
+  useEffect(() => {
+    loadCart();
+  }, [loadCart]);
 
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
 
-  const addToCart = (item: CartItem) => {
-    setCartItems((prev) => {
-      // ✨ برای سکه: فقط _id رو چک کن (چون size نداره)
-      // برای بقیه: _id و size رو چک کن
-      const existingItem = prev.find((i) => {
-        if (item.productType === "coin") {
-          return i._id === item._id && i.productType === "coin";
-        }
-        return i._id === item._id && i.size === item.size;
-      });
-      
-      if (existingItem) {
-        return prev.map((i) => {
-          if (item.productType === "coin") {
-            return i._id === item._id && i.productType === "coin"
-              ? { ...i, quantity: i.quantity + 1 }
-              : i;
-          }
-          return i._id === item._id && i.size === item.size
-            ? { ...i, quantity: i.quantity + 1 }
-            : i;
-        });
-      }
-      return [...prev, { ...item, quantity: 1 }];
-    });
-    openCart();
-  };
-
-  const removeFromCart = (_id: string) => {
-    setCartItems((prev) => prev.filter((item) => item._id !== _id));
-  };
-
-  const updateQuantity = (_id: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(_id);
-      return;
+  const addToCart = async (
+    productId: string,
+    quantity: number = 1,
+    size?: string
+  ) => {
+    try {
+      setError(null);
+      const updatedCart = await addToCartAPI(productId, quantity, size);
+      setCart(updatedCart);
+      setIsCartOpen(true);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "خطا در افزودن محصول";
+      setError(errorMessage);
+      throw err;
     }
-    setCartItems((prev) =>
-      prev.map((item) => (item._id === _id ? { ...item, quantity } : item))
-    );
   };
+
+  const removeFromCart = async (itemId: string) => {
+    try {
+      setError(null);
+      const updatedCart = await removeFromCartAPI(itemId);
+      setCart(updatedCart);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "خطا در حذف محصول";
+      setError(errorMessage);
+      // اگر خطای 403 (Forbidden) رخ داد، سبد را reload کن
+      if (
+        errorMessage.includes("دسترسی") ||
+        errorMessage.includes("Forbidden")
+      ) {
+        await loadCart();
+      }
+      throw err;
+    }
+  };
+
+  const updateQuantity = async (itemId: string, quantity: number) => {
+    try {
+      if (quantity <= 0) {
+        await removeFromCart(itemId);
+        return;
+      }
+      setError(null);
+      const updatedCart = await updateCartItem(itemId, quantity);
+      setCart(updatedCart);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "خطا در به‌روزرسانی تعداد";
+      setError(errorMessage);
+      // اگر خطای 403 (Forbidden) رخ داد، سبد را reload کن
+      if (
+        errorMessage.includes("دسترسی") ||
+        errorMessage.includes("Forbidden")
+      ) {
+        await loadCart();
+      }
+      throw err;
+    }
+  };
+
+  const mergeCart = async () => {
+    try {
+      setError(null);
+      const mergedCart = await mergeCartAPI();
+      setCart(mergedCart);
+      // بعد از merge موفق، سبد را reload کن
+      await loadCart();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "خطا در merge کردن سبد";
+      setError(errorMessage);
+      // اگر merge خطا داد، فقط سبد را reload کن
+      await loadCart();
+    }
+  };
+
+  // بررسی اینکه آیا کاربر مهمان است
+  const isGuest = !cart?.cart?.user && !!cart?.cart?.sessionId;
 
   return (
     <CartContext.Provider
       value={{
+        cart,
+        loading,
+        error,
         isCartOpen,
-        cartItems,
         openCart,
         closeCart,
+        reloadCart: loadCart,
         addToCart,
         removeFromCart,
         updateQuantity,
+        mergeCart,
+        // Helper values from backend
+        totalItems: cart?.totalItems || 0,
+        totalPrice: cart?.totalPrice || 0,
+        itemCount: cart?.itemCount || 0,
+        remainingSeconds: cart?.remainingSeconds || 0,
+        isGuest,
       }}
     >
       {children}
@@ -106,3 +189,6 @@ export function useCart() {
   }
   return context;
 }
+
+// Backward compatibility - export old CartItem type for components that still use it
+export type { CartItem };

@@ -124,10 +124,7 @@ const BestSellingProducts = ({ products }: Props) => {
                           }}
                           className="relative overflow-visible cursor-pointer w-full"
                         >
-                          <div
-                            className="relative overflow-hidden w-full border border-gray-300 rounded"
-                            style={{ height: "439px" }}
-                          >
+                          <div className="relative overflow-hidden w-full border border-gray-300 rounded aspect-square">
                             {/* Default Image */}
                             <motion.div
                               className="absolute inset-0"
@@ -151,14 +148,9 @@ const BestSellingProducts = ({ products }: Props) => {
                                 <Image
                                   src={productImage}
                                   alt={product.name}
-                                  width={340}
-                                  height={439}
-                                  className="object-cover w-full h-full"
-                                  style={{
-                                    width: "340px",
-                                    height: "439px",
-                                  }}
-                                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 340px"
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 25vw, 300px"
                                 />
                               </motion.div>
                             </motion.div>
@@ -187,14 +179,9 @@ const BestSellingProducts = ({ products }: Props) => {
                                 <Image
                                   src={productHoverImage}
                                   alt={product.name}
-                                  width={340}
-                                  height={439}
-                                  className="object-cover w-full h-full"
-                                  style={{
-                                    width: "340px",
-                                    height: "439px",
-                                  }}
-                                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 340px"
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 25vw, 300px"
                                 />
                               </motion.div>
                             </motion.div>

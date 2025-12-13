@@ -57,21 +57,33 @@ export default function Home() {
     const fetchData = async () => {
       try {
         // گرفتن محصولات پرفروش
-        const bestSelling = await getProducts({ isBestSelling: true, limit: 10 });
-        if (isMounted) setBestSellingProducts(bestSelling);
-        
+        const bestSellingResponse = await getProducts({
+          productType: "jewelry",
+          isBestSelling: true,
+          limit: 10,
+        });
+        if (isMounted) setBestSellingProducts(bestSellingResponse.data);
+
         // گرفتن محصولات هدیه
-        const gifts = await getProducts({ isGift: true, limit: 12 });
-        if (isMounted) setGiftProducts(gifts);
-        
+        const giftsResponse = await getProducts({
+          productType: "jewelry",
+          isGift: true,
+          limit: 12,
+        });
+        if (isMounted) setGiftProducts(giftsResponse.data);
+
         // گرفتن محصولات جدید
-        const newProducts = await getProducts({ isNewArrival: true, limit: 12 });
-        if (isMounted) setNewArrivals(newProducts);
-        
+        const newProductsResponse = await getProducts({
+          productType: "jewelry",
+          isNewArrival: true,
+          limit: 12,
+        });
+        if (isMounted) setNewArrivals(newProductsResponse.data);
+
         // گرفتن بلاگ ها
         const { posts } = await getBlogs({ isFeatured: true, limit: 2 });
         if (isMounted) setBlogPosts(posts);
-        
+
         // گرفتن سوالات متداول
         const faqData = await getFAQs();
         if (isMounted) setFaqs(faqData);

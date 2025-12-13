@@ -20,6 +20,9 @@ export const API_CONFIG = {
 
     // Announcements (Public)
     ANNOUNCEMENTS: "/announcement",
+
+    // Cart
+    CART: "/site/cart",
   },
 };
 

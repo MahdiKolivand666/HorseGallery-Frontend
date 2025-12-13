@@ -31,7 +31,7 @@ export default function CoinGoldProductCard({
     >
       <Link href={`/${category}/${product.slug}`} className="flex flex-col">
         <div
-          className="relative w-full aspect-square overflow-hidden cursor-pointer rounded border border-gray-200"
+          className="relative w-full aspect-square overflow-hidden cursor-pointer rounded border border-gray-200 bg-transparent"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >

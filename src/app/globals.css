@@ -31,7 +31,10 @@
 html {
   scroll-behavior: smooth;
   width: 100%;
+  height: auto;
+  min-height: 100vh;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 body {
@@ -40,9 +43,11 @@ body {
   font-family: "Vazirmatn", Arial, Helvetica, sans-serif;
   direction: rtl;
   width: 100%;
-  max-width: 100vw;
+  height: auto;
+  min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #__next {

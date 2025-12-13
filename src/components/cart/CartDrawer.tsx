@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { X, ShoppingBag, Trash2, AlertCircle } from "lucide-react";
@@ -14,8 +14,16 @@ interface CartDrawerProps {
 
 const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   const [mounted, setMounted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
-  const { cartItems, removeFromCart } = useCart();
+  const hasReloadedRef = useRef(false);
+  const {
+    cart,
+    loading,
+    totalItems,
+    totalPrice,
+    remainingSeconds,
+    removeFromCart,
+    reloadCart,
+  } = useCart();
 
   useEffect(() => {
     // Client-side only mounting to prevent hydration mismatch
@@ -25,25 +33,73 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      // فقط یک بار reload کن وقتی drawer باز می‌شود
+      if (!hasReloadedRef.current) {
+        reloadCart();
+        hasReloadedRef.current = true;
+      }
     } else {
       document.body.style.overflow = "unset";
+      // Reset flag وقتی drawer بسته می‌شود
+      hasReloadedRef.current = false;
     }
 
     return () => {
       document.body.style.overflow = "unset";
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Timer countdown
+  // Timer countdown - استفاده از remainingSeconds از backend
+  // برای UX بهتر، تایمر client-side داریم اما هر 30 ثانیه با backend sync می‌شود
+  const [timeLeft, setTimeLeft] = useState(remainingSeconds);
+
   useEffect(() => {
-    if (!isOpen || timeLeft <= 0) return;
+    // Update timer when remainingSeconds changes from backend
+    setTimeLeft(remainingSeconds);
+  }, [remainingSeconds]);
+
+  // Sync با backend هر 30 ثانیه
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const syncInterval = setInterval(() => {
+      reloadCart(); // Sync با backend
+    }, 30000); // هر 30 ثانیه
+
+    return () => clearInterval(syncInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // تایمر client-side برای نمایش (UX بهتر)
+  useEffect(() => {
+    if (!isOpen || timeLeft <= 0) {
+      if (
+        timeLeft <= 0 &&
+        cart &&
+        cart.items &&
+        Array.isArray(cart.items) &&
+        cart.items.length > 0
+      ) {
+        // Cart expired - reload to get empty cart
+        reloadCart();
+      }
+      return;
+    }
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          // Cart expired
+          reloadCart();
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isOpen, timeLeft]);
+  }, [isOpen, timeLeft, cart, reloadCart]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -53,18 +109,18 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       .padStart(2, "0")}`;
   };
 
-  const removeItem = (_id: string) => {
-    removeFromCart(_id);
+  const handleRemoveItem = async (itemId: string) => {
+    try {
+      await removeFromCart(itemId);
+    } catch (error) {
+      console.error("Error removing item:", error);
+    }
   };
 
-  const totalPrice = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
   if (!mounted) return null;
+
+  const cartItems = cart?.items || [];
+  const isEmpty = !loading && cartItems.length === 0;
 
   return createPortal(
     <>
@@ -105,13 +161,22 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
             </h2>
           </div>
           <div className="flex items-center gap-3">
-            {/* Timer - Small */}
-            {cartItems.length > 0 && (
+            {/* Timer - از backend */}
+            {!isEmpty && timeLeft > 0 && (
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-gray-700">مهلت خرید:</span>
-                <span className="text-xs font-bold text-white font-mono bg-red-500 px-2 py-0.5 rounded">
+                <span
+                  className={`text-xs font-bold text-white font-mono px-2 py-0.5 rounded ${
+                    timeLeft < 60 ? "bg-red-600" : "bg-red-500"
+                  }`}
+                >
                   {formatTime(timeLeft)}
                 </span>
+                {timeLeft < 60 && (
+                  <span className="text-[10px] text-red-600 font-medium">
+                    ⚠️
+                  </span>
+                )}
               </div>
             )}
             {/* Close Button */}
@@ -132,7 +197,12 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
 
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto px-4 pb-4 bg-white">
-          {cartItems.length === 0 ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center h-full text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+              <p className="text-sm text-gray-500">در حال بارگذاری...</p>
+            </div>
+          ) : isEmpty ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="bg-gray-100 rounded-full p-6 mb-4">
                 <ShoppingBag className="w-16 h-16 text-gray-400" />
@@ -154,96 +224,152 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
           ) : (
             <>
               <div className="space-y-4">
-                {cartItems.map((item) => (
-                  <div
-                    key={item._id}
-                    className="p-3 bg-gray-50 hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex gap-3">
-                      {/* Image */}
-                      <Link
-                        href={`/${item.category}/${item.slug}`}
-                        onClick={onClose}
-                        className="relative w-24 h-24 flex-shrink-0 border border-gray-300 rounded overflow-hidden"
-                      >
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </Link>
+                {cartItems.map((item) => {
+                  const product = item.product;
+                  const productImage =
+                    product.productType === "coin"
+                      ? "/images/products/coinphoto.webp"
+                      : product.productType === "melted_gold"
+                      ? "/images/products/goldbarphoto.webp"
+                      : product.images[0] || "/images/products/product1.webp";
 
-                      {/* Details */}
-                      <div className="flex-1">
-                        {/* Title and Delete Button */}
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <Link
-                            href={`/${item.category}/${item.slug}`}
-                            onClick={onClose}
-                            className="text-sm font-semibold text-gray-900 hover:text-primary line-clamp-1 flex-1"
-                          >
-                            {item.name}
-                          </Link>
-                          <button
-                            onClick={() => removeItem(item._id)}
-                            className="text-red-600 hover:text-red-700 transition-colors flex-shrink-0"
-                            aria-label="حذف محصول"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
+                  // Get category slug from product slug or use default
+                  const categorySlug = product.slug.split("/")[0] || "products";
+
+                  return (
+                    <div
+                      key={item._id}
+                      className="p-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex gap-3">
+                        {/* Image */}
+                        <Link
+                          href={`/${categorySlug}/${product.slug}`}
+                          onClick={onClose}
+                          className="relative w-24 h-24 flex-shrink-0 border border-gray-300 rounded overflow-hidden"
+                        >
+                          <Image
+                            src={productImage}
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                          />
+                          {/* Discount Badge - از backend */}
+                          {item.discount && item.discount > 0 && (
+                            <div className="absolute top-1 right-1 z-10 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              {item.discount}٪
+                            </div>
+                          )}
+                        </Link>
+
+                        {/* Details */}
+                        <div className="flex-1">
+                          {/* Title and Delete Button */}
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <Link
+                              href={`/${categorySlug}/${product.slug}`}
+                              onClick={onClose}
+                              className="text-sm font-semibold text-gray-900 hover:text-primary line-clamp-1 flex-1"
+                            >
+                              {product.name}
+                            </Link>
+                            <button
+                              onClick={() => handleRemoveItem(item._id)}
+                              className="text-red-600 hover:text-red-700 transition-colors flex-shrink-0"
+                              aria-label="حذف محصول"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+
+                          <p className="text-xs text-gray-500 mb-2">
+                            {product.code}
+                          </p>
+
+                          {/* ✨ برای سکه: فقط نوع و وزن */}
+                          {product.productType === "coin" &&
+                            product.goldInfo && (
+                              <>
+                                {product.goldInfo.denomination && (
+                                  <p className="text-xs text-gray-600 mb-1">
+                                    <span className="text-gray-500">نوع: </span>
+                                    <span className="font-medium">
+                                      {product.goldInfo.denomination}
+                                    </span>
+                                  </p>
+                                )}
+                                {product.goldInfo.weight && (
+                                  <p className="text-xs text-gray-600 mb-1">
+                                    <span className="text-gray-500">وزن: </span>
+                                    <span className="font-medium">
+                                      {product.goldInfo.weight} گرم
+                                    </span>
+                                  </p>
+                                )}
+                              </>
+                            )}
+
+                          {/* برای جواهرات: وزن و سایز */}
+                          {product.productType !== "coin" && (
+                            <>
+                              {product.goldInfo?.weight && (
+                                <p className="text-xs text-gray-600 mb-1">
+                                  <span className="text-gray-500">وزن: </span>
+                                  <span className="font-medium">
+                                    {product.goldInfo.weight} گرم
+                                  </span>
+                                </p>
+                              )}
+                              {item.size && (
+                                <p className="text-xs text-gray-600">
+                                  <span className="text-gray-500">سایز: </span>
+                                  <span className="font-medium">
+                                    {item.size}
+                                  </span>
+                                </p>
+                              )}
+                            </>
+                          )}
+
+                          {/* Quantity */}
+                          <p className="text-xs text-gray-600 mt-1">
+                            <span className="text-gray-500">تعداد: </span>
+                            <span className="font-medium">{item.quantity}</span>
+                          </p>
                         </div>
+                      </div>
 
-                        <p className="text-xs text-gray-500 mb-2">
-                          {item.code}
-                        </p>
-                        
-                        {/* ✨ برای سکه: فقط نوع و وزن */}
-                        {item.productType === "coin" && item.goldInfo && (
-                          <>
-                            {item.goldInfo.denomination && (
-                              <p className="text-xs text-gray-600 mb-1">
-                                <span className="text-gray-500">نوع: </span>
-                                <span className="font-medium">{item.goldInfo.denomination}</span>
-                              </p>
-                            )}
-                            <p className="text-xs text-gray-600 mb-1">
-                              <span className="text-gray-500">وزن: </span>
-                              <span className="font-medium">{item.weight}</span>
-                            </p>
-                          </>
-                        )}
-                        
-                        {/* برای جواهرات: وزن و سایز */}
-                        {item.productType !== "coin" && (
-                          <>
-                            <p className="text-xs text-gray-600 mb-1">
-                              <span className="text-gray-500">وزن: </span>
-                              <span className="font-medium">{item.weight}</span>
-                            </p>
-                            {item.size && (
-                              <p className="text-xs text-gray-600">
-                                <span className="text-gray-500">سایز: </span>
-                                <span className="font-medium">{item.size}</span>
-                              </p>
-                            )}
-                          </>
-                        )}
+                      {/* Footer - Price - از backend (بدون محاسبه) */}
+                      <div className="flex items-center justify-end pt-2">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xs text-gray-500">قیمت:</span>
+                          {item.originalPrice > item.price ? (
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-base font-bold text-red-600">
+                                {item.price.toLocaleString("fa-IR")}
+                              </span>
+                              <span className="text-xs text-gray-400 line-through">
+                                {item.originalPrice.toLocaleString("fa-IR")}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                تومان
+                              </span>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="text-base font-bold text-gray-900">
+                                {item.price.toLocaleString("fa-IR")}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                تومان
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-
-                    {/* Footer - Price */}
-                    <div className="flex items-center justify-end pt-2">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-xs text-gray-500">قیمت:</span>
-                        <span className="text-base font-bold text-gray-900">
-                          {item.price.toLocaleString("fa-IR")}
-                        </span>
-                        <span className="text-xs text-gray-500">تومان</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Divider */}
@@ -260,7 +386,9 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                   </p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-xl font-bold text-gray-900">
-                      {totalPrice.toLocaleString("fa-IR")}
+                      {cart?.prices?.totalWithDiscount
+                        ? cart.prices.totalWithDiscount.toLocaleString("fa-IR")
+                        : totalPrice.toLocaleString("fa-IR")}
                     </span>
                     <span className="text-xs text-gray-600">تومان</span>
                   </div>
@@ -275,7 +403,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                     ادامه خرید
                   </button>
                   <Link
-                    href="/purchase/basket/53500"
+                    href="/purchase/basket"
                     onClick={onClose}
                     className="flex-1 bg-primary hover:bg-primary/90 text-white text-center py-2 font-medium transition-colors rounded text-sm"
                   >

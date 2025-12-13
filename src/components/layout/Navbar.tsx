@@ -668,7 +668,9 @@ const Navbar = () => {
                                   }}
                                   className="flex items-center justify-center gap-1 py-1.5 px-2 text-xs font-medium text-white/80 hover:text-white rounded-lg transition-colors"
                                 >
-                                  <span className="text-center">مشاهده همه</span>
+                                  <span className="text-center">
+                                    مشاهده همه
+                                  </span>
                                   <ChevronLeft className="w-3 h-3" />
                                 </Link>
                               </div>

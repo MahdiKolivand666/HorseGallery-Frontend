@@ -5,6 +5,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
+import { useCart } from "@/contexts/CartContext";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [mounted, setMounted] = useState(false);
+  const { cart, mergeCart, reloadCart } = useCart();
 
   useEffect(() => {
     // Client-side only mounting to prevent hydration mismatch
@@ -71,13 +73,38 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     }
   };
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
+  const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const otpCode = otp.join("");
     if (otpCode.length === 6) {
-      // Handle OTP verification
-      // TODO: Connect to backend API
-      onClose();
+      try {
+        // Handle OTP verification
+        // TODO: Connect to backend API
+        // بعد از لاگین موفق:
+        // 1. Token را در localStorage ذخیره کنید
+        // 2. اگر سبد مهمان وجود داشت، merge کنید
+        // 3. سبد را reload کنید
+
+        // مثال:
+        // const response = await loginAPI(phoneNumber, otpCode);
+        // localStorage.setItem("token", response.token);
+
+        // اگر سبد مهمان وجود داشت، merge کن
+        if (cart?.cart?.sessionId) {
+          try {
+            await mergeCart();
+          } catch (mergeError) {
+            console.error("Error merging cart:", mergeError);
+            // اگر merge خطا داد، فقط سبد را reload کن
+            await reloadCart();
+          }
+        }
+
+        onClose();
+      } catch (error) {
+        console.error("Login error:", error);
+        // Handle login error
+      }
     }
   };
 

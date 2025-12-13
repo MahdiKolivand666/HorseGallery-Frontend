@@ -12,7 +12,7 @@ import {
   Home,
 } from "lucide-react";
 import FilterDrawer from "@/components/shop/FilterDrawer";
-import FilterSidebar from "@/components/shop/FilterSidebar";
+import FilterSidebar, { FilterState } from "@/components/shop/FilterSidebar";
 import ProductCard from "@/components/shop/ProductCard";
 import { getCategoryData, getSubcategoryData } from "@/constants/categories";
 import { notFound } from "next/navigation";
@@ -55,6 +55,21 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
   const [sortBy, setSortBy] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<FilterState>({
+    selectedCategories: [],
+    priceRange: [0, 900000000],
+    selectedColors: [],
+    selectedKarats: [],
+    selectedBrands: [],
+    selectedBranches: [],
+    selectedWages: [],
+    selectedSizes: [],
+    selectedCoatings: [],
+    weightRange: [0, 100],
+    lowCommission: false,
+    inStock: false,
+    onSale: false,
+  });
   const productsPerPage = 12;
 
   // Filter positioning (like GiftSection)
@@ -67,13 +82,56 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const fetchedProducts = await getProducts({
+        const response = await getProducts({
+          productType: "jewelry",
           category,
           subcategory,
           limit: 100,
           sortBy: sortBy || undefined,
+          minPrice:
+            filters.priceRange[0] > 0 ? filters.priceRange[0] : undefined,
+          maxPrice:
+            filters.priceRange[1] < 900000000
+              ? filters.priceRange[1]
+              : undefined,
+          colors:
+            filters.selectedColors.length > 0
+              ? filters.selectedColors
+              : undefined,
+          karats:
+            filters.selectedKarats.length > 0
+              ? filters.selectedKarats
+              : undefined,
+          brands:
+            filters.selectedBrands.length > 0
+              ? filters.selectedBrands
+              : undefined,
+          branches:
+            filters.selectedBranches.length > 0
+              ? filters.selectedBranches
+              : undefined,
+          wages:
+            filters.selectedWages.length > 0
+              ? filters.selectedWages
+              : undefined,
+          sizes:
+            filters.selectedSizes.length > 0
+              ? filters.selectedSizes
+              : undefined,
+          coatings:
+            filters.selectedCoatings.length > 0
+              ? filters.selectedCoatings
+              : undefined,
+          minWeight:
+            filters.weightRange[0] > 0 ? filters.weightRange[0] : undefined,
+          maxWeight:
+            filters.weightRange[1] < 100 ? filters.weightRange[1] : undefined,
+          lowCommission: filters.lowCommission || undefined,
+          inStock: filters.inStock || undefined,
+          onSale: filters.onSale || undefined,
         });
-        setProducts(fetchedProducts);
+        setProducts(response.data);
+        setCurrentPage(1); // Reset to first page when filters change
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
@@ -82,7 +140,7 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
     };
 
     fetchProducts();
-  }, [category, subcategory, sortBy]);
+  }, [category, subcategory, sortBy, filters]);
 
   // Filter positioning
   useEffect(() => {
@@ -135,6 +193,10 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
   };
 
   const getPaginationNumbers = () => {
@@ -253,7 +315,10 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
           className="hidden lg:block w-80 h-[calc(100vh-105px)] z-40"
           style={filterStyle}
         >
-          <FilterSidebar />
+          <FilterSidebar
+            onFilterChange={handleFilterChange}
+            initialFilters={filters}
+          />
         </aside>
 
         {/* Products Section */}
@@ -315,6 +380,11 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
                     product={{
                       name: product.name,
                       price: `${product.price.toLocaleString("fa-IR")} تومان`,
+                      discountPrice: product.discountPrice
+                        ? `${product.discountPrice.toLocaleString(
+                            "fa-IR"
+                          )} تومان`
+                        : undefined,
                       image:
                         product.images[0] || "/images/products/product1.webp",
                       hoverImage:
@@ -322,6 +392,8 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
                         product.images[0] ||
                         "/images/products/product1-1.webp",
                       slug: product.slug,
+                      onSale: product.onSale,
+                      discount: product.discount,
                     }}
                     category={product.category.slug}
                   />
@@ -417,6 +489,8 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
       <FilterDrawer
         isOpen={isFilterDrawerOpen}
         onClose={() => setIsFilterDrawerOpen(false)}
+        onFilterChange={handleFilterChange}
+        initialFilters={filters}
       />
     </div>
   );

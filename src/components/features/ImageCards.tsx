@@ -60,15 +60,18 @@ const ImageCards = () => {
           >
             {cards.map((card) => (
               <SwiperSlide key={card.id}>
-                <Link href={card.href} className="relative group cursor-pointer block">
+                <Link
+                  href={card.href}
+                  className="relative group cursor-pointer block"
+                >
                   {/* Image Container */}
                   <div className="relative w-full aspect-[358/584] overflow-hidden mx-auto border border-gray-300 rounded">
                     <Image
                       src={card.image}
                       alt={card.title}
                       fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                      sizes="100vw"
+                      className="object-cover object-center transition-transform duration-500 group-hover:scale-110"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
 
                     {/* Overlay */}
@@ -125,7 +128,7 @@ const ImageCards = () => {
                   src={card.image}
                   alt={card.title}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="object-cover object-center transition-transform duration-500 group-hover:scale-110"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
 

@@ -16,68 +16,73 @@ import {
   Truck,
 } from "lucide-react";
 import { GoldInfo } from "@/lib/api/products";
+import { useCart } from "@/contexts/CartContext";
 
 interface CartItem {
   _id: string;
   name: string;
   image: string;
-  price: number;
+  price: number; // ✅ قیمت کل (با تخفیف) برای quantity فعلی - از backend
+  originalPrice: number; // ✅ قیمت کل اصلی (بدون تخفیف) برای quantity فعلی - از backend
   quantity: number;
   code: string;
   weight: string;
   size?: string;
   slug: string;
   category: string;
-  discount?: number;
+  discount?: number; // ✅ درصد تخفیف - از backend
   // ✨ فیلدهای جدید برای سکه و شمش
   productType?: "jewelry" | "coin" | "melted_gold";
   goldInfo?: GoldInfo;
 }
 
 export default function CheckoutPage() {
+  const { cart, removeFromCart, remainingSeconds, reloadCart } = useCart();
   const [activeTab, setActiveTab] = useState<"cart" | "shipping" | "payment">(
     "cart"
   );
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [selectedGateway, setSelectedGateway] = useState("saman");
 
-  // Mock cart data
-  const [cartItems] = useState<CartItem[]>([
-    {
-      _id: "mock-product-1",
-      name: "گردنبند طلای زنانه",
-      image: "/images/products/product1.webp",
-      price: 45000000,
-      quantity: 1,
-      code: "GN-001",
-      weight: "۱۲.۵ گرم",
-      size: "45 سانتی‌متر",
-      slug: "gold-necklace-001",
-      category: "women",
-      discount: 2000000,
-    },
-    {
-      _id: "mock-product-2",
-      name: "دستبند طلای مردانه",
-      image: "/images/products/product2.webp",
-      price: 28000000,
-      quantity: 1,
-      code: "GB-002",
-      weight: "۸.۳ گرم",
-      size: "20 سانتی‌متر",
-      slug: "gold-bracelet-002",
-      category: "men",
-      discount: 1000000,
-    },
-  ]);
+  // Timer countdown - استفاده از remainingSeconds از backend
+  // برای UX بهتر، تایمر client-side داریم اما هر 30 ثانیه با backend sync می‌شود
+  const [timeLeft, setTimeLeft] = useState(remainingSeconds);
 
-  // Timer countdown
   useEffect(() => {
+    // Update timer when remainingSeconds changes from backend
+    setTimeLeft(remainingSeconds);
+  }, [remainingSeconds]);
+
+  // Sync با backend هر 30 ثانیه
+  useEffect(() => {
+    const syncInterval = setInterval(() => {
+      reloadCart(); // Sync با backend
+    }, 30000); // هر 30 ثانیه
+
+    return () => clearInterval(syncInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // تایمر client-side برای نمایش (UX بهتر)
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      if (
+        cart &&
+        cart.items &&
+        Array.isArray(cart.items) &&
+        cart.items.length > 0
+      ) {
+        // Cart expired - reload to get empty cart
+        reloadCart();
+      }
+      return;
+    }
+
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 0) {
-          clearInterval(timer);
+        if (prev <= 1) {
+          // Cart expired
+          reloadCart();
           return 0;
         }
         return prev - 1;
@@ -85,7 +90,40 @@ export default function CheckoutPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [timeLeft, cart, reloadCart]);
+
+  // تبدیل cart?.items به فرمت مورد نیاز صفحه پرداخت
+  const cartItems: CartItem[] = (cart?.items || []).map((item) => {
+    const product = item.product;
+
+    // تعیین تصویر بر اساس نوع محصول
+    const productImage =
+      product.productType === "coin"
+        ? "/images/products/coinphoto.webp"
+        : product.productType === "melted_gold"
+        ? "/images/products/goldbarphoto.webp"
+        : product.images?.[0] || "/images/products/default.webp";
+
+    // استخراج category از slug
+    const categorySlug = product.slug.split("/")[0] || "products";
+
+    return {
+      _id: item._id,
+      name: product.name,
+      image: productImage,
+      price: item.price, // ✅ قیمت کل (با تخفیف) برای quantity فعلی - از backend
+      originalPrice: item.originalPrice, // ✅ قیمت کل اصلی (بدون تخفیف) برای quantity فعلی - از backend
+      quantity: item.quantity,
+      code: product.code,
+      weight: product.weight || "نامشخص",
+      size: item.size,
+      slug: product.slug,
+      category: categorySlug,
+      discount: item.discount, // ✅ درصد تخفیف - از backend
+      productType: product.productType,
+      goldInfo: product.goldInfo,
+    };
+  });
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -105,23 +143,17 @@ export default function CheckoutPage() {
       .replace(/9/g, "۹");
   };
 
-  // Calculate totals
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  const totalDiscount = cartItems.reduce(
-    (sum, item) => sum + (item.discount || 0) * item.quantity,
-    0
-  );
+  // استفاده از مقادیر محاسبه شده از Backend
+  const subtotal = cart?.prices?.totalWithoutDiscount || 0;
+  const totalDiscount = cart?.prices?.totalSavings || 0;
   const walletAmount: number = 0; // User's wallet balance
   const shippingCost: number = 0; // Free shipping
-  const finalTotal = subtotal - totalDiscount - walletAmount + shippingCost;
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const finalTotal =
+    (cart?.prices?.totalWithDiscount || 0) - walletAmount + shippingCost;
+  const totalItems = cart?.totalItems || 0;
 
-  const handleRemoveItem = (_id: string) => {
-    // Handle remove item logic
-    console.log("Remove item:", _id);
+  const handleRemoveItem = async (itemId: string) => {
+    await removeFromCart(itemId);
   };
 
   return (
@@ -137,10 +169,10 @@ export default function CheckoutPage() {
         </Link>
 
         {/* Tabs */}
-        <div className="flex justify-center gap-4 mb-8 border-b border-gray-200">
+        <div className="flex justify-center gap-2 sm:gap-4 mb-8 border-b border-gray-200 overflow-x-auto">
           <button
             onClick={() => setActiveTab("cart")}
-            className={`pb-4 px-4 font-medium transition-colors relative ${
+            className={`pb-3 sm:pb-4 px-2 sm:px-4 text-xs sm:text-base font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
               activeTab === "cart"
                 ? "text-primary"
                 : "text-gray-500 hover:text-gray-700"
@@ -153,7 +185,7 @@ export default function CheckoutPage() {
           </button>
           <button
             onClick={() => setActiveTab("shipping")}
-            className={`pb-4 px-4 font-medium transition-colors relative ${
+            className={`pb-3 sm:pb-4 px-2 sm:px-4 text-xs sm:text-base font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
               activeTab === "shipping"
                 ? "text-primary"
                 : "text-gray-500 hover:text-gray-700"
@@ -166,7 +198,7 @@ export default function CheckoutPage() {
           </button>
           <button
             onClick={() => setActiveTab("payment")}
-            className={`pb-4 px-4 font-medium transition-colors relative ${
+            className={`pb-3 sm:pb-4 px-2 sm:px-4 text-xs sm:text-base font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
               activeTab === "payment"
                 ? "text-primary"
                 : "text-gray-500 hover:text-gray-700"
@@ -190,7 +222,7 @@ export default function CheckoutPage() {
                     {/* Product Image */}
                     <Link
                       href={`/${item.category}/${item.slug}`}
-                      className="relative w-24 h-24 flex-shrink-0 overflow-hidden"
+                      className="relative w-24 h-24 flex-shrink-0 overflow-hidden border border-gray-300 rounded"
                     >
                       <Image
                         src={item.image}
@@ -198,6 +230,12 @@ export default function CheckoutPage() {
                         fill
                         className="object-cover"
                       />
+                      {/* Discount Badge - از backend */}
+                      {item.discount && item.discount > 0 && (
+                        <div className="absolute top-1 right-1 z-10 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                          {item.discount}٪
+                        </div>
+                      )}
                     </Link>
 
                     {/* Product Details */}
@@ -222,6 +260,11 @@ export default function CheckoutPage() {
                       {/* Product Code */}
                       <p className="text-xs text-gray-500 mb-2">{item.code}</p>
 
+                      {/* Quantity */}
+                      <p className="text-xs text-gray-600 mb-0.5">
+                        تعداد: {item.quantity}
+                      </p>
+
                       {/* Weight */}
                       <p className="text-xs text-gray-600 mb-0.5">
                         وزن: {item.weight}
@@ -230,7 +273,8 @@ export default function CheckoutPage() {
                       {/* Size/MintYear and Price */}
                       <div className="flex items-center justify-between mt-0.5">
                         {/* برای سکه: سال ضرب، برای بقیه: سایز */}
-                        {item.productType === "coin" && item.goldInfo?.mintYear ? (
+                        {item.productType === "coin" &&
+                        item.goldInfo?.mintYear ? (
                           <p className="text-xs text-gray-600">
                             سال ضرب: {item.goldInfo.mintYear}
                           </p>
@@ -239,13 +283,31 @@ export default function CheckoutPage() {
                             سایز: {item.size}
                           </p>
                         ) : null}
-                        <p className="text-xs text-gray-600">
-                          قیمت:{" "}
-                          <span className="text-base font-bold text-gray-900">
-                            {item.price.toLocaleString("fa-IR")}
-                          </span>{" "}
-                          تومان
-                        </p>
+                        {/* Price - از backend */}
+                        <div className="flex flex-col items-end gap-0.5">
+                          {item.originalPrice > item.price ? (
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-base font-bold text-red-600">
+                                {item.price.toLocaleString("fa-IR")}
+                              </span>
+                              <span className="text-xs text-gray-400 line-through">
+                                {item.originalPrice.toLocaleString("fa-IR")}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                تومان
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-base font-bold text-gray-900">
+                                {item.price.toLocaleString("fa-IR")}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                تومان
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -296,7 +358,7 @@ export default function CheckoutPage() {
                   {totalDiscount > 0 && (
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-white">مجموع تخفیف محصولات</span>
-                      <span className="font-medium text-yellow-300">
+                      <span className="font-medium text-red-400">
                         {totalDiscount.toLocaleString("fa-IR")} تومان
                       </span>
                     </div>
@@ -426,7 +488,8 @@ export default function CheckoutPage() {
                           وزن: {item.weight}
                         </p>
                         {/* برای سکه: سال ضرب، برای بقیه: سایز */}
-                        {item.productType === "coin" && item.goldInfo?.mintYear ? (
+                        {item.productType === "coin" &&
+                        item.goldInfo?.mintYear ? (
                           <p className="text-xs text-white/80">
                             سال ضرب: {item.goldInfo.mintYear}
                           </p>
@@ -471,7 +534,7 @@ export default function CheckoutPage() {
                   {totalDiscount > 0 && (
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-white">مجموع تخفیف محصولات</span>
-                      <span className="font-medium text-yellow-300">
+                      <span className="font-medium text-red-300">
                         {totalDiscount.toLocaleString("fa-IR")} تومان
                       </span>
                     </div>
@@ -708,8 +771,11 @@ export default function CheckoutPage() {
                           <p className="text-white/80">{item.code}</p>
                           <p className="text-white/80">وزن: {item.weight}</p>
                           {/* برای سکه: سال ضرب، برای بقیه: سایز */}
-                          {item.productType === "coin" && item.goldInfo?.mintYear ? (
-                            <p className="text-white/80">سال ضرب: {item.goldInfo.mintYear}</p>
+                          {item.productType === "coin" &&
+                          item.goldInfo?.mintYear ? (
+                            <p className="text-white/80">
+                              سال ضرب: {item.goldInfo.mintYear}
+                            </p>
                           ) : item.size ? (
                             <p className="text-white/80">سایز: {item.size}</p>
                           ) : null}
@@ -735,12 +801,14 @@ export default function CheckoutPage() {
                       {subtotal.toLocaleString("fa-IR")} تومان
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>تخفیف محصولات:</span>
-                    <span className="font-medium text-yellow-300">
-                      {totalDiscount.toLocaleString("fa-IR")} تومان
-                    </span>
-                  </div>
+                  {totalDiscount > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span>مجموع تخفیف محصولات:</span>
+                      <span className="font-medium text-red-300">
+                        {totalDiscount.toLocaleString("fa-IR")} تومان
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-sm">
                     <span>کیف پول:</span>
                     <span className="font-medium">
@@ -797,7 +865,7 @@ export default function CheckoutPage() {
             <div className="flex items-center justify-end px-3 py-0.5 bg-white">
               <button
                 onClick={() => setIsAddressModalOpen(false)}
-                className="p-0.5 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                className="p-0.5 rounded hover:bg-gray-50 transition-colors"
                 aria-label="بستن"
               >
                 <span className="text-3xl text-gray-600">×</span>

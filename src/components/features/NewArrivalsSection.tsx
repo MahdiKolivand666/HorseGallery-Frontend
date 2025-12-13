@@ -29,7 +29,8 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
   const [activeProduct, setActiveProduct] = useState<string | null>(null);
 
   // محدود به 12 محصول
-  const products = (!apiProducts || apiProducts.length === 0) ? [] : apiProducts.slice(0, 12);
+  const products =
+    !apiProducts || apiProducts.length === 0 ? [] : apiProducts.slice(0, 12);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -84,7 +85,10 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
   }
 
   return (
-    <section ref={sectionRef} className="w-full bg-white relative">
+    <section
+      ref={sectionRef}
+      className="w-full bg-white relative lg:min-h-[100vh]"
+    >
       <div className="w-full">
         <div className="flex flex-col lg:flex-row relative">
           {/* Left Side - Large Sticky Image (Desktop) */}
@@ -119,7 +123,7 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
           </div>
 
           {/* Right Side - Products Grid (Scrollable) */}
-          <div className="w-full lg:w-1/2 px-2 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-16 relative z-10 lg:order-1">
+          <div className="w-full lg:w-1/2 px-2 sm:px-6 lg:px-8 pt-2 sm:pt-4 lg:pt-16 pb-8 sm:pb-10 lg:pb-16 relative z-10 lg:order-1">
             <div className="max-w-3xl mx-auto">
               {/* Large Image for Mobile/Tablet (Above Products) */}
               <div className="lg:hidden mb-6 sm:mb-8">
@@ -169,8 +173,12 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
                 >
                   {products.map((product) => {
                     const isActive = activeProduct === product._id;
-                    const productImage = product.images[0] || "/images/products/product1.webp";
-                    const productHoverImage = product.images[1] || product.images[0] || "/images/products/product1-1.webp";
+                    const productImage =
+                      product.images[0] || "/images/products/product1.webp";
+                    const productHoverImage =
+                      product.images[1] ||
+                      product.images[0] ||
+                      "/images/products/product1-1.webp";
                     const productHref = `/${product.category.slug}/${product.slug}`;
 
                     return (
@@ -228,7 +236,7 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
                                         src={productImage}
                                         alt={product.name}
                                         fill
-                                        className="object-cover w-full h-full"
+                                        className="object-cover"
                                         sizes="(max-width: 640px) 45vw, 303px"
                                       />
                                     </motion.div>
@@ -259,7 +267,7 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
                                         src={productHoverImage}
                                         alt={product.name}
                                         fill
-                                        className="object-cover w-full h-full"
+                                        className="object-cover"
                                         sizes="(max-width: 640px) 45vw, 303px"
                                       />
                                     </motion.div>
@@ -311,8 +319,12 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
               <div className="hidden lg:grid lg:grid-cols-2 gap-6 mb-6">
                 {products.map((product) => {
                   const isActive = activeProduct === product._id;
-                  const productImage = product.images[0] || "/images/products/product1.webp";
-                  const productHoverImage = product.images[1] || product.images[0] || "/images/products/product1-1.webp";
+                  const productImage =
+                    product.images[0] || "/images/products/product1.webp";
+                  const productHoverImage =
+                    product.images[1] ||
+                    product.images[0] ||
+                    "/images/products/product1-1.webp";
                   const productHref = `/${product.category.slug}/${product.slug}`;
 
                   return (
@@ -361,7 +373,7 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
                                   src={productImage}
                                   alt={product.name}
                                   fill
-                                  className="object-cover w-full h-full"
+                                  className="object-cover"
                                   sizes="(max-width: 1024px) 40vw, 303px"
                                 />
                               </motion.div>
@@ -392,7 +404,7 @@ const NewArrivalsSection = ({ products: apiProducts }: Props) => {
                                   src={productHoverImage}
                                   alt={product.name}
                                   fill
-                                  className="object-cover w-full h-full"
+                                  className="object-cover"
                                   sizes="(max-width: 1024px) 40vw, 303px"
                                 />
                               </motion.div>

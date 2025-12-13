@@ -85,7 +85,10 @@ const GiftSection = ({ products: apiProducts }: Props) => {
   }
 
   return (
-    <section ref={sectionRef} className="w-full bg-white relative">
+    <section
+      ref={sectionRef}
+      className="w-full bg-white relative lg:min-h-[100vh]"
+    >
       <div className="w-full">
         <div className="flex flex-col lg:flex-row relative">
           {/* Right Side - Large Sticky Image (Desktop) */}
@@ -120,7 +123,7 @@ const GiftSection = ({ products: apiProducts }: Props) => {
           </div>
 
           {/* Left Side - Products Grid (Scrollable) */}
-          <div className="w-full lg:w-1/2 px-2 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-16 relative z-10 lg:order-2">
+          <div className="w-full lg:w-1/2 px-2 sm:px-6 lg:px-8 pt-8 sm:pt-10 lg:pt-16 pb-2 sm:pb-4 lg:pb-16 relative z-10 lg:order-2">
             <div className="max-w-3xl mx-auto">
               {/* Large Image for Mobile/Tablet (Above Products) */}
               <div className="lg:hidden mb-6 sm:mb-8">
@@ -233,7 +236,7 @@ const GiftSection = ({ products: apiProducts }: Props) => {
                                         src={productImage}
                                         alt={product.name}
                                         fill
-                                        className="object-cover w-full h-full"
+                                        className="object-cover"
                                         sizes="(max-width: 640px) 45vw, 303px"
                                       />
                                     </motion.div>
@@ -264,7 +267,7 @@ const GiftSection = ({ products: apiProducts }: Props) => {
                                         src={productHoverImage}
                                         alt={product.name}
                                         fill
-                                        className="object-cover w-full h-full"
+                                        className="object-cover"
                                         sizes="(max-width: 640px) 45vw, 303px"
                                       />
                                     </motion.div>
@@ -370,7 +373,7 @@ const GiftSection = ({ products: apiProducts }: Props) => {
                                   src={productImage}
                                   alt={product.name}
                                   fill
-                                  className="object-cover w-full h-full"
+                                  className="object-cover"
                                   sizes="(max-width: 1024px) 40vw, 303px"
                                 />
                               </motion.div>
@@ -401,7 +404,7 @@ const GiftSection = ({ products: apiProducts }: Props) => {
                                   src={productHoverImage}
                                   alt={product.name}
                                   fill
-                                  className="object-cover w-full h-full"
+                                  className="object-cover"
                                   sizes="(max-width: 1024px) 40vw, 303px"
                                 />
                               </motion.div>
