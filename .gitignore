@@ -44,3 +44,7 @@ next-env.d.ts
 /public/video/*.mp4
 /public/video/*.webm
 /public/video/*.mov
+
+# documentation files (except README.md)
+*.md
+!README.md

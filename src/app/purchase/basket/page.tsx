@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -17,6 +19,21 @@ import {
 } from "lucide-react";
 import { GoldInfo } from "@/lib/api/products";
 import { useCart } from "@/contexts/CartContext";
+import {
+  getAddresses,
+  createAddress,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
+  type Address,
+  type CreateAddressDto,
+} from "@/lib/api/address";
+import {
+  addressFormSchema,
+  type AddressFormData,
+} from "@/lib/validations/address";
+import FieldError from "@/components/forms/FieldError";
+import { ZodError } from "zod";
 
 interface CartItem {
   _id: string;
@@ -24,6 +41,8 @@ interface CartItem {
   image: string;
   price: number; // ✅ قیمت کل (با تخفیف) برای quantity فعلی - از backend
   originalPrice: number; // ✅ قیمت کل اصلی (بدون تخفیف) برای quantity فعلی - از backend
+  unitPrice?: number; // ✅ قیمت واحد (با تخفیف) - از backend
+  unitOriginalPrice?: number; // ✅ قیمت واحد اصلی (بدون تخفیف) - از backend
   quantity: number;
   code: string;
   weight: string;
@@ -36,13 +55,206 @@ interface CartItem {
   goldInfo?: GoldInfo;
 }
 
-export default function CheckoutPage() {
+// ✅ این صفحه فقط زمانی mount می‌شود که کاربر به /purchase/basket برود
+// ⚠️ مهم: استفاده از dynamic import برای جلوگیری از pre-fetch
+function CheckoutPage() {
+  const pathname = usePathname();
   const { cart, removeFromCart, remainingSeconds, reloadCart } = useCart();
   const [activeTab, setActiveTab] = useState<"cart" | "shipping" | "payment">(
     "cart"
   );
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null); // ✅ برای edit mode
   const [selectedGateway, setSelectedGateway] = useState("saman");
+
+  // Address state
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null
+  );
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+
+  // Address form state
+  const [addressForm, setAddressForm] = useState<CreateAddressDto>({
+    title: "",
+    province: "",
+    city: "",
+    postalCode: "",
+    address: "",
+    firstName: "",
+    lastName: "",
+    nationalId: "",
+    mobile: "",
+    email: "",
+    notes: "",
+    isDefault: false,
+  });
+
+  // Validation errors state
+  const [formErrors, setFormErrors] = useState<
+    Partial<Record<keyof AddressFormData, string>>
+  >({});
+
+  // Load addresses when shipping tab is opened
+  useEffect(() => {
+    if (activeTab === "shipping") {
+      loadAddresses();
+    }
+  }, [activeTab]);
+
+  const loadAddresses = async () => {
+    setIsLoadingAddresses(true);
+    try {
+      const data = await getAddresses();
+      setAddresses(data);
+      // Set default address if exists
+      const defaultAddress = data.find((addr) => addr.isDefault);
+      if (defaultAddress) {
+        setSelectedAddressId(defaultAddress._id);
+      } else if (data.length > 0) {
+        setSelectedAddressId(data[0]._id);
+      }
+    } catch (error) {
+      console.error("Error loading addresses:", error);
+    } finally {
+      setIsLoadingAddresses(false);
+    }
+  };
+
+  const handleSaveAddress = async () => {
+    // Reset errors
+    setFormErrors({});
+
+    // Validate with Zod
+    try {
+      const validatedData = addressFormSchema.parse(addressForm);
+
+      setIsSavingAddress(true);
+      try {
+        // ✅ اگر در حال edit هستیم، updateAddress صدا بزنیم
+        if (editingAddressId) {
+          await updateAddress(editingAddressId, validatedData);
+        } else {
+          // ✅ اگر آدرس جدید است، createAddress صدا بزنیم
+          await createAddress(validatedData);
+        }
+
+        // Reset form and close modal
+        setAddressForm({
+          title: "",
+          province: "",
+          city: "",
+          postalCode: "",
+          address: "",
+          firstName: "",
+          lastName: "",
+          nationalId: "",
+          mobile: "",
+          email: "",
+          notes: "",
+          isDefault: false,
+        });
+        setFormErrors({});
+        setEditingAddressId(null); // ✅ Reset edit mode
+        setIsAddressModalOpen(false);
+        // Reload addresses
+        await loadAddresses();
+      } catch (error) {
+        console.error("Error saving address:", error);
+        alert(error instanceof Error ? error.message : "خطا در ذخیره آدرس");
+      } finally {
+        setIsSavingAddress(false);
+      }
+    } catch (error) {
+      if (error instanceof ZodError) {
+        // Convert Zod errors to form errors object
+        const errors: Partial<Record<keyof AddressFormData, string>> = {};
+        error.issues.forEach((issue) => {
+          if (issue.path.length > 0) {
+            const field = issue.path[0] as keyof AddressFormData;
+            errors[field] = issue.message;
+          }
+        });
+        setFormErrors(errors);
+      } else {
+        console.error("Validation error:", error);
+        alert("خطا در اعتبارسنجی فرم. لطفاً فیلدها را بررسی کنید.");
+      }
+    }
+  };
+
+  // ✅ تابع برای باز کردن modal در حالت edit
+  const handleEditAddress = (address: Address) => {
+    setAddressForm({
+      title: address.title,
+      province: address.province,
+      city: address.city,
+      postalCode: address.postalCode,
+      address: address.address,
+      firstName: address.firstName,
+      lastName: address.lastName,
+      nationalId: address.nationalId,
+      mobile: address.mobile,
+      email: address.email || "",
+      notes: address.notes || "",
+      isDefault: address.isDefault,
+    });
+    setFormErrors({});
+    setEditingAddressId(address._id);
+    setIsAddressModalOpen(true);
+  };
+
+  // ✅ تابع برای باز کردن modal در حالت جدید
+  const handleAddNewAddress = () => {
+    setAddressForm({
+      title: "",
+      province: "",
+      city: "",
+      postalCode: "",
+      address: "",
+      firstName: "",
+      lastName: "",
+      nationalId: "",
+      mobile: "",
+      email: "",
+      notes: "",
+      isDefault: false,
+    });
+    setFormErrors({});
+    setEditingAddressId(null);
+    setIsAddressModalOpen(true);
+  };
+
+  const handleDeleteAddress = async (id: string) => {
+    if (!confirm("آیا مطمئن هستید که می‌خواهید این آدرس را حذف کنید؟")) {
+      return;
+    }
+
+    try {
+      await deleteAddress(id);
+      await loadAddresses();
+      if (selectedAddressId === id) {
+        setSelectedAddressId(null);
+      }
+    } catch (error) {
+      console.error("Error deleting address:", error);
+      alert(error instanceof Error ? error.message : "خطا در حذف آدرس");
+    }
+  };
+
+  const handleSetDefaultAddress = async (id: string) => {
+    try {
+      await setDefaultAddress(id);
+      await loadAddresses();
+      setSelectedAddressId(id);
+    } catch (error) {
+      console.error("Error setting default address:", error);
+      alert(
+        error instanceof Error ? error.message : "خطا در تنظیم آدرس پیش‌فرض"
+      );
+    }
+  };
 
   // Timer countdown - استفاده از remainingSeconds از backend
   // برای UX بهتر، تایمر client-side داریم اما هر 30 ثانیه با backend sync می‌شود
@@ -53,15 +265,19 @@ export default function CheckoutPage() {
     setTimeLeft(remainingSeconds);
   }, [remainingSeconds]);
 
-  // Sync با backend هر 30 ثانیه
+  // ✅ Sync با backend هر 30 ثانیه - فقط در این صفحه
   useEffect(() => {
+    // ⚠️ فقط اگر pathname صحیح است، interval را فعال کن
+    if (pathname !== "/purchase/basket") {
+      return;
+    }
+
     const syncInterval = setInterval(() => {
       reloadCart(); // Sync با backend
     }, 30000); // هر 30 ثانیه
 
     return () => clearInterval(syncInterval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pathname, reloadCart]);
 
   // تایمر client-side برای نمایش (UX بهتر)
   useEffect(() => {
@@ -72,8 +288,11 @@ export default function CheckoutPage() {
         Array.isArray(cart.items) &&
         cart.items.length > 0
       ) {
-        // Cart expired - reload to get empty cart
-        reloadCart();
+        // ✅ از setTimeout استفاده می‌کنیم تا بعد از render اجرا شود (جلوگیری از خطای React)
+        const timeoutId = setTimeout(() => {
+          reloadCart();
+        }, 0);
+        return () => clearTimeout(timeoutId);
       }
       return;
     }
@@ -81,8 +300,10 @@ export default function CheckoutPage() {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          // Cart expired
-          reloadCart();
+          // ✅ از setTimeout استفاده می‌کنیم تا بعد از render اجرا شود (جلوگیری از خطای React)
+          setTimeout(() => {
+            reloadCart();
+          }, 0);
           return 0;
         }
         return prev - 1;
@@ -93,37 +314,49 @@ export default function CheckoutPage() {
   }, [timeLeft, cart, reloadCart]);
 
   // تبدیل cart?.items به فرمت مورد نیاز صفحه پرداخت
-  const cartItems: CartItem[] = (cart?.items || []).map((item) => {
-    const product = item.product;
+  // ✅ فیلتر کردن طلای آب شده از cart (باید فقط در purchase باشد)
+  const cartItems: CartItem[] = (cart?.items || [])
+    .filter((item) => item.product.productType !== "melted_gold")
+    .map((item) => {
+      const product = item.product;
 
-    // تعیین تصویر بر اساس نوع محصول
-    const productImage =
-      product.productType === "coin"
-        ? "/images/products/coinphoto.webp"
-        : product.productType === "melted_gold"
-        ? "/images/products/goldbarphoto.webp"
-        : product.images?.[0] || "/images/products/default.webp";
+      // تعیین تصویر بر اساس نوع محصول
+      const productImage =
+        product.productType === "coin"
+          ? "/images/products/coinphoto.webp"
+          : product.productType === "melted_gold"
+          ? "/images/products/goldbarphoto.webp"
+          : product.images?.[0] || "/images/products/default.webp";
 
-    // استخراج category از slug
-    const categorySlug = product.slug.split("/")[0] || "products";
+      // استخراج category از slug
+      const categorySlug = product.slug.split("/")[0] || "products";
 
-    return {
-      _id: item._id,
-      name: product.name,
-      image: productImage,
-      price: item.price, // ✅ قیمت کل (با تخفیف) برای quantity فعلی - از backend
-      originalPrice: item.originalPrice, // ✅ قیمت کل اصلی (بدون تخفیف) برای quantity فعلی - از backend
-      quantity: item.quantity,
-      code: product.code,
-      weight: product.weight || "نامشخص",
-      size: item.size,
-      slug: product.slug,
-      category: categorySlug,
-      discount: item.discount, // ✅ درصد تخفیف - از backend
-      productType: product.productType,
-      goldInfo: product.goldInfo,
-    };
-  });
+      return {
+        _id: item._id,
+        name: product.name,
+        image: productImage,
+        // برای طلای آب‌شده از unitPrice استفاده می‌کنیم (چون quantity نباید در قیمت دخالت داشته باشد)
+        price:
+          product.productType === "melted_gold" && item.unitPrice
+            ? item.unitPrice
+            : item.price, // ✅ قیمت کل (با تخفیف) برای quantity فعلی - از backend
+        originalPrice:
+          product.productType === "melted_gold" && item.unitOriginalPrice
+            ? item.unitOriginalPrice
+            : item.originalPrice, // ✅ قیمت کل اصلی (بدون تخفیف) برای quantity فعلی - از backend
+        unitPrice: item.unitPrice,
+        unitOriginalPrice: item.unitOriginalPrice,
+        quantity: item.quantity,
+        code: product.code,
+        weight: product.weight || "نامشخص",
+        size: item.size,
+        slug: product.slug,
+        category: categorySlug,
+        discount: item.discount, // ✅ درصد تخفیف - از backend
+        productType: product.productType,
+        goldInfo: product.goldInfo,
+      };
+    });
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -144,13 +377,17 @@ export default function CheckoutPage() {
   };
 
   // استفاده از مقادیر محاسبه شده از Backend
-  const subtotal = cart?.prices?.totalWithoutDiscount || 0;
-  const totalDiscount = cart?.prices?.totalSavings || 0;
+  const cartSubtotal = cart?.prices?.totalWithoutDiscount || 0;
+  const cartTotalDiscount = cart?.prices?.totalSavings || 0;
+  const cartTotal = cart?.prices?.totalWithDiscount || 0;
+
+  const subtotal = cartSubtotal;
+  const totalDiscount = cartTotalDiscount;
   const walletAmount: number = 0; // User's wallet balance
   const shippingCost: number = 0; // Free shipping
-  const finalTotal =
-    (cart?.prices?.totalWithDiscount || 0) - walletAmount + shippingCost;
-  const totalItems = cart?.totalItems || 0;
+  const finalTotal = cartTotal - walletAmount + shippingCost;
+  // تعداد کالاها
+  const totalItems = cartItems.length;
 
   const handleRemoveItem = async (itemId: string) => {
     await removeFromCart(itemId);
@@ -260,14 +497,13 @@ export default function CheckoutPage() {
                       {/* Product Code */}
                       <p className="text-xs text-gray-500 mb-2">{item.code}</p>
 
-                      {/* Quantity */}
-                      <p className="text-xs text-gray-600 mb-0.5">
-                        تعداد: {item.quantity}
-                      </p>
-
                       {/* Weight */}
                       <p className="text-xs text-gray-600 mb-0.5">
-                        وزن: {item.weight}
+                        وزن:{" "}
+                        {item.weight ||
+                          (item.goldInfo?.weight
+                            ? `${item.goldInfo.weight} گرم`
+                            : "نامشخص")}
                       </p>
 
                       {/* Size/MintYear and Price */}
@@ -427,16 +663,98 @@ export default function CheckoutPage() {
                     </h3>
                   </div>
                   <button
-                    onClick={() => setIsAddressModalOpen(true)}
+                    onClick={handleAddNewAddress}
                     className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 text-sm font-medium transition-colors rounded"
                   >
                     <span>+</span>
                     <span>افزودن آدرس جدید</span>
                   </button>
                 </div>
-                <p className="text-gray-500 text-center py-8 text-sm">
-                  هنوز آدرسی ثبت نشده است
-                </p>
+
+                {isLoadingAddresses ? (
+                  <p className="text-gray-500 text-center py-8 text-sm">
+                    در حال بارگذاری...
+                  </p>
+                ) : addresses.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8 text-sm">
+                    هنوز آدرسی ثبت نشده است
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {addresses.map((addr) => (
+                      <div
+                        key={addr._id}
+                        className={`border rounded p-4 cursor-pointer transition-colors ${
+                          selectedAddressId === addr._id
+                            ? "border-primary bg-primary/5"
+                            : "border-gray-300 hover:border-gray-400"
+                        }`}
+                        onClick={() => setSelectedAddressId(addr._id)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-bold text-gray-900">
+                                {addr.title}
+                              </h4>
+                              {addr.isDefault && (
+                                <span className="bg-primary text-white text-xs px-2 py-0.5 rounded">
+                                  پیش‌فرض
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-700 mb-1">
+                              {addr.province}، {addr.city}
+                            </p>
+                            <p className="text-sm text-gray-700 mb-1">
+                              {addr.address}
+                            </p>
+                            <p className="text-xs text-gray-500 mb-1">
+                              کد پستی: {addr.postalCode}
+                            </p>
+                            <p className="text-sm text-gray-700">
+                              {addr.firstName} {addr.lastName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              موبایل: {addr.mobile}
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-2 ml-4">
+                            {!addr.isDefault && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSetDefaultAddress(addr._id);
+                                }}
+                                className="text-xs text-primary hover:text-primary/80 transition-colors"
+                              >
+                                پیش‌فرض
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditAddress(addr);
+                              }}
+                              className="text-xs text-primary hover:text-primary/80 transition-colors"
+                            >
+                              ویرایش
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteAddress(addr._id);
+                              }}
+                              className="text-xs text-red-600 hover:text-red-700 transition-colors"
+                            >
+                              حذف
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Divider */}
@@ -526,7 +844,7 @@ export default function CheckoutPage() {
                       </span>
                     </div>
                     <span className="font-medium text-white">
-                      {subtotal.toLocaleString("fa-IR")} تومان
+                      {cartSubtotal.toLocaleString("fa-IR")} تومان
                     </span>
                   </div>
 
@@ -796,9 +1114,9 @@ export default function CheckoutPage() {
                 {/* Price Summary */}
                 <div className="space-y-3 mb-5">
                   <div className="flex items-center justify-between text-sm">
-                    <span>مبلغ کل:</span>
+                    <span>مبلغ کل کالاها:</span>
                     <span className="font-medium">
-                      {subtotal.toLocaleString("fa-IR")} تومان
+                      {cartSubtotal.toLocaleString("fa-IR")} تومان
                     </span>
                   </div>
                   {totalDiscount > 0 && (
@@ -860,11 +1178,30 @@ export default function CheckoutPage() {
       {/* Address Modal */}
       {isAddressModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-gray-300 rounded max-w-5xl w-full">
+          <div className="bg-white border border-gray-300 rounded max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-end px-3 py-0.5 bg-white">
+            <div className="flex items-center justify-end px-3 py-0.5 bg-white flex-shrink-0">
               <button
-                onClick={() => setIsAddressModalOpen(false)}
+                onClick={() => {
+                  setIsAddressModalOpen(false);
+                  setEditingAddressId(null);
+                  setFormErrors({});
+                  // Reset form when closing
+                  setAddressForm({
+                    title: "",
+                    province: "",
+                    city: "",
+                    postalCode: "",
+                    address: "",
+                    firstName: "",
+                    lastName: "",
+                    nationalId: "",
+                    mobile: "",
+                    email: "",
+                    notes: "",
+                    isDefault: false,
+                  });
+                }}
                 className="p-0.5 rounded hover:bg-gray-50 transition-colors"
                 aria-label="بستن"
               >
@@ -872,35 +1209,78 @@ export default function CheckoutPage() {
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6">
-              <form className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-6">
+            {/* Modal Body - Scrollable */}
+            <div className="flex-1 overflow-y-auto pt-4 sm:pt-5 lg:pt-6 px-3 sm:px-4 lg:px-6 pb-3 sm:pb-4 lg:pb-6">
+              <form
+                className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-4 lg:gap-6"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSaveAddress();
+                }}
+              >
                 {/* Address Section - Left Column */}
-                <div className="px-5 pb-5">
+                <div className="px-2 sm:px-3 lg:px-5 pb-3 sm:pb-4 lg:pb-5">
                   <div className="flex items-center gap-2 mb-6">
                     <MapPin className="w-5 h-5 text-primary" />
                     <h3 className="text-lg font-bold text-primary">
-                      آدرس جدید
+                      {editingAddressId ? "ویرایش آدرس" : "آدرس جدید"}
                     </h3>
                   </div>
                   <div className="space-y-2.5">
                     <div>
                       <label className="block text-xs font-medium text-gray-800 mb-1">
-                        عنوان آدرس
+                        عنوان آدرس *
                       </label>
                       <input
                         type="text"
-                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
+                        required
+                        value={addressForm.title}
+                        onChange={(e) => {
+                          setAddressForm({
+                            ...addressForm,
+                            title: e.target.value,
+                          });
+                          // Clear error when user types
+                          if (formErrors.title) {
+                            setFormErrors({ ...formErrors, title: undefined });
+                          }
+                        }}
+                        className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded ${
+                          formErrors.title
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
                         placeholder="مثلاً: منزل، محل کار"
                       />
+                      <FieldError error={formErrors.title} />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-800 mb-1">
-                          استان
+                          استان *
                         </label>
-                        <select className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 transition-colors rounded">
+                        <select
+                          required
+                          value={addressForm.province}
+                          onChange={(e) => {
+                            setAddressForm({
+                              ...addressForm,
+                              province: e.target.value,
+                            });
+                            if (formErrors.province) {
+                              setFormErrors({
+                                ...formErrors,
+                                province: undefined,
+                              });
+                            }
+                          }}
+                          className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none text-sm text-gray-900 transition-colors rounded ${
+                            formErrors.province
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        >
                           <option value="" className="text-gray-400">
                             انتخاب استان
                           </option>
@@ -908,55 +1288,111 @@ export default function CheckoutPage() {
                           <option value="isfahan">اصفهان</option>
                           <option value="shiraz">شیراز</option>
                         </select>
+                        <FieldError error={formErrors.province} />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-800 mb-1">
-                          شهر
+                          شهر *
                         </label>
-                        <select className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 transition-colors rounded">
-                          <option value="" className="text-gray-400">
-                            انتخاب شهر
-                          </option>
-                        </select>
+                        <input
+                          type="text"
+                          required
+                          value={addressForm.city}
+                          onChange={(e) => {
+                            setAddressForm({
+                              ...addressForm,
+                              city: e.target.value,
+                            });
+                            if (formErrors.city) {
+                              setFormErrors({ ...formErrors, city: undefined });
+                            }
+                          }}
+                          className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded ${
+                            formErrors.city
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                          placeholder="شهر"
+                        />
+                        <FieldError error={formErrors.city} />
                       </div>
                     </div>
 
                     <div>
                       <label className="block text-xs font-medium text-gray-800 mb-1">
-                        کد پستی
+                        کد پستی *
                       </label>
                       <input
                         type="text"
-                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
+                        required
+                        maxLength={10}
+                        value={addressForm.postalCode}
+                        onChange={(e) => {
+                          setAddressForm({
+                            ...addressForm,
+                            postalCode: e.target.value.replace(/\D/g, ""),
+                          });
+                          if (formErrors.postalCode) {
+                            setFormErrors({
+                              ...formErrors,
+                              postalCode: undefined,
+                            });
+                          }
+                        }}
+                        className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded ${
+                          formErrors.postalCode
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
                         placeholder="کد پستی ۱۰ رقمی"
                       />
+                      <FieldError error={formErrors.postalCode} />
                     </div>
 
                     <div>
                       <label className="block text-xs font-medium text-gray-800 mb-1">
-                        آدرس
+                        آدرس *
                       </label>
                       <textarea
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none resize-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
+                        required
+                        value={addressForm.address}
+                        onChange={(e) => {
+                          setAddressForm({
+                            ...addressForm,
+                            address: e.target.value,
+                          });
+                          if (formErrors.address) {
+                            setFormErrors({
+                              ...formErrors,
+                              address: undefined,
+                            });
+                          }
+                        }}
+                        className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none resize-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded ${
+                          formErrors.address
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
                         placeholder="آدرس کامل خود را وارد کنید..."
                       />
+                      <FieldError error={formErrors.address} />
                     </div>
                   </div>
                 </div>
 
                 {/* Divider for mobile */}
-                <div className="lg:hidden py-4">
+                <div className="lg:hidden py-3 sm:py-4">
                   <div className="h-[1px] bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
                 </div>
 
                 {/* Divider for desktop */}
-                <div className="hidden lg:block self-stretch px-6">
+                <div className="hidden lg:block self-stretch px-4 lg:px-6">
                   <div className="h-full w-[1px] bg-gradient-to-b from-transparent via-primary/20 to-transparent" />
                 </div>
 
                 {/* Customer Info Section - Right Column */}
-                <div className="px-5 pb-5">
+                <div className="px-2 sm:px-3 lg:px-5 pb-3 sm:pb-4 lg:pb-5">
                   <div className="flex items-center gap-2 mb-6">
                     <User className="w-5 h-5 text-primary" />
                     <h3 className="text-lg font-bold text-primary">
@@ -964,72 +1400,221 @@ export default function CheckoutPage() {
                     </h3>
                   </div>
                   <div className="space-y-2.5">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-800 mb-1">
-                          نام
+                          نام *
                         </label>
                         <input
                           type="text"
-                          className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
+                          required
+                          value={addressForm.firstName}
+                          onChange={(e) => {
+                            setAddressForm({
+                              ...addressForm,
+                              firstName: e.target.value,
+                            });
+                            if (formErrors.firstName) {
+                              setFormErrors({
+                                ...formErrors,
+                                firstName: undefined,
+                              });
+                            }
+                          }}
+                          className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded ${
+                            formErrors.firstName
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
                           placeholder="نام"
                         />
+                        <FieldError error={formErrors.firstName} />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-800 mb-1">
-                          نام خانوادگی
+                          نام خانوادگی *
                         </label>
                         <input
                           type="text"
-                          className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
+                          required
+                          value={addressForm.lastName}
+                          onChange={(e) => {
+                            setAddressForm({
+                              ...addressForm,
+                              lastName: e.target.value,
+                            });
+                            if (formErrors.lastName) {
+                              setFormErrors({
+                                ...formErrors,
+                                lastName: undefined,
+                              });
+                            }
+                          }}
+                          className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded ${
+                            formErrors.lastName
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
                           placeholder="نام خانوادگی"
                         />
+                        <FieldError error={formErrors.lastName} />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-800 mb-1">
-                          کد ملی
+                          کد ملی *
                         </label>
                         <input
                           type="text"
-                          className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
+                          required
+                          maxLength={10}
+                          value={addressForm.nationalId}
+                          onChange={(e) => {
+                            setAddressForm({
+                              ...addressForm,
+                              nationalId: e.target.value.replace(/\D/g, ""),
+                            });
+                            if (formErrors.nationalId) {
+                              setFormErrors({
+                                ...formErrors,
+                                nationalId: undefined,
+                              });
+                            }
+                          }}
+                          className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded ${
+                            formErrors.nationalId
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
                           placeholder="کد ملی ۱۰ رقمی"
                         />
+                        <FieldError error={formErrors.nationalId} />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-800 mb-1">
-                          موبایل
+                          موبایل *
                         </label>
                         <input
                           type="tel"
-                          className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
+                          required
+                          maxLength={11}
+                          value={addressForm.mobile}
+                          onChange={(e) => {
+                            setAddressForm({
+                              ...addressForm,
+                              mobile: e.target.value.replace(/\D/g, ""),
+                            });
+                            if (formErrors.mobile) {
+                              setFormErrors({
+                                ...formErrors,
+                                mobile: undefined,
+                              });
+                            }
+                          }}
+                          className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded ${
+                            formErrors.mobile
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
                           placeholder="۰۹۱۲۳۴۵۶۷۸۹"
                         />
+                        <FieldError error={formErrors.mobile} />
                       </div>
                     </div>
 
                     <div>
                       <label className="block text-xs font-medium text-gray-800 mb-1">
-                        ایمیل
+                        ایمیل (اختیاری)
                       </label>
                       <input
                         type="email"
-                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
+                        value={addressForm.email || ""}
+                        onChange={(e) => {
+                          setAddressForm({
+                            ...addressForm,
+                            email: e.target.value,
+                          });
+                          if (formErrors.email) {
+                            setFormErrors({ ...formErrors, email: undefined });
+                          }
+                        }}
+                        onKeyPress={(e) => {
+                          // ✅ فقط کاراکترهای مجاز را قبول کنید: a-z, A-Z, 0-9, @, ., _, -
+                          const char = e.key;
+                          const allowedChars = /[a-zA-Z0-9@._-]/;
+                          // ✅ اگر کاراکتر مجاز نیست و کلیدهای کنترل نیستند، جلوگیری کن
+                          if (
+                            !allowedChars.test(char) &&
+                            char !== "Backspace" &&
+                            char !== "Delete" &&
+                            char !== "ArrowLeft" &&
+                            char !== "ArrowRight" &&
+                            char !== "Tab" &&
+                            char !== "Enter" &&
+                            char.length === 1 // فقط برای کاراکترهای واقعی
+                          ) {
+                            e.preventDefault();
+                          }
+                        }}
+                        className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded text-left font-sans ${
+                          formErrors.email
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
                         placeholder="example@email.com"
+                        lang="en"
+                        dir="ltr"
+                        inputMode="email"
+                        autoComplete="email"
                       />
+                      <FieldError error={formErrors.email} />
                     </div>
 
                     <div>
                       <label className="block text-xs font-medium text-gray-800 mb-1">
-                        توضیحات
+                        توضیحات (اختیاری)
                       </label>
                       <textarea
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 bg-white focus:border-primary focus:outline-none resize-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
+                        value={addressForm.notes || ""}
+                        onChange={(e) => {
+                          setAddressForm({
+                            ...addressForm,
+                            notes: e.target.value,
+                          });
+                          if (formErrors.notes) {
+                            setFormErrors({ ...formErrors, notes: undefined });
+                          }
+                        }}
+                        className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none resize-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded ${
+                          formErrors.notes
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
                         placeholder="توضیحات تکمیلی (اختیاری)"
                       />
+                      <FieldError error={formErrors.notes} />
+                    </div>
+
+                    <div>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={addressForm.isDefault}
+                          onChange={(e) =>
+                            setAddressForm({
+                              ...addressForm,
+                              isDefault: e.target.checked,
+                            })
+                          }
+                          className="w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded"
+                        />
+                        <span className="text-xs text-gray-700">
+                          تنظیم به عنوان آدرس پیش‌فرض
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -1037,29 +1622,31 @@ export default function CheckoutPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-between px-6 py-4 bg-gray-100">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 px-4 sm:px-6 py-3 sm:py-4 bg-gray-100 flex-shrink-0">
               <Link
                 href="#"
-                className="flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors text-sm"
+                className="flex items-center justify-center sm:justify-start gap-1.5 text-primary hover:text-primary/80 transition-colors text-xs sm:text-sm"
               >
-                <Info className="w-4 h-4" />
+                <Info className="w-4 h-4 flex-shrink-0" />
                 <span>راهنمای ارسال</span>
               </Link>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <button
                   onClick={() => setIsAddressModalOpen(false)}
-                  className="px-5 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors rounded"
+                  className="flex-1 sm:flex-none px-4 sm:px-5 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-medium transition-colors rounded"
                 >
                   انصراف
                 </button>
                 <button
-                  onClick={() => {
-                    // Save address logic
-                    setIsAddressModalOpen(false);
-                  }}
-                  className="px-12 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium transition-colors rounded"
+                  onClick={handleSaveAddress}
+                  disabled={isSavingAddress}
+                  className="flex-1 sm:flex-none px-6 sm:px-12 py-2 bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm font-medium transition-colors rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  ذخیره آدرس
+                  {isSavingAddress
+                    ? "در حال ذخیره..."
+                    : editingAddressId
+                    ? "به‌روزرسانی آدرس"
+                    : "ذخیره آدرس"}
                 </button>
               </div>
             </div>
@@ -1069,3 +1656,15 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+// ✅ استفاده از dynamic import برای جلوگیری از pre-fetch
+// ⚠️ مهم: این باعث می‌شود که صفحه فقط زمانی load شود که کاربر واقعاً به آن برود
+// ⚠️ مهم: ssr: false باعث می‌شود که صفحه فقط در client-side render شود
+export default dynamic(() => Promise.resolve(CheckoutPage), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    </div>
+  ),
+});

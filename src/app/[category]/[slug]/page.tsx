@@ -21,6 +21,8 @@ import "photoswipe/style.css";
 import { useCart } from "@/contexts/CartContext";
 import { getProductBySlug, RelatedProduct, GoldInfo } from "@/lib/api/products";
 import GoldInfoCard from "@/components/GoldInfoCard";
+import AuthModal from "@/components/auth/AuthModal";
+import { ErrorHandler } from "@/lib/utils/errorHandler";
 
 interface ProductDetail {
   id: string | number;
@@ -75,6 +77,11 @@ const ProductDetailPage = () => {
   const [activeRelatedProduct, setActiveRelatedProduct] = useState<
     string | null
   >(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [incompleteRegistrationPhone, setIncompleteRegistrationPhone] =
+    useState<string | null>(null);
+  const [otpExpiredPhone, setOtpExpiredPhone] = useState<string | null>(null);
+  const [otpRequiredPhone, setOtpRequiredPhone] = useState<string | null>(null);
   const { addToCart } = useCart();
 
   // Fetch product data from API
@@ -208,11 +215,68 @@ const ProductDetailPage = () => {
       const size =
         productData.productType === "coin" ? undefined : selectedSize;
 
-      await addToCart(productId, 1, size);
+      await addToCart(productId, 1, size, () => {
+        // اگر کاربر لاگین نیست، modal را باز کن
+        setIsAuthModalOpen(true);
+      });
     } catch (error) {
-      console.error("Error adding to cart:", error);
-      // می‌توانید یک toast یا alert نمایش دهید
-      alert("خطا در افزودن محصول به سبد خرید");
+      // ✅ استفاده از ErrorHandler
+      const handledError = ErrorHandler.handle(
+        error as Error & {
+          data?: import("@/types/errors").ErrorResponse;
+          statusCode?: number;
+          code?: string;
+        }
+      );
+
+      // ✅ Handle کردن بر اساس type
+      switch (handledError.type) {
+        case "otp_required":
+          // ✅ پاک کردن سایر state ها
+          setOtpExpiredPhone(null);
+          setIncompleteRegistrationPhone(null);
+          // ✅ باز کردن modal با step="otp" برای verify OTP
+          setOtpRequiredPhone(handledError.phoneNumber);
+          setIsAuthModalOpen(true);
+          return; // ✅ return کن تا خطا نمایش داده نشود
+
+        case "otp_verification_expired":
+          // ✅ پاک کردن tokens (در ErrorHandler انجام شده)
+          // ✅ باز کردن modal با step="phone" برای دریافت OTP جدید
+          setOtpExpiredPhone(handledError.phoneNumber);
+          setIncompleteRegistrationPhone(null);
+          setOtpRequiredPhone(null);
+          setIsAuthModalOpen(true);
+          return; // ✅ return کن تا خطا نمایش داده نشود
+
+        case "incomplete_registration":
+          // ✅ کاربر لاگین است اما اطلاعات کامل ندارد
+          setIncompleteRegistrationPhone(handledError.phoneNumber);
+          setOtpRequiredPhone(null);
+          setOtpExpiredPhone(null);
+          setIsAuthModalOpen(true);
+          return; // ✅ return کن تا خطا نمایش داده نشود
+
+        case "rate_limit":
+        case "generic_error":
+        default:
+          // ✅ نمایش error برای سایر موارد
+          if (error instanceof Error) {
+            console.error("Error adding to cart:", error);
+            // اگر خطا مربوط به login نبود، alert نمایش بده
+            if (!error.message.includes("وارد")) {
+              const errorMessage =
+                handledError.type === "generic_error" ||
+                handledError.type === "rate_limit"
+                  ? handledError.message
+                  : "خطا در افزودن محصول به سبد خرید";
+              alert(errorMessage);
+            }
+          } else {
+            console.error("Error adding to cart:", error);
+            alert("خطا در افزودن محصول به سبد خرید");
+          }
+      }
     }
   };
 
@@ -330,21 +394,23 @@ const ProductDetailPage = () => {
               {/* Main Image Display */}
               <div className="relative aspect-square mb-4 group">
                 {/* Badges */}
-                <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
-                  {/* Discount Badge - اولویت اول */}
-                  {productData.discount && productData.discount > 0 && (
+                {/* Discount Badge - اولویت اول */}
+                {productData.discount && productData.discount > 0 ? (
+                  <div className="absolute top-4 right-4 z-20">
                     <div className="bg-red-500 text-white px-4 py-2 rounded text-sm font-bold">
                       {productData.discount}٪ تخفیف
                     </div>
-                  )}
-
-                  {/* Low Commission Badge - پیشنهاد ویژه (کم اجرت) */}
-                  {productData.lowCommission && (
-                    <div className="bg-green-800 text-white px-2 py-1 rounded text-xs font-bold">
-                      کم اجرت
+                  </div>
+                ) : (
+                  /* Low Commission Badge - پیشنهاد ویژه (کم اجرت) */
+                  productData.lowCommission && (
+                    <div className="absolute top-4 right-4 z-20">
+                      <div className="bg-primary text-white px-2 py-1 rounded text-xs font-bold">
+                        کم اجرت
+                      </div>
                     </div>
-                  )}
-                </div>
+                  )
+                )}
 
                 {/* Current Image Display */}
                 <div className="relative aspect-square">
@@ -1019,6 +1085,33 @@ const ProductDetailPage = () => {
             </div>
           )}
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setIncompleteRegistrationPhone(null);
+          setOtpExpiredPhone(null);
+          setOtpRequiredPhone(null);
+        }}
+        initialPhoneNumber={
+          otpRequiredPhone ||
+          otpExpiredPhone ||
+          incompleteRegistrationPhone ||
+          undefined
+        }
+        initialStep={
+          otpRequiredPhone
+            ? "otp"
+            : otpExpiredPhone
+            ? "phone"
+            : incompleteRegistrationPhone
+            ? "otp" // ✅ تغییر: به جای register، به otp برود
+            : undefined
+        }
+        isFromIncompleteRegistration={!!incompleteRegistrationPhone} // ✅ flag برای نمایش پیام
+      />
     </div>
   );
 };

@@ -81,8 +81,11 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
         Array.isArray(cart.items) &&
         cart.items.length > 0
       ) {
-        // Cart expired - reload to get empty cart
-        reloadCart();
+        // ✅ از setTimeout استفاده می‌کنیم تا بعد از render اجرا شود (جلوگیری از خطای React)
+        const timeoutId = setTimeout(() => {
+          reloadCart();
+        }, 0);
+        return () => clearTimeout(timeoutId);
       }
       return;
     }
@@ -90,8 +93,10 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          // Cart expired
-          reloadCart();
+          // ✅ از setTimeout استفاده می‌کنیم تا بعد از render اجرا شود (جلوگیری از خطای React)
+          setTimeout(() => {
+            reloadCart();
+          }, 0);
           return 0;
         }
         return prev - 1;
@@ -119,7 +124,10 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
 
   if (!mounted) return null;
 
-  const cartItems = cart?.items || [];
+  // ✅ فیلتر کردن طلای آب شده از cart (باید فقط در purchase باشد)
+  const cartItems = (cart?.items || []).filter(
+    (item) => item.product.productType !== "melted_gold"
+  );
   const isEmpty = !loading && cartItems.length === 0;
 
   return createPortal(
@@ -286,7 +294,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                             {product.code}
                           </p>
 
-                          {/* ✨ برای سکه: فقط نوع و وزن */}
+                          {/* ✨ برای سکه: نوع، وزن و سال ضرب */}
                           {product.productType === "coin" &&
                             product.goldInfo && (
                               <>
@@ -298,11 +306,23 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                                     </span>
                                   </p>
                                 )}
-                                {product.goldInfo.weight && (
-                                  <p className="text-xs text-gray-600 mb-1">
-                                    <span className="text-gray-500">وزن: </span>
+                                {/* وزن */}
+                                <p className="text-xs text-gray-600 mb-1">
+                                  <span className="text-gray-500">وزن: </span>
+                                  <span className="font-medium">
+                                    {product.weight ||
+                                      (product.goldInfo.weight
+                                        ? `${product.goldInfo.weight} گرم`
+                                        : "نامشخص")}
+                                  </span>
+                                </p>
+                                {product.goldInfo.mintYear && (
+                                  <p className="text-xs text-gray-600">
+                                    <span className="text-gray-500">
+                                      سال ضرب:{" "}
+                                    </span>
                                     <span className="font-medium">
-                                      {product.goldInfo.weight} گرم
+                                      {product.goldInfo.mintYear}
                                     </span>
                                   </p>
                                 )}
@@ -312,14 +332,17 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                           {/* برای جواهرات: وزن و سایز */}
                           {product.productType !== "coin" && (
                             <>
-                              {product.goldInfo?.weight && (
-                                <p className="text-xs text-gray-600 mb-1">
-                                  <span className="text-gray-500">وزن: </span>
-                                  <span className="font-medium">
-                                    {product.goldInfo.weight} گرم
-                                  </span>
-                                </p>
-                              )}
+                              {/* وزن - همیشه نمایش داده می‌شود */}
+                              <p className="text-xs text-gray-600 mb-1">
+                                <span className="text-gray-500">وزن: </span>
+                                <span className="font-medium">
+                                  {product.weight ||
+                                    (product.goldInfo?.weight
+                                      ? `${product.goldInfo.weight} گرم`
+                                      : "نامشخص")}
+                                </span>
+                              </p>
+                              {/* سایز */}
                               {item.size && (
                                 <p className="text-xs text-gray-600">
                                   <span className="text-gray-500">سایز: </span>
@@ -330,12 +353,6 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                               )}
                             </>
                           )}
-
-                          {/* Quantity */}
-                          <p className="text-xs text-gray-600 mt-1">
-                            <span className="text-gray-500">تعداد: </span>
-                            <span className="font-medium">{item.quantity}</span>
-                          </p>
                         </div>
                       </div>
 
@@ -343,28 +360,42 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                       <div className="flex items-center justify-end pt-2">
                         <div className="flex items-baseline gap-1">
                           <span className="text-xs text-gray-500">قیمت:</span>
-                          {item.originalPrice > item.price ? (
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-base font-bold text-red-600">
-                                {item.price.toLocaleString("fa-IR")}
-                              </span>
-                              <span className="text-xs text-gray-400 line-through">
-                                {item.originalPrice.toLocaleString("fa-IR")}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                تومان
-                              </span>
-                            </div>
-                          ) : (
-                            <>
-                              <span className="text-base font-bold text-gray-900">
-                                {item.price.toLocaleString("fa-IR")}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                تومان
-                              </span>
-                            </>
-                          )}
+                          {(() => {
+                            // برای طلای آب‌شده از unitPrice استفاده می‌کنیم
+                            const displayPrice =
+                              product.productType === "melted_gold" &&
+                              item.unitPrice
+                                ? item.unitPrice
+                                : item.price;
+                            const displayOriginalPrice =
+                              product.productType === "melted_gold" &&
+                              item.unitOriginalPrice
+                                ? item.unitOriginalPrice
+                                : item.originalPrice;
+
+                            return displayOriginalPrice > displayPrice ? (
+                              <div className="flex items-baseline gap-1.5">
+                                <span className="text-base font-bold text-red-600">
+                                  {displayPrice.toLocaleString("fa-IR")}
+                                </span>
+                                <span className="text-xs text-gray-400 line-through">
+                                  {displayOriginalPrice.toLocaleString("fa-IR")}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  تومان
+                                </span>
+                              </div>
+                            ) : (
+                              <>
+                                <span className="text-base font-bold text-gray-900">
+                                  {displayPrice.toLocaleString("fa-IR")}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  تومان
+                                </span>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -405,6 +436,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                   <Link
                     href="/purchase/basket"
                     onClick={onClose}
+                    prefetch={false}
                     className="flex-1 bg-primary hover:bg-primary/90 text-white text-center py-2 font-medium transition-colors rounded text-sm"
                   >
                     تکمیل خرید

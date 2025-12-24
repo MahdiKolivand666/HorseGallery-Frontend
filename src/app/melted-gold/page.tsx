@@ -3,112 +3,426 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, ChevronLeft, ChevronRight, Home } from "lucide-react";
-import { getProducts } from "@/lib/api/products";
-import CoinGoldProductCard from "@/components/shop/CoinGoldProductCard";
-
-interface Product {
-  _id: string;
-  name: string;
-  price: number;
-  discountPrice?: number;
-  images: string[];
-  slug: string;
-  category: {
-    slug: string;
-  };
-  onSale?: boolean;
-  discount?: number;
-  lowCommission?: boolean;
-}
+import { useRouter } from "next/navigation";
+import { Calculator, Clock, Home, ChevronLeft, Info } from "lucide-react";
+import { getGoldPrice } from "@/lib/api/gold";
+import {
+  addGoldToPurchase,
+  getGoldInvestmentInfo,
+  GoldInvestmentInfo,
+} from "@/lib/api/gold-investment";
+import { isLoggedIn } from "@/lib/api/auth";
+import AuthModal from "@/components/auth/AuthModal";
+import {
+  isIncompleteRegistrationError,
+  isOtpVerificationExpiredError,
+  isOtpRequiredError,
+} from "@/types/errors";
 
 export default function MeltedGoldPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState("");
-  const productsPerPage = 12;
+  const router = useRouter();
+  const [goldPrice, setGoldPrice] = useState<number | null>(null);
+  const [amount, setAmount] = useState<string>("");
+  const [goldGrams, setGoldGrams] = useState<number>(0);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [investmentInfo, setInvestmentInfo] =
+    useState<GoldInvestmentInfo | null>(null);
+  const [loadingInfo, setLoadingInfo] = useState(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [incompleteRegistrationPhone, setIncompleteRegistrationPhone] =
+    useState<string | null>(null);
+  const [otpExpiredPhone, setOtpExpiredPhone] = useState<string | null>(null);
+  const [otpRequiredPhone, setOtpRequiredPhone] = useState<string | null>(null);
 
+  // دریافت قیمت طلا
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchGoldPrice = async () => {
       try {
-        setLoading(true);
-        const response = await getProducts({
-          productType: "melted_gold",
-          limit: 100,
-          sortBy: sortBy || undefined,
-        });
-        setProducts(response.data);
+        const priceData = await getGoldPrice();
+        setGoldPrice(priceData.price);
       } catch (error) {
-        console.error("Error fetching products:", error);
-      } finally {
-        setLoading(false);
+        console.error("Error fetching gold price:", error);
+        // ❌ هیچ fallback price استفاده نمی‌شود - فقط قیمت online
+        setGoldPrice(null);
       }
     };
 
-    fetchProducts();
-  }, [sortBy]);
+    fetchGoldPrice();
 
-  const totalPages = Math.ceil(products.length / productsPerPage);
-  const startIndex = (currentPage - 1) * productsPerPage;
-  const currentProducts = products.slice(
-    startIndex,
-    startIndex + productsPerPage
-  );
+    // به‌روزرسانی قیمت هر 60 ثانیه (مطابق با cache Backend)
+    const interval = setInterval(fetchGoldPrice, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  // دریافت اطلاعات خرید طلا
+  useEffect(() => {
+    const fetchInvestmentInfo = async () => {
+      try {
+        setLoadingInfo(true);
+        const info = await getGoldInvestmentInfo();
+        setInvestmentInfo(info);
+      } catch (error) {
+        console.error("Error fetching investment info:", error);
+        // در صورت خطا، investmentInfo null می‌ماند
+      } finally {
+        setLoadingInfo(false);
+      }
+    };
 
-  const getPaginationNumbers = () => {
-    const pages = [];
-    const maxVisible = 5;
+    fetchInvestmentInfo();
+  }, []);
 
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
+  // محاسبه مقدار طلا هنگام تغییر مبلغ
+  // ⚠️ فقط اگر قیمت online از API دریافت شده باشد
+  useEffect(() => {
+    if (amount && goldPrice && goldPrice > 0) {
+      const numAmount = parseFloat(amount.replace(/,/g, ""));
+      if (!isNaN(numAmount) && numAmount > 0) {
+        // محاسبه در frontend فقط برای نمایش
+        // محاسبه واقعی در backend انجام می‌شود
+        const grams = numAmount / goldPrice;
+        setGoldGrams(grams);
+      } else {
+        setGoldGrams(0);
       }
     } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push("...");
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push("...");
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pages.push(i);
-        }
+      setGoldGrams(0);
+    }
+  }, [amount, goldPrice]);
+
+  // تبدیل اعداد فارسی به انگلیسی
+  const persianToEnglish = (str: string): string => {
+    const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
+    const englishDigits = "0123456789";
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      const index = persianDigits.indexOf(char);
+      if (index !== -1) {
+        result += englishDigits[index];
       } else {
-        pages.push(1);
-        pages.push("...");
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push("...");
-        pages.push(totalPages);
+        result += char;
+      }
+    }
+    return result;
+  };
+
+  // تبدیل اعداد انگلیسی به فارسی
+  const englishToPersian = (str: string): string => {
+    const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
+    const englishDigits = "0123456789";
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      const index = englishDigits.indexOf(char);
+      if (index !== -1) {
+        result += persianDigits[index];
+      } else {
+        result += char;
+      }
+    }
+    return result;
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // تبدیل اعداد فارسی به انگلیسی برای پردازش
+    const value = persianToEnglish(e.target.value);
+
+    // حذف تمام جداکننده‌ها و کاراکترهای غیرعددی
+    const rawValue = value.replace(/,/g, "").replace(/[^\d]/g, "");
+
+    // ذخیره مقدار خام (بدون comma) برای محاسبات (به انگلیسی)
+    // نمایش در input به صورت خودکار به فارسی تبدیل می‌شود
+    setAmount(rawValue);
+  };
+
+  // جلوگیری از ورود کاراکترهای غیرعددی
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // اجازه دادن به کلیدهای کنترل
+    if (
+      e.key === "Backspace" ||
+      e.key === "Delete" ||
+      e.key === "ArrowLeft" ||
+      e.key === "ArrowRight" ||
+      e.key === "Tab" ||
+      e.key === "Enter" ||
+      (e.ctrlKey &&
+        (e.key === "a" || e.key === "c" || e.key === "v" || e.key === "x"))
+    ) {
+      return;
+    }
+
+    // بررسی اینکه آیا کاراکتر عدد است (انگلیسی یا فارسی)
+    const englishDigits = "0123456789";
+    const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
+    const isNumeric =
+      englishDigits.includes(e.key) || persianDigits.includes(e.key);
+
+    // اگر کاراکتر عدد نیست، از ورود آن جلوگیری می‌کنیم
+    if (!isNumeric) {
+      e.preventDefault();
+    }
+  };
+
+  // مدیریت paste - فقط اعداد را نگه می‌دارد
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData("text");
+    // تبدیل اعداد فارسی به انگلیسی و حذف کاراکترهای غیرعددی
+    const englishText = persianToEnglish(pastedText);
+    const numericOnly = englishText.replace(/[^\d]/g, "");
+
+    if (numericOnly) {
+      setAmount(numericOnly);
+    }
+  };
+
+  // فرمت کردن عدد با جداکننده هزارگان فارسی
+  const formatNumber = (num: number): string => {
+    // برای اعداد اعشاری، از toFixed استفاده می‌کنیم
+    const numStr = num.toString();
+    const hasDecimal = numStr.includes(".");
+
+    if (hasDecimal) {
+      // برای اعداد اعشاری، جداکننده هزارگان و اعشار را حفظ می‌کنیم
+      const parts = numStr.split(".");
+      const integerPart = parseFloat(parts[0]).toLocaleString("en-US");
+      const decimalPart = parts[1];
+      const formatted = `${integerPart}.${decimalPart}`;
+      return englishToPersian(formatted);
+    } else {
+      // برای اعداد صحیح، فقط جداکننده هزارگان
+      const formatted = num.toLocaleString("en-US");
+      return englishToPersian(formatted);
+    }
+  };
+
+  // تبدیل عدد به کلمات فارسی (ساده شده)
+  const numberToWords = (num: number): string => {
+    if (num === 0) return "صفر";
+
+    const ones = [
+      "",
+      "یک",
+      "دو",
+      "سه",
+      "چهار",
+      "پنج",
+      "شش",
+      "هفت",
+      "هشت",
+      "نه",
+      "ده",
+      "یازده",
+      "دوازده",
+      "سیزده",
+      "چهارده",
+      "پانزده",
+      "شانزده",
+      "هفده",
+      "هجده",
+      "نوزده",
+    ];
+    const tens = [
+      "",
+      "",
+      "بیست",
+      "سی",
+      "چهل",
+      "پنجاه",
+      "شصت",
+      "هفتاد",
+      "هشتاد",
+      "نود",
+    ];
+    const hundreds = [
+      "",
+      "یکصد",
+      "دویست",
+      "سیصد",
+      "چهارصد",
+      "پانصد",
+      "ششصد",
+      "هفتصد",
+      "هشتصد",
+      "نهصد",
+    ];
+
+    if (num < 20) return ones[num];
+    if (num < 100) {
+      const ten = Math.floor(num / 10);
+      const one = num % 10;
+      return tens[ten] + (one > 0 ? " و " + ones[one] : "");
+    }
+    if (num < 1000) {
+      const hundred = Math.floor(num / 100);
+      const remainder = num % 100;
+      return (
+        hundreds[hundred] +
+        (remainder > 0 ? " و " + numberToWords(remainder) : "")
+      );
+    }
+    if (num < 1000000) {
+      const thousand = Math.floor(num / 1000);
+      const remainder = num % 1000;
+      return (
+        numberToWords(thousand) +
+        " هزار" +
+        (remainder > 0 ? " و " + numberToWords(remainder) : "")
+      );
+    }
+    if (num < 1000000000) {
+      const million = Math.floor(num / 1000000);
+      const remainder = num % 1000000;
+      return (
+        numberToWords(million) +
+        " میلیون" +
+        (remainder > 0 ? " و " + numberToWords(remainder) : "")
+      );
+    }
+    return formatNumber(num); // برای اعداد خیلی بزرگ، از formatNumber استفاده می‌کنیم
+  };
+
+  const handleAddToCart = async () => {
+    // ✅ چک کردن اینکه آیا کاربر لاگین است
+    if (!isLoggedIn()) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    // ✅ بررسی registrationStatus (این بررسی در backend انجام می‌شود، اما برای UX بهتر اینجا هم چک می‌کنیم)
+    // اگر backend خطا بدهد، از پیام backend استفاده می‌کنیم
+
+    if (!goldPrice || goldPrice <= 0) {
+      alert(
+        "قیمت طلا در دسترس نیست. لطفاً چند لحظه صبر کنید و دوباره تلاش کنید."
+      );
+      return;
+    }
+
+    if (!amount || goldGrams <= 0) {
+      alert("لطفاً مبلغ را وارد کنید");
+      return;
+    }
+
+    const numAmount = parseFloat(amount.replace(/,/g, ""));
+    if (numAmount <= 0) {
+      alert("مبلغ باید بیشتر از صفر باشد");
+      return;
+    }
+
+    // بررسی حداقل و حداکثر مبلغ از backend
+    if (investmentInfo) {
+      if (numAmount < investmentInfo.minAmount) {
+        alert(`حداقل مبلغ ${formatNumber(investmentInfo.minAmount)} تومان است`);
+        return;
+      }
+      if (numAmount > investmentInfo.maxAmount) {
+        alert(
+          `حداکثر مبلغ ${formatNumber(investmentInfo.maxAmount)} تومان است`
+        );
+        return;
+      }
+    } else {
+      // Fallback در صورت عدم دریافت اطلاعات
+      if (numAmount < 1000000) {
+        alert("حداقل مبلغ ۱,۰۰۰,۰۰۰ تومان است");
+        return;
       }
     }
 
-    return pages;
+    setAddingToCart(true);
+
+    try {
+      // ارسال مبلغ به backend برای افزودن به purchase
+      await addGoldToPurchase(numAmount);
+
+      // ✅ Set flag که کاربر طلای آب‌شده دارد (در localStorage تا بعد از reload هم حفظ شود)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("hasGoldPurchase", "true");
+      }
+
+      // هدایت مستقیم به صفحه سبد خرید
+      router.push("/purchase/basket");
+    } catch (error: unknown) {
+      // error ممکن است یک Error instance با properties اضافی باشد
+      const errorWithDetails = error as Error & {
+        statusCode?: number;
+        code?: string;
+        requiresRegistration?: boolean;
+        isAuthenticated?: boolean;
+        requiresOtpVerification?: boolean;
+        phoneNumber?: string | null;
+      };
+
+      // ✅ مهم: اول چک کن که آیا OTP_REQUIRED است
+      if (isOtpRequiredError(errorWithDetails)) {
+        // ✅ کاربر لاگین است اما OTP verify نشده - باید modal OTP باز شود
+        // ✅ پاک کردن سایر state ها
+        setOtpExpiredPhone(null);
+        setIncompleteRegistrationPhone(null);
+        // ✅ باز کردن modal با step="otp" برای verify OTP
+        setOtpRequiredPhone(errorWithDetails.phoneNumber || null);
+        setIsAuthModalOpen(true);
+        return; // ✅ return کن تا خطا نمایش داده نشود
+      }
+
+      // ✅ سپس چک کن که آیا OTP_VERIFICATION_EXPIRED است
+      if (isOtpVerificationExpiredError(errorWithDetails)) {
+        // ✅ احراز هویت منقضی شده - کاربر باید دوباره OTP بگیرد
+        // ✅ پاک کردن token و pendingOtpCode
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+          localStorage.removeItem("pendingOtpCode");
+          localStorage.removeItem("userInfo");
+        }
+        // ✅ باز کردن modal با step="phone" برای دریافت OTP جدید
+        setOtpExpiredPhone(errorWithDetails.phoneNumber || null);
+        setIncompleteRegistrationPhone(null); // پاک کردن incomplete registration phone
+        setIsAuthModalOpen(true);
+        return; // ✅ return کن تا خطا نمایش داده نشود
+      }
+
+      // ✅ سپس چک کن که آیا INCOMPLETE_REGISTRATION است
+      if (isIncompleteRegistrationError(errorWithDetails)) {
+        // ✅ کاربر لاگین است اما اطلاعات کامل ندارد
+        // ✅ اول باید OTP را verify کند، سپس به register برود
+        // ✅ فقط modal را باز کن - خطا را نمایش نده
+        // ⚠️ خطا را در console نمایش نده - این یک flow عادی است
+        setIncompleteRegistrationPhone(errorWithDetails.phoneNumber || null);
+        setOtpRequiredPhone(null); // پاک کردن otpRequiredPhone
+        setOtpExpiredPhone(null); // پاک کردن otpExpiredPhone
+        setIsAuthModalOpen(true);
+        return; // ✅ return کن تا خطا نمایش داده نشود
+      }
+
+      // ✅ فقط برای سایر خطاها، خطا را نمایش بده
+      let errorMessage = "خطا در افزودن به purchase";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+
+        // بهبود پیام خطا برای انواع مختلف
+        if (error.message.includes("درخواست‌های زیادی")) {
+          errorMessage =
+            "⚠️ درخواست‌های زیادی ارسال شده است. لطفاً چند دقیقه صبر کنید و دوباره تلاش کنید.";
+        } else if (error.message.includes("قیمت لحظه‌ای")) {
+          errorMessage =
+            "⚠️ خطا در دریافت قیمت لحظه‌ای طلا. لطفاً چند لحظه صبر کنید و دوباره تلاش کنید.";
+        } else if (error.message.includes("اتصال به سرور")) {
+          errorMessage =
+            "⚠️ خطا در اتصال به سرور. لطفاً اتصال اینترنت را بررسی کنید.";
+        }
+      }
+
+      console.error("Error adding to purchase:", error);
+      alert(errorMessage);
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">در حال بارگذاری محصولات...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-white pt-[110px] sm:pt-[105px] lg:pt-[105px]">
+    <div className="min-h-screen bg-gray-50 pt-[110px] sm:pt-[105px] lg:pt-[105px]">
       {/* Hero Image */}
       <div className="relative w-full h-64 sm:h-80 lg:h-96">
         <Image
@@ -120,7 +434,7 @@ export default function MeltedGoldPage() {
         />
         <div className="absolute inset-0 flex items-end justify-start p-6 sm:p-8 lg:p-12">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#e8f5e9] drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] tracking-wide">
-            شمش طلا
+            خرید طلا به صورت آنلاین
           </h1>
         </div>
       </div>
@@ -137,99 +451,222 @@ export default function MeltedGoldPage() {
               <span>خانه</span>
             </Link>
             <ChevronLeft className="w-4 h-4 text-primary" />
-            <span className="text-primary font-medium">شمش طلا</span>
+            <span className="text-primary font-medium">خرید طلا</span>
           </nav>
         </div>
       </div>
 
-      {/* Main Content */}
-      <main className="px-4 sm:px-6 pt-[5px] pb-6 lg:pb-8">
-        {/* Sort */}
-        <div className="flex items-center justify-end gap-4 my-[1.25rem]">
-          <div className="relative">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 pr-4 py-1 pl-8 text-xs text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer text-right"
-              dir="rtl"
-            >
-              <option value="" disabled>
-                مرتب‌سازی
-              </option>
-              <option value="inStock">موجود</option>
-              <option value="outOfStock">ناموجود</option>
-              <option value="weight-desc">از بیشترین وزن به کمترین</option>
-              <option value="weight-asc">از کمترین وزن به بیشترین</option>
-            </select>
-            <ChevronDown className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Calculator Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-8 border border-gray-200">
+          <div className="flex items-center gap-3 mb-6">
+            <Calculator className="w-6 h-6 text-primary" />
+            <h2 className="text-2xl font-bold text-gray-900">
+              محاسبه مقدار طلا
+            </h2>
           </div>
-        </div>
 
-        {/* Products Grid - 4 columns */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {currentProducts.map((product) => (
-              <CoinGoldProductCard
-                key={product._id}
-                product={{
-                  name: product.name,
-                  price: `${product.price.toLocaleString("fa-IR")} تومان`,
-                  image: "/images/products/goldbarphoto.webp",
-                  hoverImage: "/images/products/goldbarphoto.webp",
-                  slug: product.slug,
-                }}
-                category={product.category.slug}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Side - Image */}
+            <div className="relative h-64 lg:h-[600px] rounded-lg overflow-hidden border border-gray-200">
+              <Image
+                src="/images/products/goldbarphoto.webp"
+                alt="طلا"
+                fill
+                className="object-cover"
               />
-            ))}
+            </div>
+
+            {/* Right Side - Form */}
+            <div className="space-y-6">
+              {/* مبلغ پرداختی */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  مبلغ پرداختی (تومان) *
+                </label>
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg border-2 border-gray-300">
+                  <input
+                    type="text"
+                    value={
+                      amount
+                        ? formatNumber(
+                            parseFloat(amount.replace(/,/g, "") || "0")
+                          )
+                        : ""
+                    }
+                    onChange={handleAmountChange}
+                    onKeyPress={handleKeyPress}
+                    onPaste={handlePaste}
+                    inputMode="numeric"
+                    placeholder="مثال: ۱۰,۰۰۰,۰۰۰"
+                    dir="rtl"
+                    className="flex-1 bg-transparent border-none focus:outline-none text-gray-900 placeholder:text-gray-400 text-[1.4rem] text-end"
+                  />
+                  <span className="text-base text-gray-400 mr-2">تومان</span>
+                </div>
+              </div>
+
+              {/* مقدار طلا */}
+              <div className="p-3 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg border border-yellow-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-600">مقدار طلا:</span>
+                  <span className="font-medium text-gray-900">
+                    {goldGrams > 0 ? (
+                      <>
+                        <span className="text-[1.4rem]">
+                          {formatNumber(
+                            Math.round(Number(goldGrams.toFixed(4)) * 1000)
+                          )}
+                        </span>
+                        <span className="text-base text-gray-400">
+                          {" "}
+                          میلی‌گرم
+                        </span>
+                      </>
+                    ) : (
+                      "--"
+                    )}
+                  </span>
+                </div>
+                {goldGrams > 0 &&
+                  amount &&
+                  parseFloat(amount.replace(/,/g, "")) > 0 && (
+                    <p className="text-xs text-gray-600 text-right flex items-center gap-1 justify-start">
+                      <Info className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span className="font-bold">
+                        {formatNumber(Number(goldGrams.toFixed(3)))} گرم (معادل{" "}
+                        {numberToWords(parseFloat(amount.replace(/,/g, "")))}{" "}
+                        تومان)
+                      </span>
+                    </p>
+                  )}
+              </div>
+
+              {/* قیمت لحظه‌ای طلا */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <span className="absolute w-3 h-3 bg-red-600 rounded-full animate-ping opacity-75"></span>
+                    <span className="relative w-3 h-3 bg-red-600 rounded-full block"></span>
+                  </div>
+                  <span className="text-sm text-gray-600">
+                    قیمت لحظه‌ای طلا:
+                  </span>
+                </div>
+                <span className="font-medium text-gray-900">
+                  {goldPrice
+                    ? `${formatNumber(goldPrice)} تومان`
+                    : "در حال دریافت..."}
+                </span>
+              </div>
+
+              {/* حداقل خرید */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-sm text-gray-600">حداقل خرید:</span>
+                <span className="font-medium text-gray-900">
+                  {loadingInfo || !investmentInfo
+                    ? "در حال محاسبه"
+                    : `${formatNumber(investmentInfo.minAmount)} تومان`}
+                </span>
+              </div>
+
+              {/* حداکثر خرید */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-sm text-gray-600">حداکثر خرید:</span>
+                <span className="font-medium text-gray-900">
+                  {loadingInfo || !investmentInfo
+                    ? "در حال محاسبه"
+                    : `${formatNumber(investmentInfo.maxAmount)} تومان`}
+                </span>
+              </div>
+
+              {/* کارمزد خرید */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-sm text-gray-600">کارمزد خرید:</span>
+                <span className="font-medium text-gray-900">
+                  {loadingInfo || !investmentInfo
+                    ? "در حال بروزرسانی"
+                    : investmentInfo.commissionAmount
+                    ? `${formatNumber(investmentInfo.commissionAmount)} تومان`
+                    : investmentInfo.commission
+                    ? `%${englishToPersian(
+                        investmentInfo.commission.toString()
+                      )}`
+                    : "نامشخص"}
+                </span>
+              </div>
+
+              {/* لینک محدودیت‌های خرید و فروش */}
+              {investmentInfo?.restrictionsLink && (
+                <div className="text-center">
+                  <Link
+                    href={investmentInfo.restrictionsLink}
+                    className="text-sm text-primary hover:text-primary/80 underline"
+                  >
+                    محدودیت‌های خرید و فروش
+                  </Link>
+                </div>
+              )}
+
+              {/* Add to Cart Button */}
+              <button
+                onClick={handleAddToCart}
+                disabled={
+                  !goldGrams ||
+                  goldGrams <= 0 ||
+                  addingToCart ||
+                  !goldPrice ||
+                  (investmentInfo
+                    ? parseFloat(amount.replace(/,/g, "")) <
+                        investmentInfo.minAmount ||
+                      parseFloat(amount.replace(/,/g, "")) >
+                        investmentInfo.maxAmount
+                    : parseFloat(amount.replace(/,/g, "")) < 1000000)
+                }
+                className="w-full bg-primary hover:bg-primary/90 text-white py-3 px-6 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {addingToCart ? (
+                  <>
+                    <Clock className="w-5 h-5 animate-spin" />
+                    <span>در حال اضافه کردن...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>افزودن به سبد خرید</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-12 flex items-center justify-center gap-2">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
-              aria-label="صفحه قبل"
-            >
-              <ChevronRight className="w-5 h-5 text-gray-600" />
-            </button>
-
-            {getPaginationNumbers().map((page, index) =>
-              page === "..." ? (
-                <span key={`ellipsis-${index}`} className="px-3 text-gray-500">
-                  ...
-                </span>
-              ) : (
-                <button
-                  key={page}
-                  onClick={() => handlePageChange(page as number)}
-                  className={`min-w-[40px] h-10 px-3 border transition-colors rounded ${
-                    currentPage === page
-                      ? "bg-primary text-white border-primary"
-                      : "border-gray-300 hover:bg-gray-50 text-gray-700"
-                  }`}
-                >
-                  {String(page)
-                    .split("")
-                    .map((digit) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(digit)])
-                    .join("")}
-                </button>
-              )
-            )}
-
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
-              aria-label="صفحه بعد"
-            >
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
-            </button>
-          </div>
-        )}
-      </main>
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setIncompleteRegistrationPhone(null);
+          setOtpExpiredPhone(null);
+          setOtpRequiredPhone(null);
+        }}
+        initialPhoneNumber={
+          otpRequiredPhone ||
+          otpExpiredPhone ||
+          incompleteRegistrationPhone ||
+          undefined
+        }
+        initialStep={
+          otpRequiredPhone
+            ? "otp"
+            : otpExpiredPhone
+            ? "phone"
+            : incompleteRegistrationPhone
+            ? "otp" // ✅ تغییر: به جای register، به otp برود
+            : undefined
+        }
+        isFromIncompleteRegistration={!!incompleteRegistrationPhone} // ✅ flag برای نمایش پیام
+      />
     </div>
   );
 }

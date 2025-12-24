@@ -5,6 +5,7 @@
 import API_CONFIG from "@/config/api";
 import { GoldInfo } from "./products";
 import { setSessionId, removeSessionId } from "@/lib/session";
+import { ErrorCode } from "@/types/errors";
 
 // Types
 export interface Cart {
@@ -56,6 +57,7 @@ export interface CartResponse {
   totalPrice: number;
   expiresAt: string | null;
   remainingSeconds: number;
+  expired?: boolean; // ✅ نشان می‌دهد که cart منقضی شده
   sessionId?: string; // ✨ اگر Backend sessionId ایجاد کرده باشد
   prices: {
     totalWithoutDiscount: number;
@@ -65,11 +67,11 @@ export interface CartResponse {
   };
 }
 
-// Helper function to get auth token
+// Helper function to get auth token (از tokenStorage)
+import { tokenStorage } from "@/lib/utils/tokenStorage";
+
 function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  // TODO: Get token from your auth system (localStorage, cookie, etc.)
-  return localStorage.getItem("token") || null;
+  return tokenStorage.getAccessToken();
 }
 
 /**
@@ -196,18 +198,148 @@ export async function addToCart(
     });
 
     if (!res.ok) {
-      // Handle 403 - Forbidden
-      if (res.status === 403) {
-        const error = await res.json().catch(() => ({
-          message: "دسترسی به این سبد خرید ندارید",
-        }));
-        throw new Error(error.message || "دسترسی به این سبد خرید ندارید");
+      const error = await res.json().catch(() => ({
+        message:
+          res.status === 403
+            ? "دسترسی به این سبد خرید ندارید"
+            : "خطا در افزودن محصول",
+      }));
+
+      // ✅ Import ErrorCode در بالای فایل اضافه شده است
+      // ✅ اول چک کن که آیا خطا مربوط به OTP Required است
+      if (
+        res.status === 403 &&
+        (error.code === "OTP_REQUIRED" ||
+          error.code === ErrorCode.OTP_REQUIRED) &&
+        error.requiresRegistration === true &&
+        error.isAuthenticated === true &&
+        error.requiresOtpVerification === true
+      ) {
+        // ایجاد یک خطای خاص با تمام اطلاعات
+        const errorMessage = Array.isArray(error.message)
+          ? error.message.join(", ")
+          : error.message || "لطفاً ابتدا شماره موبایل خود را تأیید کنید";
+
+        // ✅ استفاده از Object.assign برای اطمینان از حفظ properties
+        const customError = Object.assign(new Error(errorMessage), {
+          statusCode: 403,
+          code: ErrorCode.OTP_REQUIRED,
+          data: {
+            statusCode: 403,
+            message: error.message,
+            code: ErrorCode.OTP_REQUIRED,
+            requiresRegistration: true,
+            isAuthenticated: true,
+            requiresOtpVerification: true,
+            phoneNumber: error.phoneNumber || null,
+          },
+          requiresRegistration: true,
+          isAuthenticated: true,
+          requiresOtpVerification: true,
+          phoneNumber: error.phoneNumber || null,
+        }) as Error & {
+          statusCode: number;
+          code: ErrorCode;
+          data?: any;
+          requiresRegistration: boolean;
+          isAuthenticated: boolean;
+          requiresOtpVerification: boolean;
+          phoneNumber: string | null;
+        };
+
+        throw customError;
       }
 
-      const error = await res
-        .json()
-        .catch(() => ({ message: "خطا در افزودن محصول" }));
-      throw new Error(error.message || "خطا در افزودن محصول");
+      // ✅ سپس چک کن که آیا خطا مربوط به OTP Verification Expired است
+      if (
+        res.status === 403 &&
+        (error.code === "OTP_VERIFICATION_EXPIRED" ||
+          error.code === ErrorCode.OTP_VERIFICATION_EXPIRED) &&
+        error.requiresRegistration === true &&
+        error.isAuthenticated === false
+      ) {
+        // ایجاد یک خطای خاص با تمام اطلاعات
+        const errorMessage = Array.isArray(error.message)
+          ? error.message.join(", ")
+          : error.message ||
+            "احراز هویت شما منقضی شده است. لطفاً دوباره کد تأیید دریافت کنید";
+
+        // ✅ استفاده از Object.assign برای اطمینان از حفظ properties
+        const customError = Object.assign(new Error(errorMessage), {
+          statusCode: 403,
+          code: ErrorCode.OTP_VERIFICATION_EXPIRED,
+          data: {
+            statusCode: 403,
+            message: error.message,
+            code: ErrorCode.OTP_VERIFICATION_EXPIRED,
+            requiresRegistration: true,
+            isAuthenticated: false,
+            phoneNumber: error.phoneNumber || null,
+          },
+          requiresRegistration: true,
+          isAuthenticated: false,
+          phoneNumber: error.phoneNumber || null,
+        }) as Error & {
+          statusCode: number;
+          code: ErrorCode;
+          data?: any;
+          requiresRegistration: boolean;
+          isAuthenticated: boolean;
+          phoneNumber: string | null;
+        };
+
+        throw customError;
+      }
+
+      // ✅ سپس چک کن که آیا خطا مربوط به Incomplete Registration است
+      if (
+        res.status === 403 &&
+        (error.code === "INCOMPLETE_REGISTRATION" ||
+          error.code === ErrorCode.INCOMPLETE_REGISTRATION) &&
+        error.requiresRegistration === true &&
+        error.isAuthenticated === true
+      ) {
+        // ایجاد یک خطای خاص با تمام اطلاعات
+        const errorMessage = Array.isArray(error.message)
+          ? error.message.join(", ")
+          : error.message || "لطفاً ابتدا اطلاعات تکمیلی خود را کامل کنید";
+
+        // ✅ استفاده از Object.assign برای اطمینان از حفظ properties
+        const customError = Object.assign(new Error(errorMessage), {
+          statusCode: 403,
+          code: ErrorCode.INCOMPLETE_REGISTRATION,
+          data: {
+            statusCode: 403,
+            message: error.message,
+            code: ErrorCode.INCOMPLETE_REGISTRATION,
+            requiresRegistration: true,
+            isAuthenticated: true,
+            phoneNumber: error.phoneNumber || null,
+          },
+          requiresRegistration: true,
+          isAuthenticated: true,
+          phoneNumber: error.phoneNumber || null,
+        }) as Error & {
+          statusCode: number;
+          code: ErrorCode;
+          data?: any;
+          requiresRegistration: boolean;
+          isAuthenticated: boolean;
+          phoneNumber: string | null;
+        };
+
+        throw customError;
+      }
+
+      // سایر خطاها
+      const errorMessage = Array.isArray(error.message)
+        ? error.message.join(", ")
+        : error.message ||
+          (res.status === 403
+            ? "دسترسی به این سبد خرید ندارید"
+            : "خطا در افزودن محصول");
+
+      throw new Error(errorMessage);
     }
 
     const data = await res.json();
@@ -219,6 +351,41 @@ export async function addToCart(
 
     return data;
   } catch (error) {
+    // ✅ اگر error از داخل try block throw شده باشد (مثل OTP_REQUIRED, INCOMPLETE_REGISTRATION)
+    // آن را بدون تغییر throw کن
+    // فقط برای خطاهای network یا غیرمنتظره console.error بزن
+    const errorWithDetails = error as Error & {
+      code?: string;
+      statusCode?: number;
+      requiresRegistration?: boolean;
+      isAuthenticated?: boolean;
+      requiresOtpVerification?: boolean;
+      phoneNumber?: string | null;
+    };
+
+    // ✅ اگر OTP_REQUIRED است، بدون console.error throw کن
+    if (
+      error instanceof Error &&
+      (errorWithDetails?.code === "OTP_REQUIRED" ||
+        errorWithDetails?.code === ErrorCode.OTP_REQUIRED)
+    ) {
+      // ✅ این یک flow عادی است - خطا را نمایش نده
+      // ✅ مطمئن شو که properties حفظ می‌شوند
+      throw error;
+    }
+
+    // ✅ اگر INCOMPLETE_REGISTRATION است، بدون console.error throw کن
+    if (
+      error instanceof Error &&
+      (errorWithDetails?.code === "INCOMPLETE_REGISTRATION" ||
+        errorWithDetails?.code === ErrorCode.INCOMPLETE_REGISTRATION)
+    ) {
+      // ✅ این یک flow عادی است - خطا را نمایش نده
+      // ✅ مطمئن شو که properties حفظ می‌شوند
+      throw error;
+    }
+
+    // ✅ فقط برای خطاهای دیگر console.error بزن
     console.error("Error adding to cart:", error);
     throw error;
   }

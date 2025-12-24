@@ -49,7 +49,7 @@ export default function ProductCard({ product, category }: ProductCardProps) {
               (!product.onSale ||
                 !product.discount ||
                 product.discount === 0) && (
-                <div className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
+                <div className="bg-primary text-white text-xs font-bold px-2 py-1 rounded">
                   کم اجرت
                 </div>
               )}

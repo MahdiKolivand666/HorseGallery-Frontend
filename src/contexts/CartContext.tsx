@@ -17,6 +17,12 @@ import {
   removeFromCart as removeFromCartAPI,
   mergeCart as mergeCartAPI,
 } from "@/lib/api/cart";
+import { isLoggedIn } from "@/lib/api/auth";
+import {
+  isIncompleteRegistrationError,
+  isOtpVerificationExpiredError,
+  isOtpRequiredError,
+} from "@/types/errors";
 
 interface CartContextType {
   cart: CartResponse | null;
@@ -29,7 +35,8 @@ interface CartContextType {
   addToCart: (
     productId: string,
     quantity?: number,
-    size?: string
+    size?: string,
+    onLoginRequired?: () => void
   ) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
@@ -55,7 +62,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
       const cartData = await getCart();
-      setCart(cartData);
+
+      // ✅ بررسی کنید که cart منقضی شده یا نه
+      if (cartData?.expired) {
+        // Cart منقضی شده، state را پاک کنید
+        setCart(null);
+      } else {
+        // Cart معتبر است
+        setCart(cartData);
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "خطا در دریافت سبد خرید";
@@ -77,14 +92,60 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addToCart = async (
     productId: string,
     quantity: number = 1,
-    size?: string
+    size?: string,
+    onLoginRequired?: () => void
   ) => {
+    // ✅ چک کردن اینکه آیا کاربر لاگین است
+    if (!isLoggedIn()) {
+      // اگر callback برای باز کردن modal وجود دارد، آن را صدا بزن
+      if (onLoginRequired) {
+        onLoginRequired();
+      } else {
+        // اگر callback وجود ندارد، خطا بده
+        throw new Error("برای افزودن محصول به سبد خرید باید وارد شوید");
+      }
+      return;
+    }
+
     try {
       setError(null);
       const updatedCart = await addToCartAPI(productId, quantity, size);
       setCart(updatedCart);
       setIsCartOpen(true);
     } catch (err) {
+      // err ممکن است یک Error instance با properties اضافی باشد
+      const errorWithDetails = err as Error & {
+        statusCode?: number;
+        code?: string;
+        requiresRegistration?: boolean;
+        isAuthenticated?: boolean;
+        requiresOtpVerification?: boolean;
+        phoneNumber?: string | null;
+      };
+
+      // ✅ مهم: اول چک کن که آیا OTP_REQUIRED است
+      if (isOtpRequiredError(errorWithDetails)) {
+        // ✅ کاربر لاگین است اما OTP verify نشده - خطا را throw کن تا component بتواند handle کند
+        // ⚠️ خطا را در state یا console نمایش نده - این یک flow عادی است
+        throw err;
+      }
+
+      // ✅ سپس چک کن که آیا OTP_VERIFICATION_EXPIRED است
+      if (isOtpVerificationExpiredError(errorWithDetails)) {
+        // ✅ احراز هویت منقضی شده - خطا را throw کن تا component بتواند handle کند
+        // ⚠️ خطا را در state یا console نمایش نده - این یک flow عادی است
+        throw err;
+      }
+
+      // ✅ سپس چک کن که آیا INCOMPLETE_REGISTRATION است
+      if (isIncompleteRegistrationError(errorWithDetails)) {
+        // ✅ کاربر لاگین است اما اطلاعات کامل ندارد
+        // ⚠️ خطا را در state یا console نمایش نده - این یک flow عادی است
+        // خطا را throw کن تا component بتواند modal را باز کند
+        throw err;
+      }
+
+      // ✅ فقط خطاهای غیر INCOMPLETE_REGISTRATION را در state و console نمایش بده
       const errorMessage =
         err instanceof Error ? err.message : "خطا در افزودن محصول";
       setError(errorMessage);

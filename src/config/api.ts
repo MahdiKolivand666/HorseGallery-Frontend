@@ -17,6 +17,10 @@ export const API_CONFIG = {
 
     // Gold Price (Public)
     GOLD_PRICE: "/gold-price",
+    GOLD_PRICE_LATEST: "/gold-price/latest", // قیمت لحظه‌ای از API خارجی
+
+    // Gold Investment (Public)
+    GOLD_INVESTMENT_INFO: "/gold-investment/info", // اطلاعات خرید طلا (حداقل/حداکثر، کارمزد)
 
     // Announcements (Public)
     ANNOUNCEMENTS: "/announcement",

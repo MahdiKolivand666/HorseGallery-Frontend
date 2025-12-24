@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -24,9 +25,19 @@ import CartDrawer from "@/components/cart/CartDrawer";
 import "swiper/css";
 import "swiper/css/navigation";
 import { useCart } from "@/contexts/CartContext";
+import { getGoldPrice } from "@/lib/api/gold";
+import {
+  isLoggedIn,
+  getUserInfo,
+  logout,
+  getUserDashboardInfo,
+  type UserDashboardInfo,
+} from "@/lib/api/auth";
+import { convertEnglishToPersian } from "@/lib/utils";
 
 const Navbar = () => {
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,6 +48,16 @@ const Navbar = () => {
   const [isMobileCoinGoldOpen, setIsMobileCoinGoldOpen] = useState(false);
   const [isNavHovered, setIsNavHovered] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [goldPrice, setGoldPrice] = useState<number | null>(null);
+  const [userInfo, setUserInfo] =
+    useState<ReturnType<typeof getUserInfo>>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [dashboardInfo, setDashboardInfo] = useState<UserDashboardInfo | null>(
+    null
+  );
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
+  const userMenuRefDesktop = useRef<HTMLDivElement>(null);
+  const userMenuRefMobile = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const productsMenuRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("navbar");
@@ -122,6 +143,142 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
+  // تبدیل اعداد انگلیسی به فارسی
+  const englishToPersian = (str: string): string => {
+    const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
+    const englishDigits = "0123456789";
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      const index = englishDigits.indexOf(char);
+      if (index !== -1) {
+        result += persianDigits[index];
+      } else {
+        result += char;
+      }
+    }
+    return result;
+  };
+
+  // فرمت کردن عدد با جداکننده هزارگان فارسی
+  const formatNumber = (num: number): string => {
+    const formatted = num.toLocaleString("en-US");
+    return englishToPersian(formatted);
+  };
+
+  // ✅ Set isMounted to true after component mounts (client-side only)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // دریافت قیمت طلا
+  useEffect(() => {
+    const fetchGoldPrice = async () => {
+      try {
+        const priceData = await getGoldPrice();
+        setGoldPrice(priceData.price);
+      } catch {
+        // ✅ خطا را به صورت silent handle می‌کنیم (نه console.error)
+        // فقط state را null می‌کنیم تا UI پیام مناسب نمایش دهد
+        setGoldPrice(null);
+      }
+    };
+
+    fetchGoldPrice();
+
+    // به‌روزرسانی قیمت هر 60 ثانیه
+    const interval = setInterval(fetchGoldPrice, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ دریافت اطلاعات کاربر در mount و بعد از reload
+  useEffect(() => {
+    const checkAndSetUserInfo = () => {
+      const userInfoData = getUserInfo();
+      const isLoggedInValue = isLoggedIn();
+
+      if (isLoggedInValue && userInfoData) {
+        setUserInfo(userInfoData);
+      } else {
+        setUserInfo(null);
+      }
+    };
+
+    // ✅ بررسی در mount (همیشه)
+    checkAndSetUserInfo();
+
+    // ✅ Listener برای تغییرات localStorage (برای به‌روزرسانی بعد از login)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "userInfo" || e.key === "accessToken") {
+        checkAndSetUserInfo();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // ✅ همچنین یک interval برای چک کردن تغییرات (برای تغییرات در همان tab)
+    const interval = setInterval(checkAndSetUserInfo, 1000); // هر 1 ثانیه چک می‌کند
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []); // ✅ فقط یک بار در mount اجرا می‌شود
+
+  // ✅ به‌روزرسانی userInfo زمانی که modal باز/بسته می‌شود
+  useEffect(() => {
+    const userInfoData = getUserInfo();
+    const isLoggedInValue = isLoggedIn();
+    if (isLoggedInValue && userInfoData) {
+      setUserInfo(userInfoData);
+    } else {
+      setUserInfo(null);
+      setDashboardInfo(null);
+    }
+  }, [isAuthModalOpen]);
+
+  // ✅ دریافت اطلاعات dashboard زمانی که user menu باز می‌شود
+  useEffect(() => {
+    if (
+      isUserMenuOpen &&
+      isLoggedIn() &&
+      !dashboardInfo &&
+      !isLoadingDashboard
+    ) {
+      const loadDashboardInfo = async () => {
+        setIsLoadingDashboard(true);
+        try {
+          const info = await getUserDashboardInfo();
+          setDashboardInfo(info);
+        } catch (error) {
+          console.error("Error loading dashboard info:", error);
+        } finally {
+          setIsLoadingDashboard(false);
+        }
+      };
+      loadDashboardInfo();
+    }
+  }, [isUserMenuOpen, dashboardInfo, isLoadingDashboard]);
+
+  // تابع برای خروج از سیستم
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setUserInfo(null);
+      setDashboardInfo(null);
+      setIsUserMenuOpen(false);
+      // Reload page to update navbar
+      window.location.reload();
+    } catch (error) {
+      console.error("Logout error:", error);
+      // حتی اگر logout failed، state را پاک کن
+      setUserInfo(null);
+      setDashboardInfo(null);
+      setIsUserMenuOpen(false);
+      window.location.reload();
+    }
+  };
+
   // Close mobile menu when window is resized to desktop
   const handleResize = useCallback(() => {
     if (window.innerWidth >= 1024 && isMobileMenuOpen) {
@@ -144,37 +301,57 @@ const Navbar = () => {
   }, [isMobileMenuOpen, isProductsMenuOpen]);
 
   // Close search box and products menu when clicking outside
-  const handleClickOutside = useCallback((event: MouseEvent) => {
-    const target = event.target as HTMLElement;
-    // Check if click is outside search box and not on search button
-    const isSearchButton = target.closest("[data-search-button]");
-    const isProductsButton = target.closest("[data-products-button]");
-    const isCoinGoldButton = target.closest("[data-coin-gold-button]");
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Check if click is outside search box and not on search button
+      const isSearchButton = target.closest("[data-search-button]");
+      const isProductsButton = target.closest("[data-products-button]");
+      const isCoinGoldButton = target.closest("[data-coin-gold-button]");
 
-    if (
-      searchRef.current &&
-      !searchRef.current.contains(target) &&
-      !isSearchButton
-    ) {
-      setIsSearchOpen(false);
-      setSearchQuery("");
-    }
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(target) &&
+        !isSearchButton
+      ) {
+        setIsSearchOpen(false);
+        setSearchQuery("");
+      }
 
-    if (
-      productsMenuRef.current &&
-      !productsMenuRef.current.contains(target) &&
-      !isProductsButton
-    ) {
-      setIsProductsMenuOpen(false);
-    }
+      if (
+        productsMenuRef.current &&
+        !productsMenuRef.current.contains(target) &&
+        !isProductsButton
+      ) {
+        setIsProductsMenuOpen(false);
+      }
 
-    if (!isCoinGoldButton) {
-      setIsCoinGoldMenuOpen(false);
-    }
-  }, []);
+      if (!isCoinGoldButton) {
+        setIsCoinGoldMenuOpen(false);
+      }
+
+      // ✅ بستن user menu اگر کلیک خارج از آن باشد
+      const isUserMenuButton = target.closest("[data-user-menu-button]");
+      const isInsideUserMenu =
+        (userMenuRefDesktop.current &&
+          userMenuRefDesktop.current.contains(target)) ||
+        (userMenuRefMobile.current &&
+          userMenuRefMobile.current.contains(target));
+
+      if (isUserMenuOpen && !isInsideUserMenu && !isUserMenuButton) {
+        setIsUserMenuOpen(false);
+      }
+    },
+    [isUserMenuOpen]
+  );
 
   useEffect(() => {
-    if (isSearchOpen || isProductsMenuOpen || isCoinGoldMenuOpen) {
+    if (
+      isSearchOpen ||
+      isProductsMenuOpen ||
+      isCoinGoldMenuOpen ||
+      isUserMenuOpen
+    ) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
@@ -185,6 +362,7 @@ const Navbar = () => {
     isSearchOpen,
     isProductsMenuOpen,
     isCoinGoldMenuOpen,
+    isUserMenuOpen,
     handleClickOutside,
   ]);
 
@@ -318,27 +496,19 @@ const Navbar = () => {
 
           {/* Left - Gold Price (Absolute Positioned - Desktop Only) */}
           <div className="hidden lg:flex items-center gap-3 flex-shrink-0 absolute left-8 top-1/2 -translate-y-1/2">
-            {/* Live Indicator */}
-            <motion.div
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [1, 0.6, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="w-2 h-2 bg-red-500 rounded-full"
-            />
-
             {/* Gold Price */}
             <div className="flex items-center gap-2">
+              <div className="relative">
+                <span className="absolute w-2 h-2 bg-red-600 rounded-full animate-ping opacity-75"></span>
+                <span className="relative w-2 h-2 bg-red-600 rounded-full block"></span>
+              </div>
               <span className="text-xs font-medium text-white/90">
-                قیمت روز طلا:
+                قیمت لحظه‌ای طلا:
               </span>
               <span className="text-sm font-bold text-yellow-400">
-                ۲,۴۵۰,۰۰۰ تومان
+                {goldPrice
+                  ? `${formatNumber(goldPrice)} تومان`
+                  : "در حال دریافت..."}
               </span>
             </div>
           </div>
@@ -346,51 +516,29 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Top Bar - Always Visible */}
-      <div className="lg:hidden w-full max-w-[1920px] mx-auto px-3 xs:px-4 sm:px-6">
+      <div className="xl:hidden w-full max-w-[1920px] mx-auto px-3 xs:px-4 sm:px-6">
         <div className="flex items-center justify-between h-16 xs:h-18 sm:h-20 relative w-full">
-          {/* Logo - Mobile Left */}
-          <Link href="/" className="flex-shrink-0 z-10">
-            <motion.div whileHover={{ scale: 1.02 }} className="relative">
-              <Image
-                src="/images/logo/logo.png"
-                alt="Horse Gallery Logo"
-                width={100}
-                height={100}
-                className="w-16 h-16 xs:w-20 xs:h-20 sm:w-24 sm:h-24 object-contain"
-                priority
-              />
-            </motion.div>
-          </Link>
-
-          {/* Mobile Menu Button - Mobile Center */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMobileMenuOpen(!isMobileMenuOpen);
-            }}
-            className={`absolute left-1/2 -translate-x-1/2 transition-colors z-10 active:opacity-70 ${
-              isScrolled ? "text-white" : "text-primary"
-            }`}
-            aria-label="Menu"
-          >
-            {isMobileMenuOpen ? (
-              <X className="w-5 h-5 xs:w-6 xs:h-6" />
-            ) : (
-              <Menu className="w-5 h-5 xs:w-6 xs:h-6" />
-            )}
-          </button>
-
-          {/* Right Section - User Actions */}
-          <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 flex-shrink-0 z-10 max-w-[30%] justify-end">
+          {/* Left Section - Menu + Favorites + Search */}
+          <div className="flex items-center gap-4 xs:gap-3 sm:gap-4 flex-shrink-0 z-10">
+            {/* Mobile Menu Button */}
             <button
-              onClick={() => setIsAuthModalOpen(true)}
-              className={`hidden md:block text-xs sm:text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMobileMenuOpen(!isMobileMenuOpen);
+              }}
+              className={`transition-colors z-10 active:opacity-70 flex-shrink-0 ${
                 isScrolled ? "text-white" : "text-primary"
               }`}
+              aria-label="Menu"
             >
-              {t("auth.label")}
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5 xs:w-6 xs:h-6" />
+              ) : (
+                <Menu className="w-5 h-5 xs:w-6 xs:h-6" />
+              )}
             </button>
 
+            {/* Favorites Button */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
@@ -400,18 +548,6 @@ const Navbar = () => {
               aria-label={t("favorites")}
             >
               <Heart className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={openCart}
-              className={`transition-colors ${
-                isScrolled ? "text-white" : "text-primary"
-              }`}
-              aria-label={t("cart")}
-            >
-              <ShoppingBag className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
             </motion.button>
 
             {/* Search Button (Mobile/Tablet) */}
@@ -428,14 +564,163 @@ const Navbar = () => {
               <Search className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
             </motion.button>
           </div>
+
+          {/* Logo - Mobile Center */}
+          <div className="absolute left-1/2 -translate-x-1/2 z-10">
+            <Link href="/" className="flex-shrink-0">
+              <motion.div whileHover={{ scale: 1.02 }} className="relative">
+                <Image
+                  src="/images/logo/logo.png"
+                  alt="Horse Gallery Logo"
+                  width={100}
+                  height={100}
+                  className="w-16 h-16 xs:w-20 xs:h-20 sm:w-24 sm:h-24 object-contain"
+                  priority
+                />
+              </motion.div>
+            </Link>
+          </div>
+
+          {/* Right Section - Cart + Profile */}
+          <div className="flex items-center gap-3 xs:gap-4 sm:gap-5 flex-shrink-0 z-10 justify-end">
+            {/* فقط دکمه ورود برای کاربران لاگین نشده */}
+            {isMounted && !isLoggedIn() && (
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className={`text-xs sm:text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
+                  isScrolled ? "text-white" : "text-primary"
+                }`}
+              >
+                {t("auth.label")}
+              </button>
+            )}
+
+            {/* Cart Button - Mobile */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={openCart}
+              className={`transition-colors xl:hidden ${
+                isScrolled ? "text-white" : "text-primary"
+              }`}
+              aria-label={t("cart")}
+            >
+              <ShoppingBag className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
+            </motion.button>
+
+            {/* User Name - Mobile */}
+            {isMounted && isLoggedIn() && userInfo && (
+              <div className="relative xl:hidden" ref={userMenuRefMobile}>
+                <button
+                  data-user-menu-button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className={`text-xs sm:text-sm font-medium tracking-wide whitespace-nowrap truncate transition-colors hover:opacity-70 flex items-center gap-1 max-w-[100px] xs:max-w-[120px] sm:max-w-[150px] ${
+                    isScrolled ? "text-white" : "text-primary"
+                  }`}
+                >
+                  <User className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-4 sm:h-4 flex-shrink-0" />
+                  {userInfo.firstName && userInfo.lastName
+                    ? `${userInfo.firstName} ${userInfo.lastName}`
+                    : userInfo.phoneNumber
+                    ? convertEnglishToPersian(userInfo.phoneNumber)
+                    : ""}
+                  <ChevronDown
+                    className={`w-3 h-3 transition-transform flex-shrink-0 ${
+                      isUserMenuOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {/* User Dropdown Menu - Mobile */}
+                <AnimatePresence>
+                  {isUserMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 top-full mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-50 max-w-[calc(100vw-2rem)]"
+                    >
+                      <div className="p-4 space-y-3">
+                        {/* User Info */}
+                        <div className="pb-3 border-b border-gray-200">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {userInfo.firstName && userInfo.lastName
+                              ? `${userInfo.firstName} ${userInfo.lastName}`
+                              : "کاربر"}
+                          </p>
+                          {dashboardInfo && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              {convertEnglishToPersian(
+                                dashboardInfo.phoneNumber
+                              )}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Dashboard Info */}
+                        {isLoadingDashboard ? (
+                          <div className="py-4 text-center text-sm text-gray-500">
+                            در حال بارگذاری...
+                          </div>
+                        ) : dashboardInfo ? (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-600">
+                                کیف پول:
+                              </span>
+                              <span className="text-sm font-semibold text-gray-900">
+                                {convertEnglishToPersian(
+                                  dashboardInfo.walletBalance.toLocaleString()
+                                )}{" "}
+                                تومان
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-600">
+                                تعداد سفارش‌ها:
+                              </span>
+                              <span className="text-sm font-semibold text-gray-900">
+                                {convertEnglishToPersian(
+                                  dashboardInfo.ordersCount.toString()
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-600">
+                                تعداد آدرس‌ها:
+                              </span>
+                              <span className="text-sm font-semibold text-gray-900">
+                                {convertEnglishToPersian(
+                                  dashboardInfo.addressesCount.toString()
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {/* Logout Button */}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full mt-4 py-2 px-4 text-sm font-medium text-white bg-primary rounded-lg hover:opacity-90 transition-colors"
+                        >
+                          خروج از حساب کاربری
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Bottom Bar - Main Navigation with Everything */}
-      <div className="hidden lg:block border-t border-primary/10">
+      <div className="hidden xl:block border-t border-primary/10">
         <div className="max-w-[1920px] mx-auto px-8">
-          <div className="flex items-center justify-between h-16 gap-6">
-            {/* Left Section - Logo + Filter Button */}
+          <div className="flex items-center justify-between h-16 gap-6 relative">
+            {/* Left Section - Logo + User Name */}
             <div
               className="flex items-center gap-3 flex-shrink-0"
               onMouseEnter={() => setIsNavHovered(true)}
@@ -453,11 +738,136 @@ const Navbar = () => {
                   />
                 </motion.div>
               </Link>
+
+              {/* Cart Button - Desktop (Next to Logo) */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={openCart}
+                className={`transition-colors hidden xl:block ${
+                  isScrolled || isNavHovered ? "text-white" : "text-primary"
+                }`}
+                aria-label={t("cart")}
+              >
+                <ShoppingBag className="w-5 h-5" />
+              </motion.button>
+
+              {/* User Name - Desktop */}
+              {isMounted && isLoggedIn() && userInfo && (
+                <div className="flex items-center gap-3">
+                  <div
+                    className="relative hidden xl:block"
+                    ref={userMenuRefDesktop}
+                  >
+                    <button
+                      data-user-menu-button
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      className={`text-sm font-medium tracking-wide whitespace-nowrap transition-colors hover:opacity-70 flex items-center gap-1.5 ${
+                        isScrolled || isNavHovered
+                          ? "text-white"
+                          : "text-primary"
+                      }`}
+                    >
+                      <User className="w-5 h-5 flex-shrink-0" />
+                      {userInfo.firstName && userInfo.lastName
+                        ? `${userInfo.firstName} ${userInfo.lastName}`
+                        : userInfo.phoneNumber
+                        ? convertEnglishToPersian(userInfo.phoneNumber)
+                        : ""}
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform ${
+                          isUserMenuOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {/* User Dropdown Menu */}
+                    <AnimatePresence>
+                      {isUserMenuOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute right-0 top-full mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-50 max-w-[calc(100vw-2rem)]"
+                        >
+                          <div className="p-4 space-y-3">
+                            {/* User Info */}
+                            <div className="pb-3 border-b border-gray-200">
+                              <p className="text-sm font-semibold text-gray-900">
+                                {userInfo.firstName && userInfo.lastName
+                                  ? `${userInfo.firstName} ${userInfo.lastName}`
+                                  : "کاربر"}
+                              </p>
+                              {dashboardInfo && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {convertEnglishToPersian(
+                                    dashboardInfo.phoneNumber
+                                  )}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Dashboard Info */}
+                            {isLoadingDashboard ? (
+                              <div className="py-4 text-center text-sm text-gray-500">
+                                در حال بارگذاری...
+                              </div>
+                            ) : dashboardInfo ? (
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs text-gray-600">
+                                    کیف پول:
+                                  </span>
+                                  <span className="text-sm font-semibold text-gray-900">
+                                    {convertEnglishToPersian(
+                                      dashboardInfo.walletBalance.toLocaleString()
+                                    )}{" "}
+                                    تومان
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs text-gray-600">
+                                    تعداد سفارش‌ها:
+                                  </span>
+                                  <span className="text-sm font-semibold text-gray-900">
+                                    {convertEnglishToPersian(
+                                      dashboardInfo.ordersCount.toString()
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs text-gray-600">
+                                    تعداد آدرس‌ها:
+                                  </span>
+                                  <span className="text-sm font-semibold text-gray-900">
+                                    {convertEnglishToPersian(
+                                      dashboardInfo.addressesCount.toString()
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                            ) : null}
+
+                            {/* Logout Button */}
+                            <button
+                              onClick={handleLogout}
+                              className="w-full mt-4 py-2 px-4 text-sm font-medium text-white bg-primary rounded-lg hover:opacity-90 transition-colors"
+                            >
+                              خروج از حساب کاربری
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Center - Menu Items */}
             <div
-              className="flex items-center gap-6 flex-1 justify-center"
+              className="absolute left-1/2 -translate-x-1/2 flex items-center gap-6"
               onMouseEnter={() => setIsNavHovered(true)}
               onMouseLeave={() => setIsNavHovered(false)}
             >
@@ -557,15 +967,17 @@ const Navbar = () => {
                 <Search className="w-5 h-5" />
               </motion.button>
 
-              {/* Auth Link */}
-              <button
-                onClick={() => setIsAuthModalOpen(true)}
-                className={`text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
-                  isScrolled || isNavHovered ? "text-white" : "text-primary"
-                }`}
-              >
-                {t("auth.label")}
-              </button>
+              {/* Auth Link - فقط برای کاربران لاگین نشده */}
+              {isMounted && !isLoggedIn() && (
+                <button
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className={`text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
+                    isScrolled || isNavHovered ? "text-white" : "text-primary"
+                  }`}
+                >
+                  {t("auth.label")}
+                </button>
+              )}
 
               {/* Favorites */}
               <motion.button
@@ -577,19 +989,6 @@ const Navbar = () => {
                 aria-label={t("favorites")}
               >
                 <Heart className="w-5 h-5" />
-              </motion.button>
-
-              {/* Cart */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={openCart}
-                className={`transition-colors ${
-                  isScrolled || isNavHovered ? "text-white" : "text-primary"
-                }`}
-                aria-label={t("cart")}
-              >
-                <ShoppingBag className="w-5 h-5" />
               </motion.button>
             </div>
           </div>
@@ -604,7 +1003,7 @@ const Navbar = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
-            className="lg:hidden bg-primary/95 backdrop-blur-md z-40 border-t border-white/10"
+            className="xl:hidden bg-primary/95 backdrop-blur-md z-40 border-t border-white/10"
           >
             <div className="flex flex-col px-4 py-4 space-y-1 max-h-[calc(100vh-4rem)] overflow-y-auto">
               {/* Menu Items */}
@@ -774,20 +1173,86 @@ const Navbar = () => {
                 )
               )}
 
-              {/* Auth Link */}
+              {/* Auth Link / User Name */}
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: menuItems.length * 0.05 }}
                 className="pt-2 border-t border-white/10"
               >
-                <Link
-                  href="/auth"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block py-3 px-4 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors text-center"
-                >
-                  {t("auth.label")}
-                </Link>
+                {isMounted && isLoggedIn() && userInfo ? (
+                  <div className="flex flex-col gap-2">
+                    {/* User Info */}
+                    <div className="py-3 px-4 border-b border-white/20">
+                      <p className="text-base font-semibold text-white text-center">
+                        {userInfo.firstName && userInfo.lastName
+                          ? `${userInfo.firstName} ${userInfo.lastName}`
+                          : "کاربر"}
+                      </p>
+                      {dashboardInfo && (
+                        <p className="text-xs text-white/70 mt-1 text-center">
+                          {convertEnglishToPersian(dashboardInfo.phoneNumber)}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Dashboard Info */}
+                    {isLoadingDashboard ? (
+                      <div className="py-2 text-center text-xs text-white/70">
+                        در حال بارگذاری...
+                      </div>
+                    ) : dashboardInfo ? (
+                      <div className="space-y-2 px-4 py-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-white/70">کیف پول:</span>
+                          <span className="text-white font-semibold">
+                            {convertEnglishToPersian(
+                              dashboardInfo.walletBalance.toLocaleString()
+                            )}{" "}
+                            تومان
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-white/70">تعداد سفارش‌ها:</span>
+                          <span className="text-white font-semibold">
+                            {convertEnglishToPersian(
+                              dashboardInfo.ordersCount.toString()
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-white/70">تعداد آدرس‌ها:</span>
+                          <span className="text-white font-semibold">
+                            {convertEnglishToPersian(
+                              dashboardInfo.addressesCount.toString()
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Logout Button */}
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full py-2 px-4 text-sm font-medium text-white bg-primary hover:opacity-90 rounded-lg transition-colors text-center mt-2"
+                    >
+                      خروج از حساب کاربری
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setIsAuthModalOpen(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="block w-full py-3 px-4 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors text-center"
+                  >
+                    {t("auth.label")}
+                  </button>
+                )}
               </motion.div>
             </div>
           </motion.div>
@@ -861,7 +1326,7 @@ const Navbar = () => {
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
             onMouseLeave={() => setIsProductsMenuOpen(false)}
-            className="hidden lg:block overflow-hidden border-t backdrop-blur-md bg-primary/95 border-white/10"
+            className="hidden xl:block overflow-hidden border-t backdrop-blur-md bg-primary/95 border-white/10"
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
               <div className="grid grid-cols-2 gap-8 lg:gap-12">
@@ -928,7 +1393,7 @@ const Navbar = () => {
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
             onMouseLeave={() => setIsCoinGoldMenuOpen(false)}
-            className="hidden lg:block overflow-hidden border-t backdrop-blur-md bg-primary/95 border-white/10"
+            className="hidden xl:block overflow-hidden border-t backdrop-blur-md bg-primary/95 border-white/10"
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
               <div className="flex justify-center items-center gap-8">
