@@ -453,6 +453,7 @@ export async function updateCartItem(
 
 /**
  * Remove item from cart
+ * ✅ بعد از حذف موفق، دوباره سبد را از backend می‌گیرد تا اطلاعات کامل را داشته باشیم
  */
 export async function removeFromCart(itemId: string): Promise<CartResponse> {
   try {
@@ -487,6 +488,14 @@ export async function removeFromCart(itemId: string): Promise<CartResponse> {
         );
       }
 
+      // Handle 404 - آیتم یافت نشد
+      if (res.status === 404) {
+        const error = await res.json().catch(() => ({
+          message: "آیتم در سبد خرید یافت نشد",
+        }));
+        throw new Error(error.message || "آیتم در سبد خرید یافت نشد");
+      }
+
       const error = await res.json().catch(() => ({
         message: "خطا در حذف محصول",
       }));
@@ -500,7 +509,15 @@ export async function removeFromCart(itemId: string): Promise<CartResponse> {
       setSessionId(data.sessionId);
     }
 
-    return data;
+    // ✅ بعد از حذف موفق، دوباره سبد را از backend بگیر تا اطلاعات کامل (items) را داشته باشیم
+    // چون backend ممکن است فقط cart summary را برگرداند نه items کامل را
+    const updatedCart = await getCart();
+    if (updatedCart) {
+      return updatedCart;
+    }
+
+    // اگر getCart null برگرداند، response خالی برگردان
+    return getEmptyCartResponse();
   } catch (error) {
     console.error("Error removing from cart:", error);
     throw error;

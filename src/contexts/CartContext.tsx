@@ -41,6 +41,7 @@ interface CartContextType {
   removeFromCart: (itemId: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   mergeCart: () => Promise<void>;
+  clearCart: () => void; // ✅ جدید: پاک کردن cart از state
   // Helper values
   totalItems: number;
   totalPrice: number;
@@ -63,14 +64,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setError(null);
       const cartData = await getCart();
 
-      // ✅ بررسی کنید که cart منقضی شده یا نه
-      if (cartData?.expired) {
-        // Cart منقضی شده، state را پاک کنید
-        setCart(null);
-      } else {
-        // Cart معتبر است
-        setCart(cartData);
-      }
+      // ✅ طبق مستندات جدید backend: cart expired را از state پاک نمی‌کنیم
+      // ✅ فقط cart را set می‌کنیم (حتی اگر expired باشد)
+      // ✅ UI باید expired flag را بررسی کند و checkout را disable کند
+      setCart(cartData);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "خطا در دریافت سبد خرید";
@@ -213,6 +210,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // ✅ Function برای پاک کردن cart از state (بعد از expired error در checkout)
+  const clearCart = useCallback(() => {
+    setCart(null);
+    setError(null);
+    // ✅ پاک کردن cartId از localStorage/cookie اگر وجود دارد
+    if (typeof window !== "undefined") {
+      // اگر sessionId در cookie است، آن را پاک نمی‌کنیم (ممکن است برای مهمان باشد)
+      // فقط cart state را پاک می‌کنیم
+    }
+  }, []);
+
   // بررسی اینکه آیا کاربر مهمان است
   const isGuest = !cart?.cart?.user && !!cart?.cart?.sessionId;
 
@@ -230,6 +238,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         removeFromCart,
         updateQuantity,
         mergeCart,
+        clearCart, // ✅ اضافه کردن clearCart
         // Helper values from backend
         totalItems: cart?.totalItems || 0,
         totalPrice: cart?.totalPrice || 0,

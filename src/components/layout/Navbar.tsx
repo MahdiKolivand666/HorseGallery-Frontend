@@ -739,19 +739,6 @@ const Navbar = () => {
                 </motion.div>
               </Link>
 
-              {/* Cart Button - Desktop (Next to Logo) */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={openCart}
-                className={`transition-colors hidden xl:block ${
-                  isScrolled || isNavHovered ? "text-white" : "text-primary"
-                }`}
-                aria-label={t("cart")}
-              >
-                <ShoppingBag className="w-5 h-5" />
-              </motion.button>
-
               {/* User Name - Desktop */}
               {isMounted && isLoggedIn() && userInfo && (
                 <div className="flex items-center gap-3">
@@ -947,36 +934,54 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* Right Section - Search + Auth + Icons */}
+            {/* Right Section - Auth + Icons */}
             <div
               className="flex items-center gap-5 flex-shrink-0"
               onMouseEnter={() => setIsNavHovered(true)}
               onMouseLeave={() => setIsNavHovered(false)}
             >
-              {/* Search Button */}
-              <motion.button
-                data-search-button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className={`transition-colors ${
-                  isScrolled || isNavHovered ? "text-white" : "text-primary"
-                }`}
-                aria-label="Search"
-              >
-                <Search className="w-5 h-5" />
-              </motion.button>
-
-              {/* Auth Link - فقط برای کاربران لاگین نشده */}
+              {/* Cart Button + Login/Register Button - Desktop (When not logged in) */}
               {isMounted && !isLoggedIn() && (
-                <button
-                  onClick={() => setIsAuthModalOpen(true)}
-                  className={`text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
+                <div className="flex items-center gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={openCart}
+                    className={`transition-colors ${
+                      isScrolled || isNavHovered
+                        ? "text-white"
+                        : "text-primary"
+                    }`}
+                    aria-label={t("cart")}
+                  >
+                    <ShoppingBag className="w-5 h-5" />
+                  </motion.button>
+                  <button
+                    onClick={() => setIsAuthModalOpen(true)}
+                    className={`text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
+                      isScrolled || isNavHovered
+                        ? "text-white"
+                        : "text-primary"
+                    }`}
+                  >
+                    {t("auth.label")}
+                  </button>
+                </div>
+              )}
+
+              {/* Cart Button - Desktop (When logged in) */}
+              {isMounted && isLoggedIn() && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={openCart}
+                  className={`transition-colors ${
                     isScrolled || isNavHovered ? "text-white" : "text-primary"
                   }`}
+                  aria-label={t("cart")}
                 >
-                  {t("auth.label")}
-                </button>
+                  <ShoppingBag className="w-5 h-5" />
+                </motion.button>
               )}
 
               {/* Favorites */}
@@ -989,6 +994,20 @@ const Navbar = () => {
                 aria-label={t("favorites")}
               >
                 <Heart className="w-5 h-5" />
+              </motion.button>
+
+              {/* Search Button */}
+              <motion.button
+                data-search-button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className={`transition-colors ${
+                  isScrolled || isNavHovered ? "text-white" : "text-primary"
+                }`}
+                aria-label="Search"
+              >
+                <Search className="w-5 h-5" />
               </motion.button>
             </div>
           </div>

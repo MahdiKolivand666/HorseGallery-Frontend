@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { X, ShoppingBag, Trash2, AlertCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/contexts/CartContext";
@@ -13,6 +14,7 @@ interface CartDrawerProps {
 }
 
 const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const hasReloadedRef = useRef(false);
   const {
@@ -23,6 +25,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     remainingSeconds,
     removeFromCart,
     reloadCart,
+    clearCart,
   } = useCart();
 
   useEffect(() => {
@@ -129,6 +132,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     (item) => item.product.productType !== "melted_gold"
   );
   const isEmpty = !loading && cartItems.length === 0;
+  const isExpired = cart?.expired === true; // ✅ بررسی expired flag
 
   return createPortal(
     <>
@@ -170,7 +174,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
           </div>
           <div className="flex items-center gap-3">
             {/* Timer - از backend */}
-            {!isEmpty && timeLeft > 0 && (
+            {!isEmpty && !isExpired && timeLeft > 0 && (
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-gray-700">مهلت خرید:</span>
                 <span
@@ -185,6 +189,15 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                     ⚠️
                   </span>
                 )}
+              </div>
+            )}
+            {/* Expired Message */}
+            {!isEmpty && isExpired && (
+              <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded px-2 py-1">
+                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                <span className="text-[10px] text-red-700 font-medium">
+                  زمان تمام شده
+                </span>
               </div>
             )}
             {/* Close Button */}
@@ -228,6 +241,29 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               >
                 مشاهده محصولات
               </Link>
+            </div>
+          ) : isExpired ? (
+            // ✅ نمایش پیام expired
+            <div className="flex flex-col items-center justify-center h-full text-center py-12 px-4">
+              <div className="bg-red-50 rounded-full p-6 mb-4">
+                <AlertCircle className="w-16 h-16 text-red-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                ⏰ مدت زمان خرید شما به پایان رسیده است
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید
+              </p>
+              <button
+                onClick={() => {
+                  clearCart();
+                  onClose();
+                  router.push("/products");
+                }}
+                className="px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-medium rounded"
+              >
+                بازگشت به محصولات
+              </button>
             </div>
           ) : (
             <>
@@ -437,7 +473,11 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                     href="/purchase/basket"
                     onClick={onClose}
                     prefetch={false}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-white text-center py-2 font-medium transition-colors rounded text-sm"
+                    className={`flex-1 text-center py-2 font-medium transition-colors rounded text-sm ${
+                      isExpired
+                        ? "bg-gray-400 text-gray-600 cursor-not-allowed pointer-events-none"
+                        : "bg-primary hover:bg-primary/90 text-white"
+                    }`}
                   >
                     تکمیل خرید
                   </Link>

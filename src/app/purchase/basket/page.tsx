@@ -28,6 +28,8 @@ import {
   type Address,
   type CreateAddressDto,
 } from "@/lib/api/address";
+import { createOrder } from "@/lib/api/order";
+import { useRouter } from "next/navigation";
 import {
   addressFormSchema,
   type AddressFormData,
@@ -58,14 +60,17 @@ interface CartItem {
 // ✅ این صفحه فقط زمانی mount می‌شود که کاربر به /purchase/basket برود
 // ⚠️ مهم: استفاده از dynamic import برای جلوگیری از pre-fetch
 function CheckoutPage() {
+  const router = useRouter();
   const pathname = usePathname();
-  const { cart, removeFromCart, remainingSeconds, reloadCart } = useCart();
+  const { cart, removeFromCart, remainingSeconds, reloadCart, clearCart } =
+    useCart();
   const [activeTab, setActiveTab] = useState<"cart" | "shipping" | "payment">(
     "cart"
   );
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null); // ✅ برای edit mode
   const [selectedGateway, setSelectedGateway] = useState("saman");
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Address state
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -256,9 +261,68 @@ function CheckoutPage() {
     }
   };
 
+  // ✅ Handler برای پرداخت - با error handling برای cart expired
+  const handlePayment = async () => {
+    if (!cart?.cart?._id || !selectedAddressId) {
+      alert("لطفاً آدرس و روش ارسال را انتخاب کنید");
+      return;
+    }
+
+    setIsProcessingPayment(true);
+    try {
+      // TODO: shippingId باید از state گرفته شود (فعلاً placeholder)
+      const shippingId = "default"; // باید از state گرفته شود
+
+      const order = await createOrder({
+        cartId: cart.cart._id,
+        addressId: selectedAddressId,
+        shippingId: shippingId,
+      });
+
+      // Success - redirect to payment
+      if (order.data.paymentUrl) {
+        window.location.href = order.data.paymentUrl;
+      } else {
+        alert("سفارش با موفقیت ایجاد شد");
+        // TODO: redirect to order details page
+      }
+    } catch (error: unknown) {
+      // ✅ بررسی cart expired error
+      const errorWithDetails = error as Error & {
+        statusCode?: number;
+        code?: string;
+        isCartExpired?: boolean;
+        message?: string;
+      };
+      if (
+        errorWithDetails.statusCode === 400 &&
+        (errorWithDetails.code === "CART_EXPIRED" ||
+          errorWithDetails.isCartExpired ||
+          errorWithDetails.message?.includes("زمان شما تمام شده است"))
+      ) {
+        // ✅ Cart از database حذف شده است
+        clearCart();
+        alert(
+          "زمان شما تمام شده است. لطفاً مجدداً محصول را به سبد خرید اضافه کنید"
+        );
+        router.push("/products");
+        return;
+      }
+
+      // Handle سایر errors
+      alert(
+        errorWithDetails.message ||
+          (error instanceof Error ? error.message : "خطا در ایجاد سفارش")
+      );
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
   // Timer countdown - استفاده از remainingSeconds از backend
   // برای UX بهتر، تایمر client-side داریم اما هر 30 ثانیه با backend sync می‌شود
   const [timeLeft, setTimeLeft] = useState(remainingSeconds);
+  const isExpired = cart?.expired === true; // ✅ بررسی expired flag
 
   useEffect(() => {
     // Update timer when remainingSeconds changes from backend
@@ -451,6 +515,23 @@ function CheckoutPage() {
         {/* Content */}
         {activeTab === "cart" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Expired Message */}
+            {isExpired && (
+              <div className="lg:col-span-3 mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Info className="w-5 h-5 text-red-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-800">
+                      ⏰ مدت زمان خرید شما به پایان رسیده است
+                    </p>
+                    <p className="text-xs text-red-700 mt-1">
+                      لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Cart Items - Left Side */}
             <div className="lg:col-span-2">
               {cartItems.map((item, index) => (
@@ -638,9 +719,14 @@ function CheckoutPage() {
                   {/* Continue Button */}
                   <button
                     onClick={() => setActiveTab("shipping")}
-                    className="w-full bg-white hover:bg-white/90 text-primary py-2 text-sm font-medium transition-colors mt-3 rounded"
+                    disabled={isExpired}
+                    className={`w-full py-2 text-sm font-medium transition-colors mt-3 rounded ${
+                      isExpired
+                        ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                        : "bg-white hover:bg-white/90 text-primary"
+                    }`}
                   >
-                    ادامه خرید
+                    {isExpired ? "زمان تمام شده" : "ادامه خرید"}
                   </button>
                 </div>
               </div>
@@ -896,9 +982,14 @@ function CheckoutPage() {
                   {/* Continue Button */}
                   <button
                     onClick={() => setActiveTab("payment")}
-                    className="w-full bg-white hover:bg-white/90 text-primary py-2 text-sm font-medium transition-colors mt-3 rounded"
+                    disabled={isExpired}
+                    className={`w-full py-2 text-sm font-medium transition-colors mt-3 rounded ${
+                      isExpired
+                        ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                        : "bg-white hover:bg-white/90 text-primary"
+                    }`}
                   >
-                    ادامه خرید
+                    {isExpired ? "زمان تمام شده" : "ادامه خرید"}
                   </button>
                 </div>
               </div>
@@ -1166,8 +1257,24 @@ function CheckoutPage() {
                 </label>
 
                 {/* Action Button */}
-                <button className="w-full py-2 bg-white text-primary hover:bg-gray-100 text-sm font-medium transition-colors rounded">
-                  پرداخت آنلاین
+                <button
+                  disabled={
+                    isExpired || isProcessingPayment || !selectedAddressId
+                  }
+                  onClick={handlePayment}
+                  className={`w-full py-2 text-sm font-medium transition-colors rounded ${
+                    isExpired || !selectedAddressId
+                      ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                      : "bg-white text-primary hover:bg-gray-100"
+                  }`}
+                >
+                  {isExpired
+                    ? "زمان تمام شده"
+                    : isProcessingPayment
+                    ? "در حال پردازش..."
+                    : !selectedAddressId
+                    ? "لطفاً آدرس را انتخاب کنید"
+                    : "پرداخت آنلاین"}
                 </button>
               </div>
             </div>
