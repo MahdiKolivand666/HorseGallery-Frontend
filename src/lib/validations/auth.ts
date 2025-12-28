@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { convertPersianToEnglish } from "@/lib/utils";
+import { isPersianOnly } from "@/lib/utils";
 
 /**
  * Schema validation برای فرم ثبت‌نام با پیام‌های خطای فارسی
@@ -18,21 +20,34 @@ export const registerFormSchema = z.object({
   firstName: z
     .string({ required_error: "نام الزامی است" })
     .min(2, "نام باید حداقل ۲ کاراکتر باشد")
-    .max(50, "نام نمی‌تواند بیشتر از ۵۰ کاراکتر باشد")
-    .regex(/^[\u0600-\u06FF\s]+$/, "نام باید فقط شامل حروف فارسی باشد"),
+    .max(30, "نام نمی‌تواند بیشتر از ۳۰ کاراکتر باشد")
+    .refine(
+      (val) => isPersianOnly(val),
+      {
+        message: "نام باید فقط شامل حروف فارسی باشد",
+      }
+    ),
 
   lastName: z
     .string({ required_error: "نام خانوادگی الزامی است" })
     .min(2, "نام خانوادگی باید حداقل ۲ کاراکتر باشد")
-    .max(50, "نام خانوادگی نمی‌تواند بیشتر از ۵۰ کاراکتر باشد")
-    .regex(
-      /^[\u0600-\u06FF\s]+$/,
-      "نام خانوادگی باید فقط شامل حروف فارسی باشد"
+    .max(30, "نام خانوادگی نمی‌تواند بیشتر از ۳۰ کاراکتر باشد")
+    .refine(
+      (val) => isPersianOnly(val),
+      {
+        message: "نام خانوادگی باید فقط شامل حروف فارسی باشد",
+      }
     ),
 
   nationalId: z
     .string({ required_error: "کد ملی الزامی است" })
-    .regex(/^\d{10}$/, "کد ملی باید دقیقاً ۱۰ رقم باشد"),
+    .transform((val) => convertPersianToEnglish(val)) // تبدیل فارسی به انگلیسی
+    .refine(
+      (val) => /^\d{10}$/.test(val),
+      {
+        message: "کد ملی باید دقیقاً ۱۰ رقم باشد",
+      }
+    ),
 
   email: z
     .string()
@@ -44,9 +59,13 @@ export const registerFormSchema = z.object({
           return true;
         }
         // ✅ بررسی اینکه فقط کاراکترهای انگلیسی دارد
-        const englishOnlyRegex =
-          /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        return englishOnlyRegex.test(val);
+        const englishOnlyRegex = /^[a-zA-Z0-9._-]+$/;
+        if (!englishOnlyRegex.test(val)) {
+          return false;
+        }
+        // ✅ بررسی فرمت ایمیل
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(val);
       },
       {
         message: "ایمیل باید به انگلیسی وارد شود و فرمت صحیح داشته باشد",

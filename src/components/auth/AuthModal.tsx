@@ -1431,13 +1431,43 @@ const AuthModal = ({
                         type="email"
                         value={registerForm.email}
                         onChange={(e) => {
+                          const value = e.target.value;
+                          
+                          // ✅ بررسی اینکه آیا فقط کاراکترهای انگلیسی دارد
+                          const englishOnlyRegex = /^[a-zA-Z0-9@._-]*$/;
+                          if (value && !englishOnlyRegex.test(value)) {
+                            setFormErrors({
+                              ...formErrors,
+                              email: "ایمیل باید به انگلیسی وارد شود",
+                            });
+                            return;
+                          }
+
+                          // ✅ بررسی فرمت ایمیل (اگر خالی نیست)
+                          if (value && value.trim() !== "") {
+                            const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                            if (!emailRegex.test(value)) {
+                              setFormErrors({
+                                ...formErrors,
+                                email: "فرمت ایمیل صحیح نیست",
+                              });
+                            } else {
+                              // ✅ اگر فرمت صحیح است، error را پاک کن
+                              if (formErrors.email) {
+                                setFormErrors({ ...formErrors, email: undefined });
+                              }
+                            }
+                          } else {
+                            // ✅ اگر خالی است، error را پاک کن (optional field)
+                            if (formErrors.email) {
+                              setFormErrors({ ...formErrors, email: undefined });
+                            }
+                          }
+
                           setRegisterForm({
                             ...registerForm,
-                            email: e.target.value,
+                            email: value,
                           });
-                          if (formErrors.email) {
-                            setFormErrors({ ...formErrors, email: undefined });
-                          }
                         }}
                         onKeyPress={(e) => {
                           // ✅ فقط کاراکترهای مجاز را قبول کنید: a-z, A-Z, 0-9, @, ., _, -
