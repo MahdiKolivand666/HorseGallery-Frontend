@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { convertPersianToEnglish } from "@/lib/utils";
-import { isPersianOnly } from "@/lib/utils";
+import { persianToEnglish, isPersianOnly } from "@/lib/utils/persianNumber";
 
 /**
  * Schema validation برای فرم ثبت‌نام با پیام‌های خطای فارسی
@@ -41,7 +40,7 @@ export const registerFormSchema = z.object({
 
   nationalId: z
     .string({ required_error: "کد ملی الزامی است" })
-    .transform((val) => convertPersianToEnglish(val)) // تبدیل فارسی به انگلیسی
+    .transform((val) => persianToEnglish(val)) // ✅ تبدیل به انگلیسی
     .refine(
       (val) => /^\d{10}$/.test(val),
       {

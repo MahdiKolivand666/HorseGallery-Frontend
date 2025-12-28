@@ -332,14 +332,16 @@ const AuthModal = ({
       setOtp(["", "", "", "", "", ""]);
       setOtpDisplay(["", "", "", "", "", ""]);
       setError(null);
-      // ✅ بعد از برگشت به مرحله OTP، کد جدید ارسال کن
-      // (این کار در مرحله OTP انجام می‌شود، اما اگر کاربر بخواهد می‌تواند دوباره کلیک کند)
-      return;
+      // ✅ ادامه می‌دهیم تا کد جدید ارسال شود
     }
 
     // ✅ تبدیل phoneNumber به انگلیسی برای بررسی
     const englishPhoneNumber = convertPersianToEnglish(phoneNumber);
-    if (resendTimer > 0 || englishPhoneNumber.length !== 11) return;
+    if (englishPhoneNumber.length !== 11) return;
+    
+    // ✅ اگر timer هنوز فعال است (بیشتر از 0)، اجازه ارسال مجدد نده
+    // اما اگر timer تمام شده (0) یا expired است، اجازه ارسال مجدد بده
+    if (resendTimer > 0) return;
 
     // ✅ جلوگیری از multiple requests و rate limit cooldown
     if (isLoading || rateLimitCooldown > 0) return;
@@ -1229,11 +1231,19 @@ const AuthModal = ({
                       </p>
                     </div>
 
-                    {error && (
-                      <div className="text-sm text-red-600 text-right mb-2">
-                        {error}
-                      </div>
-                    )}
+                    <AnimatePresence>
+                      {error && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3 }}
+                          className="text-sm text-red-600 text-right mb-2"
+                        >
+                          {error}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     <button
                       type="submit"
@@ -1501,11 +1511,19 @@ const AuthModal = ({
                       <FieldError error={formErrors.email} />
                     </div>
 
-                    {error && (
-                      <div className="text-sm text-red-600 text-right mb-2">
-                        {error}
-                      </div>
-                    )}
+                    <AnimatePresence>
+                      {error && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3 }}
+                          className="text-sm text-red-600 text-right mb-2"
+                        >
+                          {error}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     <button
                       type="submit"
@@ -1563,14 +1581,22 @@ const AuthModal = ({
                   <form onSubmit={handleOtpSubmit} className="space-y-4">
                     <div>
                       {/* ✅ پیام برای INCOMPLETE_REGISTRATION */}
-                      {isFromIncompleteRegistration && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-center">
-                          <p className="text-sm text-red-600 font-medium">
-                            اطلاعات شما ناقص است. لطفاً بعد از وارد کردن کد
-                            تأیید، اطلاعات خود را تکمیل نمایید
-                          </p>
-                        </div>
-                      )}
+                      <AnimatePresence>
+                        {isFromIncompleteRegistration && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3 }}
+                            className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-center"
+                          >
+                            <p className="text-sm text-red-600 font-medium">
+                              اطلاعات شما ناقص است. لطفاً بعد از وارد کردن کد
+                              تأیید، اطلاعات خود را تکمیل نمایید
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
                       <p className="text-sm text-gray-600 text-center mb-4">
                         کد ارسال شده به شماره{" "}
@@ -1581,19 +1607,27 @@ const AuthModal = ({
                       </p>
 
                       {/* نمایش کد OTP در development mode */}
-                      {devOtpCode && (
-                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-center">
-                          <p className="text-xs text-yellow-800 mb-1">
-                            Development Mode - کد تأیید:
-                          </p>
-                          <p
-                            className="text-lg font-bold text-yellow-900"
-                            dir="ltr"
+                      <AnimatePresence>
+                        {devOtpCode && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3 }}
+                            className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-center"
                           >
-                            {devOtpCode}
-                          </p>
-                        </div>
-                      )}
+                            <p className="text-xs text-yellow-800 mb-1">
+                              Development Mode - کد تأیید:
+                            </p>
+                            <p
+                              className="text-lg font-bold text-yellow-900"
+                              dir="ltr"
+                            >
+                              {devOtpCode}
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
                       <div className="flex gap-2 justify-center mb-4" dir="ltr">
                         {otp.map((digit, index) => (
@@ -1607,13 +1641,37 @@ const AuthModal = ({
                               handleOtpChange(index, e.target.value)
                             }
                             onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                            className="w-12 h-12 text-center text-lg font-semibold border-2 border-gray-300 bg-white focus:border-primary focus:outline-none text-gray-900"
+                            disabled={isExpired || resendTimer === 0}
+                            className={`w-12 h-12 text-center text-lg font-semibold border-2 bg-white focus:outline-none text-gray-900 ${
+                              isExpired || resendTimer === 0
+                                ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-50"
+                                : "border-gray-300 focus:border-primary"
+                            }`}
                             lang="fa"
                             maxLength={1}
-                            autoFocus={index === 0}
+                            autoFocus={index === 0 && !isExpired && resendTimer > 0}
                           />
                         ))}
                       </div>
+
+                      {/* پیام راهنما وقتی timer تمام شده */}
+                      <AnimatePresence>
+                        {(isExpired || resendTimer === 0) && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3 }}
+                            className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-center"
+                          >
+                            <p className="text-sm text-red-600 font-medium">
+                              کد تأیید منقضی شده است. لطفاً روی{" "}
+                              <span className="font-semibold">ارسال مجدد کد</span>{" "}
+                              کلیک کنید.
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
                       <button
                         type="button"
@@ -1631,11 +1689,19 @@ const AuthModal = ({
                       </button>
                     </div>
 
-                    {error && (
-                      <div className="text-sm text-red-600 text-right mb-2">
-                        {error}
-                      </div>
-                    )}
+                    <AnimatePresence>
+                      {error && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3 }}
+                          className="text-sm text-red-600 text-right mb-2"
+                        >
+                          {error}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     <button
                       type="submit"
