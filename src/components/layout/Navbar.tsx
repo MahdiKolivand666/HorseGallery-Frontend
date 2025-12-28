@@ -171,8 +171,15 @@ const Navbar = () => {
     setIsMounted(true);
   }, []);
 
+  // ✅ استفاده از useRef برای جلوگیری از double call
+  const hasFetchedGoldPriceRef = useRef(false);
+
   // دریافت قیمت طلا
   useEffect(() => {
+    // ✅ جلوگیری از double call
+    if (hasFetchedGoldPriceRef.current) return;
+    hasFetchedGoldPriceRef.current = true;
+
     const fetchGoldPrice = async () => {
       try {
         const priceData = await getGoldPrice();

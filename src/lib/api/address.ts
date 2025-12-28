@@ -207,7 +207,21 @@ export async function createAddress(data: CreateAddressDto): Promise<Address> {
     if (!response.ok) {
       try {
         const errorData = JSON.parse(responseText);
+        
+        // ✅ Handle MAX_ADDRESSES_EXCEEDED error
+        if (errorData.code === "MAX_ADDRESSES_EXCEEDED") {
+          const customError = new Error(
+            errorData.message?.[0] ||
+            errorData.message ||
+            "بیشتر از ۲ آدرس نمی‌توانید اضافه کنید"
+          ) as Error & { statusCode?: number; code?: string };
+          customError.statusCode = errorData.statusCode || 400;
+          customError.code = "MAX_ADDRESSES_EXCEEDED";
+          throw customError;
+        }
+        
         const errorMessage =
+          errorData.message?.[0] ||
           errorData.message ||
           (errorData.errors && errorData.errors.length > 0
             ? errorData.errors
@@ -216,7 +230,11 @@ export async function createAddress(data: CreateAddressDto): Promise<Address> {
             : null) ||
           "خطا در افزودن آدرس";
         throw new Error(errorMessage);
-      } catch {
+      } catch (error) {
+        // اگر error قبلاً throw شده (مثل MAX_ADDRESSES_EXCEEDED)، دوباره throw کن
+        if (error instanceof Error && (error as Error & { code?: string }).code === "MAX_ADDRESSES_EXCEEDED") {
+          throw error;
+        }
         throw new Error(responseText || "خطا در افزودن آدرس");
       }
     }

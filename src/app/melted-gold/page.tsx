@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -34,8 +34,16 @@ export default function MeltedGoldPage() {
   const [otpExpiredPhone, setOtpExpiredPhone] = useState<string | null>(null);
   const [otpRequiredPhone, setOtpRequiredPhone] = useState<string | null>(null);
 
+  // ✅ استفاده از useRef برای جلوگیری از double call
+  const hasFetchedGoldPriceRef = useRef(false);
+  const hasFetchedInvestmentInfoRef = useRef(false);
+
   // دریافت قیمت طلا
   useEffect(() => {
+    // ✅ جلوگیری از double call
+    if (hasFetchedGoldPriceRef.current) return;
+    hasFetchedGoldPriceRef.current = true;
+
     const fetchGoldPrice = async () => {
       try {
         const priceData = await getGoldPrice();
@@ -56,6 +64,10 @@ export default function MeltedGoldPage() {
 
   // دریافت اطلاعات خرید طلا
   useEffect(() => {
+    // ✅ جلوگیری از double call
+    if (hasFetchedInvestmentInfoRef.current) return;
+    hasFetchedInvestmentInfoRef.current = true;
+
     const fetchInvestmentInfo = async () => {
       try {
         setLoadingInfo(true);

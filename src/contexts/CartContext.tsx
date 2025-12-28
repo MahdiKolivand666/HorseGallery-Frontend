@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   ReactNode,
 } from "react";
 import {
@@ -57,6 +58,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  
+  // ✅ استفاده از useRef برای جلوگیری از double call در development mode (فقط برای mount اولیه)
+  const hasLoadedOnMountRef = useRef(false);
 
   const loadCart = useCallback(async () => {
     try {
@@ -69,6 +73,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // ✅ UI باید expired flag را بررسی کند و checkout را disable کند
       setCart(cartData);
     } catch (err) {
+      // ✅ بررسی اینکه آیا error مربوط به rate limit است
+      const errorWithStatus = err as Error & { statusCode?: number; code?: string };
+      if (errorWithStatus.statusCode === 429 || errorWithStatus.code === "RATE_LIMIT_EXCEEDED") {
+        // ✅ Rate limit - به صورت silent handle می‌کنیم (بدون setError)
+        // ✅ cart را null نمی‌کنیم - آخرین state را نگه می‌داریم
+        return;
+      }
+
+      // ✅ فقط برای سایر errors، error را در state قرار می‌دهیم
       const errorMessage =
         err instanceof Error ? err.message : "خطا در دریافت سبد خرید";
       setError(errorMessage);
@@ -78,8 +91,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Load cart on mount
+  // Load cart on mount - فقط یک بار (جلوگیری از double call در development mode)
   useEffect(() => {
+    // ✅ جلوگیری از double call فقط در mount اولیه
+    if (hasLoadedOnMountRef.current) return;
+    hasLoadedOnMountRef.current = true;
+    
     loadCart();
   }, [loadCart]);
 
@@ -222,7 +239,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // بررسی اینکه آیا کاربر مهمان است
-  const isGuest = !cart?.cart?.user && !!cart?.cart?.sessionId;
+  const isGuest = !cart?.cart?.userId && !!cart?.cart?.sessionId; // ✅ تغییر از user به userId
 
   return (
     <CartContext.Provider

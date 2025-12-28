@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -16,6 +16,7 @@ import {
   Tag,
   Wallet,
   Truck,
+  Pencil,
 } from "lucide-react";
 import { GoldInfo } from "@/lib/api/products";
 import { useCart } from "@/contexts/CartContext";
@@ -24,7 +25,6 @@ import {
   createAddress,
   updateAddress,
   deleteAddress,
-  setDefaultAddress,
   type Address,
   type CreateAddressDto,
 } from "@/lib/api/address";
@@ -36,6 +36,14 @@ import {
 } from "@/lib/validations/address";
 import FieldError from "@/components/forms/FieldError";
 import { ZodError } from "zod";
+import toast from "react-hot-toast";
+import { Dialog, Transition } from "@headlessui/react";
+import { Fragment } from "react";
+import {
+  persianToEnglish,
+  englishToPersian,
+  isPersianOnly,
+} from "@/lib/utils/persianNumber";
 
 interface CartItem {
   _id: string;
@@ -80,6 +88,12 @@ function CheckoutPage() {
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
 
+  // ✅ State برای confirmation modal حذف آدرس
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    addressId: string | null;
+  }>({ isOpen: false, addressId: null });
+
   // Address form state
   const [addressForm, setAddressForm] = useState<CreateAddressDto>({
     title: "",
@@ -95,6 +109,11 @@ function CheckoutPage() {
     notes: "",
     isDefault: false,
   });
+
+  // ✅ State برای نمایش فارسی (فقط برای فیلدهای عددی)
+  const [postalCodeDisplay, setPostalCodeDisplay] = useState("");
+  const [nationalIdDisplay, setNationalIdDisplay] = useState("");
+  const [mobileDisplay, setMobileDisplay] = useState("");
 
   // Validation errors state
   const [formErrors, setFormErrors] = useState<
@@ -131,18 +150,28 @@ function CheckoutPage() {
     // Reset errors
     setFormErrors({});
 
+    // ✅ تبدیل اعداد فارسی به انگلیسی قبل از validation
+    const formDataForValidation = {
+      ...addressForm,
+      postalCode: persianToEnglish(addressForm.postalCode),
+      nationalId: persianToEnglish(addressForm.nationalId),
+      mobile: persianToEnglish(addressForm.mobile),
+    };
+
     // Validate with Zod
     try {
-      const validatedData = addressFormSchema.parse(addressForm);
+      const validatedData = addressFormSchema.parse(formDataForValidation);
 
       setIsSavingAddress(true);
       try {
         // ✅ اگر در حال edit هستیم، updateAddress صدا بزنیم
         if (editingAddressId) {
           await updateAddress(editingAddressId, validatedData);
+          toast.success("آدرس با موفقیت به‌روزرسانی شد");
         } else {
           // ✅ اگر آدرس جدید است، createAddress صدا بزنیم
           await createAddress(validatedData);
+          toast.success("آدرس با موفقیت اضافه شد");
         }
 
         // Reset form and close modal
@@ -162,12 +191,32 @@ function CheckoutPage() {
         });
         setFormErrors({});
         setEditingAddressId(null); // ✅ Reset edit mode
+        // ✅ Reset display states
+        setPostalCodeDisplay("");
+        setNationalIdDisplay("");
+        setMobileDisplay("");
         setIsAddressModalOpen(false);
         // Reload addresses
         await loadAddresses();
       } catch (error) {
         console.error("Error saving address:", error);
-        alert(error instanceof Error ? error.message : "خطا در ذخیره آدرس");
+
+        // ✅ Handle MAX_ADDRESSES_EXCEEDED error
+        const errorWithCode = error as Error & {
+          code?: string;
+          statusCode?: number;
+        };
+        if (errorWithCode.code === "MAX_ADDRESSES_EXCEEDED") {
+          toast.error("بیشتر از ۲ آدرس نمی‌توانید اضافه کنید");
+          // ✅ بستن modal و reload addresses
+          setIsAddressModalOpen(false);
+          await loadAddresses();
+          return;
+        }
+
+        const errorMessage =
+          error instanceof Error ? error.message : "خطا در ذخیره آدرس";
+        toast.error(errorMessage);
       } finally {
         setIsSavingAddress(false);
       }
@@ -184,7 +233,7 @@ function CheckoutPage() {
         setFormErrors(errors);
       } else {
         console.error("Validation error:", error);
-        alert("خطا در اعتبارسنجی فرم. لطفاً فیلدها را بررسی کنید.");
+        toast.error("خطا در اعتبارسنجی فرم. لطفاً فیلدها را بررسی کنید.");
       }
     }
   };
@@ -207,11 +256,21 @@ function CheckoutPage() {
     });
     setFormErrors({});
     setEditingAddressId(address._id);
+    // ✅ تبدیل اعداد انگلیسی به فارسی برای نمایش
+    setPostalCodeDisplay(englishToPersian(address.postalCode));
+    setNationalIdDisplay(englishToPersian(address.nationalId));
+    setMobileDisplay(englishToPersian(address.mobile));
     setIsAddressModalOpen(true);
   };
 
   // ✅ تابع برای باز کردن modal در حالت جدید
   const handleAddNewAddress = () => {
+    // ✅ محدودیت 2 آدرس
+    if (addresses.length >= 2) {
+      toast.error("بیشتر از ۲ آدرس نمی‌توانید اضافه کنید");
+      return;
+    }
+
     setAddressForm({
       title: "",
       province: "",
@@ -228,36 +287,35 @@ function CheckoutPage() {
     });
     setFormErrors({});
     setEditingAddressId(null);
+    // ✅ Reset display states
+    setPostalCodeDisplay("");
+    setNationalIdDisplay("");
+    setMobileDisplay("");
     setIsAddressModalOpen(true);
   };
 
-  const handleDeleteAddress = async (id: string) => {
-    if (!confirm("آیا مطمئن هستید که می‌خواهید این آدرس را حذف کنید؟")) {
-      return;
-    }
-
-    try {
-      await deleteAddress(id);
-      await loadAddresses();
-      if (selectedAddressId === id) {
-        setSelectedAddressId(null);
-      }
-    } catch (error) {
-      console.error("Error deleting address:", error);
-      alert(error instanceof Error ? error.message : "خطا در حذف آدرس");
-    }
+  // ✅ باز کردن confirmation modal
+  const handleDeleteAddress = (id: string) => {
+    setDeleteConfirm({ isOpen: true, addressId: id });
   };
 
-  const handleSetDefaultAddress = async (id: string) => {
+  // ✅ تایید و حذف آدرس
+  const confirmDeleteAddress = async () => {
+    if (!deleteConfirm.addressId) return;
+
     try {
-      await setDefaultAddress(id);
+      await deleteAddress(deleteConfirm.addressId);
       await loadAddresses();
-      setSelectedAddressId(id);
+      if (selectedAddressId === deleteConfirm.addressId) {
+        setSelectedAddressId(null);
+      }
+      toast.success("آدرس با موفقیت حذف شد");
+      setDeleteConfirm({ isOpen: false, addressId: null });
     } catch (error) {
-      console.error("Error setting default address:", error);
-      alert(
-        error instanceof Error ? error.message : "خطا در تنظیم آدرس پیش‌فرض"
-      );
+      console.error("Error deleting address:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "خطا در حذف آدرس";
+      toast.error(errorMessage);
     }
   };
 
@@ -325,49 +383,70 @@ function CheckoutPage() {
   const isExpired = cart?.expired === true; // ✅ بررسی expired flag
 
   useEffect(() => {
+    // ✅ اگر cart expired است، timeLeft را به‌روز نکن (0 نگه دار)
+    const isExpired = cart?.expired === true || remainingSeconds <= 0;
+    if (isExpired) {
+      setTimeLeft(0);
+      return;
+    }
     // Update timer when remainingSeconds changes from backend
     setTimeLeft(remainingSeconds);
-  }, [remainingSeconds]);
+  }, [remainingSeconds, cart]);
 
-  // ✅ Sync با backend هر 30 ثانیه - فقط در این صفحه
+  // ✅ تعریف reloadCartRef در ابتدا
+  const reloadCartRef = useRef(reloadCart);
+  useEffect(() => {
+    reloadCartRef.current = reloadCart;
+  }, [reloadCart]);
+
+  // ✅ Sync با backend هر 30 ثانیه (2 درخواست در دقیقه)
   useEffect(() => {
     // ⚠️ فقط اگر pathname صحیح است، interval را فعال کن
     if (pathname !== "/purchase/basket") {
       return;
     }
 
+    // ✅ اگر cart expired است یا remainingSeconds <= 0 است، sync interval را اجرا نکن
+    const isExpired = cart?.expired === true || remainingSeconds <= 0;
+    if (isExpired) return;
+
     const syncInterval = setInterval(() => {
-      reloadCart(); // Sync با backend
-    }, 30000); // هر 30 ثانیه
+      // ✅ دوباره چک کردن که expired نشده باشد
+      const currentIsExpired = cart?.expired === true || remainingSeconds <= 0;
+      if (!currentIsExpired) {
+        reloadCartRef.current();
+      }
+    }, 30000); // هر 30 ثانیه (2 درخواست در دقیقه)
 
     return () => clearInterval(syncInterval);
-  }, [pathname, reloadCart]);
+  }, [pathname, cart, remainingSeconds]); // ✅ اضافه کردن cart و remainingSeconds به dependency
 
-  // تایمر client-side برای نمایش (UX بهتر)
+  // ✅ تایمر client-side - فقط یک بار اجرا می‌شود
   useEffect(() => {
-    if (timeLeft <= 0) {
-      if (
-        cart &&
-        cart.items &&
-        Array.isArray(cart.items) &&
-        cart.items.length > 0
-      ) {
-        // ✅ از setTimeout استفاده می‌کنیم تا بعد از render اجرا شود (جلوگیری از خطای React)
-        const timeoutId = setTimeout(() => {
-          reloadCart();
-        }, 0);
-        return () => clearTimeout(timeoutId);
-      }
-      return;
-    }
+    // ✅ اگر cart خالی است، timer را اجرا نکن
+    const cartItems = (cart?.items || []).filter(
+      (item) => item.product.productType !== "melted_gold"
+    );
+    if (cartItems.length === 0) return;
+
+    // ✅ اگر cart expired است یا remainingSeconds <= 0 است، timer را اجرا نکن
+    const isExpired = cart?.expired === true || remainingSeconds <= 0;
+    if (isExpired) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          // ✅ از setTimeout استفاده می‌کنیم تا بعد از render اجرا شود (جلوگیری از خطای React)
-          setTimeout(() => {
-            reloadCart();
-          }, 0);
+          // ✅ چک کردن که cart هنوز خالی نشده باشد و expired نشده باشد
+          const currentCartItems = (cart?.items || []).filter(
+            (item) => item.product.productType !== "melted_gold"
+          );
+          const currentIsExpired =
+            cart?.expired === true || remainingSeconds <= 0;
+          if (currentCartItems.length > 0 && !currentIsExpired) {
+            setTimeout(() => {
+              reloadCartRef.current();
+            }, 0);
+          }
           return 0;
         }
         return prev - 1;
@@ -375,7 +454,7 @@ function CheckoutPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft, cart, reloadCart]);
+  }, [cart, remainingSeconds]); // ✅ اضافه کردن remainingSeconds به dependency
 
   // تبدیل cart?.items به فرمت مورد نیاز صفحه پرداخت
   // ✅ فیلتر کردن طلای آب شده از cart (باید فقط در purchase باشد)
@@ -518,16 +597,14 @@ function CheckoutPage() {
             {/* Expired Message */}
             {isExpired && (
               <div className="lg:col-span-3 mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Info className="w-5 h-5 text-red-600 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-semibold text-red-800">
-                      ⏰ مدت زمان خرید شما به پایان رسیده است
-                    </p>
-                    <p className="text-xs text-red-700 mt-1">
-                      لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-sm font-semibold text-red-800 mb-2">
+                    ⏰ مدت زمان خرید شما به پایان رسیده است
+                  </p>
+                  <p className="text-xs text-red-700 flex items-center gap-2">
+                    <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
+                    لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید
+                  </p>
                 </div>
               </div>
             )}
@@ -750,7 +827,7 @@ function CheckoutPage() {
                   </div>
                   <button
                     onClick={handleAddNewAddress}
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 text-sm font-medium transition-colors rounded"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors rounded bg-primary hover:bg-primary/90 text-white"
                   >
                     <span>+</span>
                     <span>افزودن آدرس جدید</span>
@@ -770,70 +847,79 @@ function CheckoutPage() {
                     {addresses.map((addr) => (
                       <div
                         key={addr._id}
-                        className={`border rounded p-4 cursor-pointer transition-colors ${
+                        className={`border rounded-lg p-4 transition-all ${
                           selectedAddressId === addr._id
-                            ? "border-primary bg-primary/5"
+                            ? "border-primary bg-primary/5 shadow-sm"
                             : "border-gray-300 hover:border-gray-400"
                         }`}
-                        onClick={() => setSelectedAddressId(addr._id)}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h4 className="font-bold text-gray-900">
-                                {addr.title}
-                              </h4>
-                              {addr.isDefault && (
-                                <span className="bg-primary text-white text-xs px-2 py-0.5 rounded">
-                                  پیش‌فرض
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-700 mb-1">
-                              {addr.province}، {addr.city}
-                            </p>
-                            <p className="text-sm text-gray-700 mb-1">
-                              {addr.address}
-                            </p>
-                            <p className="text-xs text-gray-500 mb-1">
-                              کد پستی: {addr.postalCode}
-                            </p>
-                            <p className="text-sm text-gray-700">
-                              {addr.firstName} {addr.lastName}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              موبایل: {addr.mobile}
-                            </p>
+                        <div className="flex items-start gap-3">
+                          {/* Radio Button */}
+                          <div className="flex-shrink-0 pt-0.5">
+                            <input
+                              type="radio"
+                              name="address-selection"
+                              id={`address-${addr._id}`}
+                              checked={selectedAddressId === addr._id}
+                              onChange={() => setSelectedAddressId(addr._id)}
+                              className="w-4 h-4 text-primary focus:ring-primary border-gray-300 bg-white checked:bg-primary checked:border-primary cursor-pointer"
+                            />
                           </div>
-                          <div className="flex flex-col gap-2 ml-4">
-                            {!addr.isDefault && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSetDefaultAddress(addr._id);
-                                }}
-                                className="text-xs text-primary hover:text-primary/80 transition-colors"
-                              >
-                                پیش‌فرض
-                              </button>
-                            )}
+
+                          {/* Address Content */}
+                          <div className="flex-1 min-w-0">
+                            <label
+                              htmlFor={`address-${addr._id}`}
+                              className="cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2 mb-2">
+                                <h4 className="font-bold text-gray-900 text-base">
+                                  {addr.title}
+                                </h4>
+                                {addr.isDefault && (
+                                  <span className="bg-primary text-white text-xs px-2 py-0.5 rounded">
+                                    پیش‌فرض
+                                  </span>
+                                )}
+                              </div>
+                              <div className="space-y-1">
+                                <p
+                                  className="text-sm text-gray-600 mb-1.5 truncate"
+                                  title={addr.address}
+                                >
+                                  {addr.address}
+                                </p>
+                                <p className="text-sm text-gray-700 font-medium">
+                                  {addr.firstName} {addr.lastName}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {addr.mobile}
+                                </p>
+                              </div>
+                            </label>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleEditAddress(addr);
                               }}
-                              className="text-xs text-primary hover:text-primary/80 transition-colors"
+                              className="p-2 text-primary hover:bg-primary/10 transition-colors rounded border border-primary/30"
+                              aria-label="ویرایش آدرس"
                             >
-                              ویرایش
+                              <Pencil className="w-4 h-4" />
                             </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDeleteAddress(addr._id);
                               }}
-                              className="text-xs text-red-600 hover:text-red-700 transition-colors"
+                              className="p-2 text-red-600 hover:bg-red-50 transition-colors rounded border border-red-300"
+                              aria-label="حذف آدرس"
                             >
-                              حذف
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
@@ -1308,6 +1394,10 @@ function CheckoutPage() {
                     notes: "",
                     isDefault: false,
                   });
+                  // ✅ Reset display states
+                  setPostalCodeDisplay("");
+                  setNationalIdDisplay("");
+                  setMobileDisplay("");
                 }}
                 className="p-0.5 rounded hover:bg-gray-50 transition-colors"
                 aria-label="بستن"
@@ -1336,16 +1426,29 @@ function CheckoutPage() {
                   <div className="space-y-2.5">
                     <div>
                       <label className="block text-xs font-medium text-gray-800 mb-1">
-                        عنوان آدرس *
+                        عنوان آدرس{" "}
+                        <span className="text-red-500 text-[10px]">
+                          (الزامی)
+                        </span>
                       </label>
                       <input
                         type="text"
                         required
+                        maxLength={25}
                         value={addressForm.title}
                         onChange={(e) => {
+                          const value = e.target.value;
+                          // ✅ بررسی اینکه آیا فقط فارسی است
+                          if (value && !/^[\u0600-\u06FF\s،]+$/.test(value)) {
+                            setFormErrors({
+                              ...formErrors,
+                              title: "عنوان آدرس باید فقط به فارسی وارد شود",
+                            });
+                            return;
+                          }
                           setAddressForm({
                             ...addressForm,
-                            title: e.target.value,
+                            title: value,
                           });
                           // Clear error when user types
                           if (formErrors.title) {
@@ -1365,7 +1468,10 @@ function CheckoutPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-800 mb-1">
-                          استان *
+                          استان{" "}
+                          <span className="text-red-500 text-[10px]">
+                            (الزامی)
+                          </span>
                         </label>
                         <select
                           required
@@ -1399,7 +1505,10 @@ function CheckoutPage() {
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-800 mb-1">
-                          شهر *
+                          شهر{" "}
+                          <span className="text-red-500 text-[10px]">
+                            (الزامی)
+                          </span>
                         </label>
                         <input
                           type="text"
@@ -1427,18 +1536,33 @@ function CheckoutPage() {
 
                     <div>
                       <label className="block text-xs font-medium text-gray-800 mb-1">
-                        کد پستی *
+                        کد پستی{" "}
+                        <span className="text-red-500 text-[10px]">
+                          (الزامی)
+                        </span>
                       </label>
                       <input
                         type="text"
                         required
                         maxLength={10}
-                        value={addressForm.postalCode}
+                        value={postalCodeDisplay}
                         onChange={(e) => {
-                          setAddressForm({
-                            ...addressForm,
-                            postalCode: e.target.value.replace(/\D/g, ""),
-                          });
+                          // ✅ استخراج فقط اعداد (فارسی و انگلیسی)
+                          const numbersOnly = e.target.value.replace(
+                            /[^\d۰-۹]/g,
+                            ""
+                          );
+                          if (numbersOnly.length <= 10) {
+                            // ✅ تبدیل به انگلیسی برای state اصلی
+                            const englishValue = persianToEnglish(numbersOnly);
+                            setAddressForm({
+                              ...addressForm,
+                              postalCode: englishValue,
+                            });
+                            // ✅ تبدیل به فارسی برای نمایش
+                            const persianValue = englishToPersian(englishValue);
+                            setPostalCodeDisplay(persianValue);
+                          }
                           if (formErrors.postalCode) {
                             setFormErrors({
                               ...formErrors,
@@ -1452,22 +1576,45 @@ function CheckoutPage() {
                             : "border-gray-300"
                         }`}
                         placeholder="کد پستی ۱۰ رقمی"
+                        dir="ltr"
+                        inputMode="numeric"
                       />
                       <FieldError error={formErrors.postalCode} />
                     </div>
 
                     <div>
                       <label className="block text-xs font-medium text-gray-800 mb-1">
-                        آدرس *
+                        آدرس{" "}
+                        <span className="text-red-500 text-[10px]">
+                          (الزامی)
+                        </span>
                       </label>
                       <textarea
                         rows={3}
                         required
+                        maxLength={200}
                         value={addressForm.address}
                         onChange={(e) => {
+                          const value = e.target.value;
+                          // ✅ بررسی تعداد خطوط
+                          const lines = value.split("\n").length;
+                          if (lines > 3) {
+                            return; // ✅ جلوگیری از بیش از 3 خط
+                          }
+                          // ✅ بررسی اینکه آیا فقط فارسی است
+                          if (
+                            value &&
+                            !/^[\u0600-\u06FF\u06F0-\u06F9\s،.؛:]*$/.test(value)
+                          ) {
+                            setFormErrors({
+                              ...formErrors,
+                              address: "آدرس باید فقط به فارسی وارد شود",
+                            });
+                            return;
+                          }
                           setAddressForm({
                             ...addressForm,
-                            address: e.target.value,
+                            address: value,
                           });
                           if (formErrors.address) {
                             setFormErrors({
@@ -1510,16 +1657,29 @@ function CheckoutPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-800 mb-1">
-                          نام *
+                          نام{" "}
+                          <span className="text-red-500 text-[10px]">
+                            (الزامی)
+                          </span>
                         </label>
                         <input
                           type="text"
                           required
+                          maxLength={30}
                           value={addressForm.firstName}
                           onChange={(e) => {
+                            const value = e.target.value;
+                            // ✅ بررسی اینکه آیا فقط فارسی است
+                            if (value && !isPersianOnly(value)) {
+                              setFormErrors({
+                                ...formErrors,
+                                firstName: "نام باید فقط به فارسی وارد شود",
+                              });
+                              return;
+                            }
                             setAddressForm({
                               ...addressForm,
-                              firstName: e.target.value,
+                              firstName: value,
                             });
                             if (formErrors.firstName) {
                               setFormErrors({
@@ -1539,16 +1699,30 @@ function CheckoutPage() {
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-800 mb-1">
-                          نام خانوادگی *
+                          نام خانوادگی{" "}
+                          <span className="text-red-500 text-[10px]">
+                            (الزامی)
+                          </span>
                         </label>
                         <input
                           type="text"
                           required
+                          maxLength={30}
                           value={addressForm.lastName}
                           onChange={(e) => {
+                            const value = e.target.value;
+                            // ✅ بررسی اینکه آیا فقط فارسی است
+                            if (value && !isPersianOnly(value)) {
+                              setFormErrors({
+                                ...formErrors,
+                                lastName:
+                                  "نام خانوادگی باید فقط به فارسی وارد شود",
+                              });
+                              return;
+                            }
                             setAddressForm({
                               ...addressForm,
-                              lastName: e.target.value,
+                              lastName: value,
                             });
                             if (formErrors.lastName) {
                               setFormErrors({
@@ -1571,18 +1745,35 @@ function CheckoutPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-800 mb-1">
-                          کد ملی *
+                          کد ملی{" "}
+                          <span className="text-red-500 text-[10px]">
+                            (الزامی)
+                          </span>
                         </label>
                         <input
                           type="text"
                           required
                           maxLength={10}
-                          value={addressForm.nationalId}
+                          value={nationalIdDisplay}
                           onChange={(e) => {
-                            setAddressForm({
-                              ...addressForm,
-                              nationalId: e.target.value.replace(/\D/g, ""),
-                            });
+                            // ✅ استخراج فقط اعداد (فارسی و انگلیسی)
+                            const numbersOnly = e.target.value.replace(
+                              /[^\d۰-۹]/g,
+                              ""
+                            );
+                            if (numbersOnly.length <= 10) {
+                              // ✅ تبدیل به انگلیسی برای state اصلی
+                              const englishValue =
+                                persianToEnglish(numbersOnly);
+                              setAddressForm({
+                                ...addressForm,
+                                nationalId: englishValue,
+                              });
+                              // ✅ تبدیل به فارسی برای نمایش
+                              const persianValue =
+                                englishToPersian(englishValue);
+                              setNationalIdDisplay(persianValue);
+                            }
                             if (formErrors.nationalId) {
                               setFormErrors({
                                 ...formErrors,
@@ -1596,23 +1787,42 @@ function CheckoutPage() {
                               : "border-gray-300"
                           }`}
                           placeholder="کد ملی ۱۰ رقمی"
+                          dir="ltr"
+                          inputMode="numeric"
                         />
                         <FieldError error={formErrors.nationalId} />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-800 mb-1">
-                          موبایل *
+                          موبایل{" "}
+                          <span className="text-red-500 text-[10px]">
+                            (الزامی)
+                          </span>
                         </label>
                         <input
                           type="tel"
                           required
                           maxLength={11}
-                          value={addressForm.mobile}
+                          value={mobileDisplay}
                           onChange={(e) => {
-                            setAddressForm({
-                              ...addressForm,
-                              mobile: e.target.value.replace(/\D/g, ""),
-                            });
+                            // ✅ استخراج فقط اعداد (فارسی و انگلیسی)
+                            const numbersOnly = e.target.value.replace(
+                              /[^\d۰-۹]/g,
+                              ""
+                            );
+                            if (numbersOnly.length <= 11) {
+                              // ✅ تبدیل به انگلیسی برای state اصلی
+                              const englishValue =
+                                persianToEnglish(numbersOnly);
+                              setAddressForm({
+                                ...addressForm,
+                                mobile: englishValue,
+                              });
+                              // ✅ تبدیل به فارسی برای نمایش
+                              const persianValue =
+                                englishToPersian(englishValue);
+                              setMobileDisplay(persianValue);
+                            }
                             if (formErrors.mobile) {
                               setFormErrors({
                                 ...formErrors,
@@ -1626,6 +1836,8 @@ function CheckoutPage() {
                               : "border-gray-300"
                           }`}
                           placeholder="۰۹۱۲۳۴۵۶۷۸۹"
+                          dir="ltr"
+                          inputMode="numeric"
                         />
                         <FieldError error={formErrors.mobile} />
                       </div>
@@ -1633,7 +1845,10 @@ function CheckoutPage() {
 
                     <div>
                       <label className="block text-xs font-medium text-gray-800 mb-1">
-                        ایمیل (اختیاری)
+                        ایمیل{" "}
+                        <span className="text-gray-500 text-[10px]">
+                          (اختیاری)
+                        </span>
                       </label>
                       <input
                         type="email"
@@ -1681,15 +1896,31 @@ function CheckoutPage() {
 
                     <div>
                       <label className="block text-xs font-medium text-gray-800 mb-1">
-                        توضیحات (اختیاری)
+                        توضیحات{" "}
+                        <span className="text-gray-500 text-[10px]">
+                          (اختیاری)
+                        </span>
                       </label>
                       <textarea
                         rows={3}
+                        maxLength={200}
                         value={addressForm.notes || ""}
                         onChange={(e) => {
+                          const value = e.target.value;
+                          // ✅ بررسی اینکه آیا فقط فارسی است
+                          if (
+                            value &&
+                            !/^[\u0600-\u06FF\u06F0-\u06F9\s،.؛:]*$/.test(value)
+                          ) {
+                            setFormErrors({
+                              ...formErrors,
+                              notes: "توضیحات باید فقط به فارسی وارد شود",
+                            });
+                            return;
+                          }
                           setAddressForm({
                             ...addressForm,
-                            notes: e.target.value,
+                            notes: value,
                           });
                           if (formErrors.notes) {
                             setFormErrors({ ...formErrors, notes: undefined });
@@ -1700,7 +1931,7 @@ function CheckoutPage() {
                             ? "border-red-500"
                             : "border-gray-300"
                         }`}
-                        placeholder="توضیحات تکمیلی (اختیاری)"
+                        placeholder="توضیحات تکمیلی ..."
                       />
                       <FieldError error={formErrors.notes} />
                     </div>
@@ -1760,6 +1991,74 @@ function CheckoutPage() {
           </div>
         </div>
       )}
+
+      {/* ✅ Confirmation Modal برای حذف آدرس */}
+      <Transition appear show={deleteConfirm.isOpen} as={Fragment}>
+        <Dialog
+          as="div"
+          className="relative z-50"
+          onClose={() => setDeleteConfirm({ isOpen: false, addressId: null })}
+        >
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/50" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-primary/50 backdrop-blur-sm p-6 text-right align-middle shadow-xl transition-all">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-bold leading-6 text-gray-900 mb-4"
+                  >
+                    حذف آدرس
+                  </Dialog.Title>
+                  <div className="mt-2">
+                    <p className="text-sm text-white">
+                      آیا مطمئن هستید که می‌خواهید این آدرس را حذف کنید؟
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex gap-3 justify-end">
+                    <button
+                      type="button"
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                      onClick={() =>
+                        setDeleteConfirm({ isOpen: false, addressId: null })
+                      }
+                    >
+                      لغو
+                    </button>
+                    <button
+                      type="button"
+                      className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
+                      onClick={confirmDeleteAddress}
+                    >
+                      حذف
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   );
 }

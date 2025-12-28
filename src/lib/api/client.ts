@@ -161,6 +161,27 @@ export async function apiRequest<T>(
       }
     }
 
+    // ✅ Handle Rate Limit (429)
+    if (response.status === 429) {
+      const errorData = await response.json().catch(() => ({
+        message: "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً کمی صبر کنید",
+        code: "RATE_LIMIT_EXCEEDED",
+      }));
+
+      const error = new Error(
+        typeof errorData.message === "string"
+          ? errorData.message
+          : Array.isArray(errorData.message)
+          ? errorData.message.join(", ")
+          : "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً کمی صبر کنید"
+      ) as Error & { statusCode?: number; data?: any; code?: string };
+
+      error.statusCode = 429;
+      error.code = errorData.code || "RATE_LIMIT_EXCEEDED";
+      error.data = errorData;
+      throw error;
+    }
+
     // ✅ اگر response موفق نبود، error throw کن
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({

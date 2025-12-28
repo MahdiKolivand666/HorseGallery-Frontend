@@ -57,9 +57,20 @@ export async function sendOtp(phoneNumber: string): Promise<{
     });
 
     if (!response.ok) {
-      const errorData: ErrorResponse = await response.json().catch(() => ({
+      const errorData: ErrorResponse & { code?: string } = await response.json().catch(() => ({
         message: "خطا در ارسال کد تأیید",
       }));
+      
+      // ✅ Handle Rate Limit (429)
+      if (response.status === 429) {
+        const rateLimitError = new Error(
+          errorData.message || "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً 2 دقیقه صبر کنید"
+        ) as Error & { statusCode?: number; code?: string };
+        rateLimitError.statusCode = 429;
+        rateLimitError.code = errorData.code || "RATE_LIMIT_EXCEEDED";
+        throw rateLimitError;
+      }
+      
       throw new Error(errorData.message || "خطا در ارسال کد تأیید");
     }
 
@@ -172,10 +183,23 @@ export async function verifyOtp(
     });
 
     if (!response.ok) {
-      const errorData: ErrorResponse | { message: string | string[] } =
+      const errorData: (ErrorResponse & { code?: string }) | { message: string | string[]; code?: string } =
         await response.json().catch(() => ({
           message: "خطا در تأیید کد",
         }));
+
+      // ✅ Handle Rate Limit (429)
+      if (response.status === 429) {
+        const errorMessage = typeof errorData.message === "string"
+          ? errorData.message
+          : Array.isArray(errorData.message)
+          ? errorData.message.join(", ")
+          : "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً 2 دقیقه صبر کنید";
+        const rateLimitError = new Error(errorMessage) as Error & { statusCode?: number; code?: string };
+        rateLimitError.statusCode = 429;
+        rateLimitError.code = errorData.code || "RATE_LIMIT_EXCEEDED";
+        throw rateLimitError;
+      }
 
       // اگر message یک array است (validation errors)، آن را join کن
       let errorMessage = "خطا در تأیید کد";
@@ -312,6 +336,19 @@ export async function register(data: RegisterData): Promise<{
         errorData = {
           message: "خطا در ثبت‌نام",
         };
+      }
+
+      // ✅ Handle Rate Limit (429)
+      if (response.status === 429) {
+        const errorMessage = typeof errorData.message === "string"
+          ? errorData.message
+          : Array.isArray(errorData.message)
+          ? errorData.message.join(", ")
+          : "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً 2 دقیقه صبر کنید";
+        const rateLimitError = new Error(errorMessage) as Error & { statusCode?: number; code?: string };
+        rateLimitError.statusCode = 429;
+        rateLimitError.code = errorData.code || "RATE_LIMIT_EXCEEDED";
+        throw rateLimitError;
       }
 
       // اگر خطای 409 (Conflict) باشد، یعنی کاربر موجود است

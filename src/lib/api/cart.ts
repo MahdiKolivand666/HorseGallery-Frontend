@@ -10,7 +10,7 @@ import { ErrorCode } from "@/types/errors";
 // Types
 export interface Cart {
   _id: string;
-  user?: string | null;
+  userId?: string | null; // ✅ تغییر از user به userId (یکپارچه با backend)
   sessionId?: string | null;
   subtotal: number;
   discount: number;
@@ -118,6 +118,13 @@ export async function getCart(): Promise<CartResponse | null> {
     });
 
     if (!res.ok) {
+      // ✅ Handle Rate Limit (429) - Silent handling (بدون error throw)
+      if (res.status === 429) {
+        // Rate limit exceeded - به صورت silent handle می‌کنیم
+        // بدون console.error و بدون throw - فقط empty cart برمی‌گردانیم
+        return getEmptyCartResponse();
+      }
+
       if (res.status === 404) {
         // سبد خرید وجود ندارد یا منقضی شده
         return getEmptyCartResponse();
@@ -159,6 +166,20 @@ export async function getCart(): Promise<CartResponse | null> {
 
     return data;
   } catch (error) {
+    // ✅ بررسی اینکه آیا error مربوط به rate limit است
+    const errorWithStatus = error as Error & {
+      statusCode?: number;
+      code?: string;
+    };
+    if (
+      errorWithStatus.statusCode === 429 ||
+      errorWithStatus.code === "RATE_LIMIT_EXCEEDED"
+    ) {
+      // ✅ Rate limit - به صورت silent handle می‌کنیم (بدون console.error)
+      return getEmptyCartResponse();
+    }
+
+    // ✅ فقط برای سایر errors، console.error نمایش می‌دهیم
     const errorMessage =
       error instanceof Error ? error.message : "خطا در دریافت سبد خرید";
     console.error("Error fetching cart:", errorMessage);
@@ -240,7 +261,7 @@ export async function addToCart(
         }) as Error & {
           statusCode: number;
           code: ErrorCode;
-          data?: any;
+          data?: unknown;
           requiresRegistration: boolean;
           isAuthenticated: boolean;
           requiresOtpVerification: boolean;
@@ -282,7 +303,7 @@ export async function addToCart(
         }) as Error & {
           statusCode: number;
           code: ErrorCode;
-          data?: any;
+          data?: unknown;
           requiresRegistration: boolean;
           isAuthenticated: boolean;
           phoneNumber: string | null;
@@ -322,7 +343,7 @@ export async function addToCart(
         }) as Error & {
           statusCode: number;
           code: ErrorCode;
-          data?: any;
+          data?: unknown;
           requiresRegistration: boolean;
           isAuthenticated: boolean;
           phoneNumber: string | null;

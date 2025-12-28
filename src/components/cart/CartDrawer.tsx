@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { X, ShoppingBag, Trash2, AlertCircle } from "lucide-react";
+import { X, ShoppingBag, Trash2, AlertCircle, Info } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/contexts/CartContext";
 
@@ -28,6 +28,12 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     clearCart,
   } = useCart();
 
+  // ✅ تعریف reloadCartRef در ابتدا (قبل از استفاده)
+  const reloadCartRef = useRef(reloadCart);
+  useEffect(() => {
+    reloadCartRef.current = reloadCart;
+  }, [reloadCart]);
+
   useEffect(() => {
     // Client-side only mounting to prevent hydration mismatch
     Promise.resolve().then(() => setMounted(true));
@@ -36,9 +42,9 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      // فقط یک بار reload کن وقتی drawer باز می‌شود
+      // ✅ استفاده از ref به جای direct call
       if (!hasReloadedRef.current) {
-        reloadCart();
+        reloadCartRef.current();
         hasReloadedRef.current = true;
       }
     } else {
@@ -50,56 +56,50 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     return () => {
       document.body.style.overflow = "unset";
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Timer countdown - استفاده از remainingSeconds از backend
-  // برای UX بهتر، تایمر client-side داریم اما هر 30 ثانیه با backend sync می‌شود
   const [timeLeft, setTimeLeft] = useState(remainingSeconds);
 
   useEffect(() => {
+    // ✅ اگر cart expired است، timeLeft را به‌روز نکن (0 نگه دار)
+    const isExpired = cart?.expired === true || remainingSeconds <= 0;
+    if (isExpired) {
+      setTimeLeft(0);
+      return;
+    }
     // Update timer when remainingSeconds changes from backend
     setTimeLeft(remainingSeconds);
-  }, [remainingSeconds]);
+  }, [remainingSeconds, cart]);
 
-  // Sync با backend هر 30 ثانیه
+  // ✅ Polling کاملاً حذف شد - فقط یکبار وقتی drawer باز می‌شود reload می‌شود
+  // ✅ تایمر client-side - فقط یک بار اجرا می‌شود و timeLeft را از state می‌خواند
   useEffect(() => {
     if (!isOpen) return;
 
-    const syncInterval = setInterval(() => {
-      reloadCart(); // Sync با backend
-    }, 30000); // هر 30 ثانیه
+    // ✅ اگر cart خالی است، timer را اجرا نکن
+    const cartItems = (cart?.items || []).filter(
+      (item) => item.product.productType !== "melted_gold"
+    );
+    if (cartItems.length === 0) return;
 
-    return () => clearInterval(syncInterval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
-
-  // تایمر client-side برای نمایش (UX بهتر)
-  useEffect(() => {
-    if (!isOpen || timeLeft <= 0) {
-      if (
-        timeLeft <= 0 &&
-        cart &&
-        cart.items &&
-        Array.isArray(cart.items) &&
-        cart.items.length > 0
-      ) {
-        // ✅ از setTimeout استفاده می‌کنیم تا بعد از render اجرا شود (جلوگیری از خطای React)
-        const timeoutId = setTimeout(() => {
-          reloadCart();
-        }, 0);
-        return () => clearTimeout(timeoutId);
-      }
-      return;
-    }
+    // ✅ اگر cart expired است یا remainingSeconds <= 0 است، timer را اجرا نکن
+    const isExpired = cart?.expired === true || remainingSeconds <= 0;
+    if (isExpired) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          // ✅ از setTimeout استفاده می‌کنیم تا بعد از render اجرا شود (جلوگیری از خطای React)
-          setTimeout(() => {
-            reloadCart();
-          }, 0);
+          // ✅ چک کردن که cart هنوز خالی نشده باشد و expired نشده باشد
+          const currentCartItems = (cart?.items || []).filter(
+            (item) => item.product.productType !== "melted_gold"
+          );
+          const currentIsExpired = cart?.expired === true || remainingSeconds <= 0;
+          if (currentCartItems.length > 0 && !currentIsExpired) {
+            setTimeout(() => {
+              reloadCartRef.current();
+            }, 0);
+          }
           return 0;
         }
         return prev - 1;
@@ -107,7 +107,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isOpen, timeLeft, cart, reloadCart]);
+  }, [isOpen, cart, remainingSeconds]); // ✅ اضافه کردن remainingSeconds به dependency
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -251,7 +251,8 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 ⏰ مدت زمان خرید شما به پایان رسیده است
               </h3>
-              <p className="text-sm text-gray-600 mb-6">
+              <p className="text-sm text-gray-600 mb-6 flex items-center gap-2 justify-center">
+                <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
                 لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید
               </p>
               <button

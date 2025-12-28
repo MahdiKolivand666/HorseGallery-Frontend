@@ -64,6 +64,7 @@ const AuthModal = ({
   const [verifiedOtpCode, setVerifiedOtpCode] = useState<string | null>(null); // کد OTP که در verify-otp استفاده شده
   const [isFromIncompleteRegistration, setIsFromIncompleteRegistration] =
     useState(propIsFromIncompleteRegistration); // ✅ آیا modal از خطای INCOMPLETE_REGISTRATION باز شده است
+  const [rateLimitCooldown, setRateLimitCooldown] = useState(0); // ✅ Cooldown timer برای rate limit (2 دقیقه = 120 ثانیه)
 
   // فرم ثبت‌نام
   const [registerForm, setRegisterForm] = useState({
@@ -176,6 +177,7 @@ const AuthModal = ({
         setDevOtpCode(null);
         setVerifiedOtpCode(null);
         setIsFromIncompleteRegistration(false);
+        setRateLimitCooldown(0); // ✅ Reset cooldown
         // ✅ پاک کردن pendingOtpCode از localStorage
         if (typeof window !== "undefined") {
           localStorage.removeItem("pendingOtpCode");
@@ -207,6 +209,9 @@ const AuthModal = ({
     const englishPhoneNumber = convertPersianToEnglish(phoneNumber);
     if (englishPhoneNumber.length !== 11) return;
 
+    // ✅ جلوگیری از multiple requests
+    if (isLoading || rateLimitCooldown > 0) return;
+
     setIsLoading(true);
     setError(null);
     setDevOtpCode(null);
@@ -217,6 +222,7 @@ const AuthModal = ({
       const result = await sendOtp(englishPhoneNumber);
       setStep("otp");
       setIsExpired(false);
+      setRateLimitCooldown(0); // ✅ Reset cooldown در صورت موفقیت
 
       // ✅ استفاده از expiresAt برای timer (بدون نیاز به request مکرر)
       if (result.expiresAt) {
@@ -250,7 +256,16 @@ const AuthModal = ({
         setDevOtpCode(result.code);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطا در ارسال کد تأیید");
+      const error = err as Error & { statusCode?: number; code?: string };
+      // ✅ Handle Rate Limit (429)
+      if (error.statusCode === 429 || error.code === "RATE_LIMIT_EXCEEDED") {
+        setRateLimitCooldown(120); // ✅ 2 دقیقه cooldown
+        setError(
+          error.message || "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً 2 دقیقه صبر کنید"
+        );
+      } else {
+        setError(err instanceof Error ? err.message : "خطا در ارسال کد تأیید");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -290,6 +305,23 @@ const AuthModal = ({
     }
   }, [expiresAt, step]);
 
+  // ✅ Countdown timer برای rate limit cooldown (2 دقیقه)
+  useEffect(() => {
+    if (rateLimitCooldown > 0) {
+      const timer = setInterval(() => {
+        setRateLimitCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [rateLimitCooldown]);
+
   // ✅ Timer فقط از expiresAt محاسبه می‌شود (بدون request مکرر به backend)
   // ⚠️ مهم: از فراخوانی getOtpRemainingTime هر ثانیه یا هر 5 ثانیه خودداری می‌کنیم
 
@@ -309,6 +341,9 @@ const AuthModal = ({
     const englishPhoneNumber = convertPersianToEnglish(phoneNumber);
     if (resendTimer > 0 || englishPhoneNumber.length !== 11) return;
 
+    // ✅ جلوگیری از multiple requests و rate limit cooldown
+    if (isLoading || rateLimitCooldown > 0) return;
+
     setIsLoading(true);
     setError(null);
     setDevOtpCode(null);
@@ -317,6 +352,7 @@ const AuthModal = ({
       // ✅ ارسال phoneNumber به انگلیسی
       const result = await sendOtp(englishPhoneNumber);
       setIsExpired(false);
+      setRateLimitCooldown(0); // ✅ Reset cooldown در صورت موفقیت
 
       // ✅ اگر در مرحله register بودیم، به مرحله OTP برگرد
       if (step === "register") {
@@ -357,7 +393,16 @@ const AuthModal = ({
         setDevOtpCode(result.code);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطا در ارسال مجدد کد");
+      const error = err as Error & { statusCode?: number; code?: string };
+      // ✅ Handle Rate Limit (429)
+      if (error.statusCode === 429 || error.code === "RATE_LIMIT_EXCEEDED") {
+        setRateLimitCooldown(120); // ✅ 2 دقیقه cooldown
+        setError(
+          error.message || "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً 2 دقیقه صبر کنید"
+        );
+      } else {
+        setError(err instanceof Error ? err.message : "خطا در ارسال مجدد کد");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -1194,11 +1239,16 @@ const AuthModal = ({
                       type="submit"
                       disabled={
                         convertPersianToEnglish(phoneNumber).length !== 11 ||
-                        isLoading
+                        isLoading ||
+                        rateLimitCooldown > 0
                       }
                       className="w-full bg-primary hover:bg-primary/90 text-white py-3 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isLoading ? "در حال ارسال..." : "دریافت کد تأیید"}
+                      {isLoading
+                        ? "در حال ارسال..."
+                        : rateLimitCooldown > 0
+                        ? `لطفاً ${Math.floor(rateLimitCooldown / 60)}:${String(rateLimitCooldown % 60).padStart(2, "0")} صبر کنید`
+                        : "دریافت کد تأیید"}
                     </button>
                   </form>
                 ) : step === "register" ? (
@@ -1439,10 +1489,26 @@ const AuthModal = ({
                     <button
                       type="button"
                       onClick={handleResendOtp}
-                      disabled={resendTimer > 0 || isLoading}
+                      disabled={resendTimer > 0 || isLoading || rateLimitCooldown > 0}
                       className="w-full text-sm text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {resendTimer > 0 ? (
+                      {rateLimitCooldown > 0 ? (
+                        <>
+                          <span className="text-red-600">ارسال مجدد کد</span> (
+                          <span className="text-red-600 font-semibold">
+                            {englishToPersian(
+                              Math.floor(rateLimitCooldown / 60)
+                                .toString()
+                                .padStart(2, "0")
+                            )}
+                            :
+                            {englishToPersian(
+                              (rateLimitCooldown % 60).toString().padStart(2, "0")
+                            )}
+                          </span>
+                          )
+                        </>
+                      ) : resendTimer > 0 ? (
                         <>
                           <span className="text-red-600">ارسال مجدد کد</span> (
                           <span className="text-red-600 font-semibold">
