@@ -244,6 +244,31 @@ const Navbar = () => {
     }
   }, [isAuthModalOpen]);
 
+  // ✅ به‌روزرسانی userInfo بعد از logout (برای نمایش دکمه ثبت‌نام/ورود)
+  // این useEffect هر 100ms چک می‌کند که آیا وضعیت login تغییر کرده است
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const checkLoginStatus = () => {
+      const userInfoData = getUserInfo();
+      const isLoggedInValue = isLoggedIn();
+      if (isLoggedInValue && userInfoData) {
+        setUserInfo(userInfoData);
+      } else {
+        setUserInfo(null);
+        setDashboardInfo(null);
+      }
+    };
+
+    // ✅ چک کردن فوری
+    checkLoginStatus();
+
+    // ✅ چک کردن هر 100ms برای تغییرات سریع (مثل logout)
+    const interval = setInterval(checkLoginStatus, 100);
+
+    return () => clearInterval(interval);
+  }, [isMounted]);
+
   // ✅ دریافت اطلاعات dashboard زمانی که user menu باز می‌شود
   useEffect(() => {
     if (
@@ -274,7 +299,8 @@ const Navbar = () => {
       setUserInfo(null);
       setDashboardInfo(null);
       setIsUserMenuOpen(false);
-      // Reload page to update navbar
+      // ✅ Force re-render to show login button
+      // Reload page to update navbar and clear all state
       window.location.reload();
     } catch (error) {
       console.error("Logout error:", error);
@@ -282,6 +308,7 @@ const Navbar = () => {
       setUserInfo(null);
       setDashboardInfo(null);
       setIsUserMenuOpen(false);
+      // ✅ Force re-render to show login button
       window.location.reload();
     }
   };
@@ -727,7 +754,7 @@ const Navbar = () => {
       <div className="hidden xl:block border-t border-primary/10">
         <div className="max-w-[1920px] mx-auto px-8">
           <div className="flex items-center justify-between h-16 gap-6 relative">
-            {/* Left Section - Logo + User Name */}
+            {/* Left Section - Logo + Cart + User Name */}
             <div
               className="flex items-center gap-3 flex-shrink-0"
               onMouseEnter={() => setIsNavHovered(true)}
@@ -745,6 +772,33 @@ const Navbar = () => {
                   />
                 </motion.div>
               </Link>
+
+              {/* Cart Button - Desktop */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={openCart}
+                className={`transition-colors ${
+                  isScrolled || isNavHovered ? "text-white" : "text-primary"
+                }`}
+                aria-label={t("cart")}
+              >
+                <ShoppingBag className="w-5 h-5" />
+              </motion.button>
+
+              {/* Login/Register Button - Desktop (When not logged in) */}
+              {isMounted && !isLoggedIn() && (
+                <button
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className={`text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
+                    isScrolled || isNavHovered
+                      ? "text-white"
+                      : "text-primary"
+                  }`}
+                >
+                  {t("auth.label")}
+                </button>
+              )}
 
               {/* User Name - Desktop */}
               {isMounted && isLoggedIn() && userInfo && (
@@ -941,55 +995,12 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* Right Section - Auth + Icons */}
+            {/* Right Section - Icons */}
             <div
               className="flex items-center gap-5 flex-shrink-0"
               onMouseEnter={() => setIsNavHovered(true)}
               onMouseLeave={() => setIsNavHovered(false)}
             >
-              {/* Cart Button + Login/Register Button - Desktop (When not logged in) */}
-              {isMounted && !isLoggedIn() && (
-                <div className="flex items-center gap-3">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={openCart}
-                    className={`transition-colors ${
-                      isScrolled || isNavHovered
-                        ? "text-white"
-                        : "text-primary"
-                    }`}
-                    aria-label={t("cart")}
-                  >
-                    <ShoppingBag className="w-5 h-5" />
-                  </motion.button>
-                  <button
-                    onClick={() => setIsAuthModalOpen(true)}
-                    className={`text-sm font-medium tracking-wide transition-colors hover:opacity-70 whitespace-nowrap ${
-                      isScrolled || isNavHovered
-                        ? "text-white"
-                        : "text-primary"
-                    }`}
-                  >
-                    {t("auth.label")}
-                  </button>
-                </div>
-              )}
-
-              {/* Cart Button - Desktop (When logged in) */}
-              {isMounted && isLoggedIn() && (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={openCart}
-                  className={`transition-colors ${
-                    isScrolled || isNavHovered ? "text-white" : "text-primary"
-                  }`}
-                  aria-label={t("cart")}
-                >
-                  <ShoppingBag className="w-5 h-5" />
-                </motion.button>
-              )}
 
               {/* Favorites */}
               <motion.button
