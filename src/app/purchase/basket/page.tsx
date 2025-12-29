@@ -44,6 +44,12 @@ import {
   englishToPersian,
   isPersianOnly,
 } from "@/lib/utils/persianNumber";
+import {
+  getProvinces,
+  getCities,
+  type Province,
+  type City,
+} from "@/lib/api/location";
 
 interface CartItem {
   _id: string;
@@ -115,6 +121,15 @@ function CheckoutPage() {
   const [nationalIdDisplay, setNationalIdDisplay] = useState("");
   const [mobileDisplay, setMobileDisplay] = useState("");
 
+  // ✅ State برای استان‌ها و شهرها
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [selectedProvinceExternalId, setSelectedProvinceExternalId] = useState<
+    number | null
+  >(null);
+  const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
+
   // Validation errors state
   const [formErrors, setFormErrors] = useState<
     Partial<Record<keyof AddressFormData, string>>
@@ -126,6 +141,59 @@ function CheckoutPage() {
       loadAddresses();
     }
   }, [activeTab]);
+
+  // ✅ دریافت لیست استان‌ها هنگام باز شدن modal
+  useEffect(() => {
+    if (isAddressModalOpen && provinces.length === 0) {
+      const fetchProvinces = async () => {
+        setIsLoadingProvinces(true);
+        try {
+          const data = await getProvinces();
+          setProvinces(data);
+        } catch (error) {
+          console.error("Error fetching provinces:", error);
+          toast.error("خطا در دریافت لیست استان‌ها");
+        } finally {
+          setIsLoadingProvinces(false);
+        }
+      };
+      fetchProvinces();
+    }
+  }, [isAddressModalOpen, provinces.length]);
+
+  // ✅ دریافت لیست شهرها هنگام تغییر استان
+  useEffect(() => {
+    if (selectedProvinceExternalId !== null) {
+      const fetchCities = async () => {
+        setIsLoadingCities(true);
+        setCities([]); // Reset cities
+        setAddressForm((prev) => ({ ...prev, city: "" })); // Reset city selection
+        try {
+          const data = await getCities({
+            provinceExternalId: selectedProvinceExternalId,
+          });
+
+          if (data.length === 0) {
+            toast.error(
+              "شهری برای این استان یافت نشد. لطفاً با پشتیبانی تماس بگیرید."
+            );
+          } else {
+            setCities(data);
+          }
+        } catch (error) {
+          console.error("Error fetching cities:", error);
+          toast.error("خطا در دریافت لیست شهرها");
+          setCities([]);
+        } finally {
+          setIsLoadingCities(false);
+        }
+      };
+      fetchCities();
+    } else {
+      setCities([]);
+      setAddressForm((prev) => ({ ...prev, city: "" }));
+    }
+  }, [selectedProvinceExternalId, provinces]);
 
   const loadAddresses = async () => {
     setIsLoadingAddresses(true);
@@ -239,7 +307,7 @@ function CheckoutPage() {
   };
 
   // ✅ تابع برای باز کردن modal در حالت edit
-  const handleEditAddress = (address: Address) => {
+  const handleEditAddress = async (address: Address) => {
     setAddressForm({
       title: address.title,
       province: address.province,
@@ -260,6 +328,31 @@ function CheckoutPage() {
     setPostalCodeDisplay(englishToPersian(address.postalCode));
     setNationalIdDisplay(englishToPersian(address.nationalId));
     setMobileDisplay(englishToPersian(address.mobile));
+
+    // ✅ پیدا کردن externalId استان از نام
+    if (address.province) {
+      // اگر استان‌ها هنوز لود نشده‌اند، ابتدا لود کن
+      let provincesData = provinces;
+      if (provincesData.length === 0) {
+        try {
+          provincesData = await getProvinces();
+          setProvinces(provincesData);
+        } catch (error) {
+          console.error("Error loading provinces for edit:", error);
+        }
+      }
+
+      const province = provincesData.find((p) => p.name === address.province);
+      if (province) {
+        setSelectedProvinceExternalId(province.externalId);
+        // شهرها به صورت خودکار از useEffect لود می‌شوند
+      } else {
+        setSelectedProvinceExternalId(null);
+      }
+    } else {
+      setSelectedProvinceExternalId(null);
+    }
+
     setIsAddressModalOpen(true);
   };
 
@@ -291,6 +384,9 @@ function CheckoutPage() {
     setPostalCodeDisplay("");
     setNationalIdDisplay("");
     setMobileDisplay("");
+    // ✅ Reset province and city selection
+    setSelectedProvinceExternalId(null);
+    setCities([]);
     setIsAddressModalOpen(true);
   };
 
@@ -1379,6 +1475,9 @@ function CheckoutPage() {
                   setIsAddressModalOpen(false);
                   setEditingAddressId(null);
                   setFormErrors({});
+                  // ✅ Reset province and city selection
+                  setSelectedProvinceExternalId(null);
+                  setCities([]);
                   // Reset form when closing
                   setAddressForm({
                     title: "",
@@ -1475,11 +1574,26 @@ function CheckoutPage() {
                         </label>
                         <select
                           required
-                          value={addressForm.province}
+                          disabled={isLoadingProvinces}
+                          value={
+                            selectedProvinceExternalId
+                              ? selectedProvinceExternalId.toString()
+                              : ""
+                          }
                           onChange={(e) => {
+                            const externalId =
+                              e.target.value === ""
+                                ? null
+                                : parseInt(e.target.value, 10);
+                            setSelectedProvinceExternalId(externalId);
+                            // پیدا کردن نام استان
+                            const selectedProvince = provinces.find(
+                              (p) => p.externalId === externalId
+                            );
                             setAddressForm({
                               ...addressForm,
-                              province: e.target.value,
+                              province: selectedProvince?.name || "",
+                              city: "", // Reset city when province changes
                             });
                             if (formErrors.province) {
                               setFormErrors({
@@ -1487,19 +1601,36 @@ function CheckoutPage() {
                                 province: undefined,
                               });
                             }
+                            if (formErrors.city) {
+                              setFormErrors({
+                                ...formErrors,
+                                city: undefined,
+                              });
+                            }
                           }}
                           className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none text-sm text-gray-900 transition-colors rounded ${
                             formErrors.province
                               ? "border-red-500"
                               : "border-gray-300"
+                          } ${
+                            isLoadingProvinces
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
                           }`}
                         >
                           <option value="" className="text-gray-400">
-                            انتخاب استان
+                            {isLoadingProvinces
+                              ? "در حال بارگذاری..."
+                              : "انتخاب استان"}
                           </option>
-                          <option value="tehran">تهران</option>
-                          <option value="isfahan">اصفهان</option>
-                          <option value="shiraz">شیراز</option>
+                          {provinces.map((province) => (
+                            <option
+                              key={province._id}
+                              value={province.externalId.toString()}
+                            >
+                              {province.name}
+                            </option>
+                          ))}
                         </select>
                         <FieldError error={formErrors.province} />
                       </div>
@@ -1510,9 +1641,11 @@ function CheckoutPage() {
                             (الزامی)
                           </span>
                         </label>
-                        <input
-                          type="text"
+                        <select
                           required
+                          disabled={
+                            !selectedProvinceExternalId || isLoadingCities
+                          }
                           value={addressForm.city}
                           onChange={(e) => {
                             setAddressForm({
@@ -1523,13 +1656,29 @@ function CheckoutPage() {
                               setFormErrors({ ...formErrors, city: undefined });
                             }
                           }}
-                          className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded ${
+                          className={`w-full px-3 py-2 border bg-white focus:border-primary focus:outline-none text-sm text-gray-900 transition-colors rounded ${
                             formErrors.city
                               ? "border-red-500"
                               : "border-gray-300"
+                          } ${
+                            !selectedProvinceExternalId || isLoadingCities
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
                           }`}
-                          placeholder="شهر"
-                        />
+                        >
+                          <option value="" className="text-gray-400">
+                            {!selectedProvinceExternalId
+                              ? "ابتدا استان را انتخاب کنید"
+                              : isLoadingCities
+                              ? "در حال بارگذاری..."
+                              : "انتخاب شهر"}
+                          </option>
+                          {cities.map((city) => (
+                            <option key={city._id} value={city.name}>
+                              {city.name}
+                            </option>
+                          ))}
+                        </select>
                         <FieldError error={formErrors.city} />
                       </div>
                     </div>

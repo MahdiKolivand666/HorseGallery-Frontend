@@ -191,19 +191,10 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                 )}
               </div>
             )}
-            {/* Expired Message */}
-            {!isEmpty && isExpired && (
-              <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded px-2 py-1">
-                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-                <span className="text-[10px] text-red-700 font-medium">
-                  زمان تمام شده
-                </span>
-              </div>
-            )}
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="p-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+              className="p-2 rounded hover:bg-gray-50 transition-colors"
               aria-label="بستن"
             >
               <X className="w-5 h-5 text-gray-700" />
@@ -259,7 +250,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                 onClick={() => {
                   clearCart();
                   onClose();
-                  router.push("/products");
+                  router.push("/");
                 }}
                 className="px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-medium rounded"
               >
