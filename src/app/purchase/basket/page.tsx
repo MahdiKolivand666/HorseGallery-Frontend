@@ -476,7 +476,17 @@ function CheckoutPage() {
   // Timer countdown - استفاده از remainingSeconds از backend
   // برای UX بهتر، تایمر client-side داریم اما هر 30 ثانیه با backend sync می‌شود
   const [timeLeft, setTimeLeft] = useState(remainingSeconds);
-  const isExpired = cart?.expired === true; // ✅ بررسی expired flag
+
+  // ✅ تبدیل cart?.items به فرمت مورد نیاز صفحه پرداخت
+  // ✅ فیلتر کردن طلای آب شده از cart (باید فقط در purchase باشد)
+  const cartItemsFiltered = (cart?.items || []).filter(
+    (item) => item.product.productType !== "melted_gold"
+  );
+
+  // ✅ بررسی isEmpty و isExpired برای UI logic (طبق مستندات جدید backend)
+  // ✅ اولویت: isEmpty > isExpired
+  const isEmpty = cartItemsFiltered.length === 0;
+  const isExpired = cart?.expired === true;
 
   useEffect(() => {
     // ✅ اگر cart expired است، timeLeft را به‌روز نکن (0 نگه دار)
@@ -552,50 +562,47 @@ function CheckoutPage() {
     return () => clearInterval(timer);
   }, [cart, remainingSeconds]); // ✅ اضافه کردن remainingSeconds به dependency
 
-  // تبدیل cart?.items به فرمت مورد نیاز صفحه پرداخت
-  // ✅ فیلتر کردن طلای آب شده از cart (باید فقط در purchase باشد)
-  const cartItems: CartItem[] = (cart?.items || [])
-    .filter((item) => item.product.productType !== "melted_gold")
-    .map((item) => {
-      const product = item.product;
+  // تبدیل cartItemsFiltered به فرمت مورد نیاز صفحه پرداخت
+  const cartItems: CartItem[] = cartItemsFiltered.map((item) => {
+    const product = item.product;
 
-      // تعیین تصویر بر اساس نوع محصول
-      const productImage =
-        product.productType === "coin"
-          ? "/images/products/coinphoto.webp"
-          : product.productType === "melted_gold"
-          ? "/images/products/goldbarphoto.webp"
-          : product.images?.[0] || "/images/products/default.webp";
+    // تعیین تصویر بر اساس نوع محصول
+    const productImage =
+      product.productType === "coin"
+        ? "/images/products/coinphoto.webp"
+        : product.productType === "melted_gold"
+        ? "/images/products/goldbarphoto.webp"
+        : product.images?.[0] || "/images/products/default.webp";
 
-      // استخراج category از slug
-      const categorySlug = product.slug.split("/")[0] || "products";
+    // استخراج category از slug
+    const categorySlug = product.slug.split("/")[0] || "products";
 
-      return {
-        _id: item._id,
-        name: product.name,
-        image: productImage,
-        // برای طلای آب‌شده از unitPrice استفاده می‌کنیم (چون quantity نباید در قیمت دخالت داشته باشد)
-        price:
-          product.productType === "melted_gold" && item.unitPrice
-            ? item.unitPrice
-            : item.price, // ✅ قیمت کل (با تخفیف) برای quantity فعلی - از backend
-        originalPrice:
-          product.productType === "melted_gold" && item.unitOriginalPrice
-            ? item.unitOriginalPrice
-            : item.originalPrice, // ✅ قیمت کل اصلی (بدون تخفیف) برای quantity فعلی - از backend
-        unitPrice: item.unitPrice,
-        unitOriginalPrice: item.unitOriginalPrice,
-        quantity: item.quantity,
-        code: product.code,
-        weight: product.weight || "نامشخص",
-        size: item.size,
-        slug: product.slug,
-        category: categorySlug,
-        discount: item.discount, // ✅ درصد تخفیف - از backend
-        productType: product.productType,
-        goldInfo: product.goldInfo,
-      };
-    });
+    return {
+      _id: item._id,
+      name: product.name,
+      image: productImage,
+      // برای طلای آب‌شده از unitPrice استفاده می‌کنیم (چون quantity نباید در قیمت دخالت داشته باشد)
+      price:
+        product.productType === "melted_gold" && item.unitPrice
+          ? item.unitPrice
+          : item.price, // ✅ قیمت کل (با تخفیف) برای quantity فعلی - از backend
+      originalPrice:
+        product.productType === "melted_gold" && item.unitOriginalPrice
+          ? item.unitOriginalPrice
+          : item.originalPrice, // ✅ قیمت کل اصلی (بدون تخفیف) برای quantity فعلی - از backend
+      unitPrice: item.unitPrice,
+      unitOriginalPrice: item.unitOriginalPrice,
+      quantity: item.quantity,
+      code: product.code,
+      weight: product.weight || "نامشخص",
+      size: item.size,
+      slug: product.slug,
+      category: categorySlug,
+      discount: item.discount, // ✅ درصد تخفیف - از backend
+      productType: product.productType,
+      goldInfo: product.goldInfo,
+    };
+  });
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -647,10 +654,10 @@ function CheckoutPage() {
         {/* Tabs */}
         <div className="flex justify-center gap-2 sm:gap-4 mb-8 border-b border-gray-200 overflow-x-auto">
           <button
-            onClick={() => !isExpired && setActiveTab("cart")}
-            disabled={isExpired}
+            onClick={() => !isEmpty && !isExpired && setActiveTab("cart")}
+            disabled={isEmpty || isExpired}
             className={`pb-3 sm:pb-4 px-2 sm:px-4 text-xs sm:text-base font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-              isExpired
+              isEmpty || isExpired
                 ? "text-gray-400 cursor-not-allowed opacity-60"
                 : activeTab === "cart"
                 ? "text-primary"
@@ -658,15 +665,15 @@ function CheckoutPage() {
             }`}
           >
             ۱. سبد خرید
-            {activeTab === "cart" && !isExpired && (
+            {activeTab === "cart" && !isEmpty && !isExpired && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
             )}
           </button>
           <button
-            onClick={() => !isExpired && setActiveTab("shipping")}
-            disabled={isExpired}
+            onClick={() => !isEmpty && !isExpired && setActiveTab("shipping")}
+            disabled={isEmpty || isExpired}
             className={`pb-3 sm:pb-4 px-2 sm:px-4 text-xs sm:text-base font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-              isExpired
+              isEmpty || isExpired
                 ? "text-gray-400 cursor-not-allowed opacity-60"
                 : activeTab === "shipping"
                 ? "text-primary"
@@ -674,15 +681,15 @@ function CheckoutPage() {
             }`}
           >
             ۲. آدرس و نحوه ارسال
-            {activeTab === "shipping" && !isExpired && (
+            {activeTab === "shipping" && !isEmpty && !isExpired && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
             )}
           </button>
           <button
-            onClick={() => !isExpired && setActiveTab("payment")}
-            disabled={isExpired}
+            onClick={() => !isEmpty && !isExpired && setActiveTab("payment")}
+            disabled={isEmpty || isExpired}
             className={`pb-3 sm:pb-4 px-2 sm:px-4 text-xs sm:text-base font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-              isExpired
+              isEmpty || isExpired
                 ? "text-gray-400 cursor-not-allowed opacity-60"
                 : activeTab === "payment"
                 ? "text-primary"
@@ -690,7 +697,7 @@ function CheckoutPage() {
             }`}
           >
             ۳. پرداخت
-            {activeTab === "payment" && !isExpired && (
+            {activeTab === "payment" && !isEmpty && !isExpired && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
             )}
           </button>
@@ -699,8 +706,21 @@ function CheckoutPage() {
         {/* Content */}
         {activeTab === "cart" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Expired Message */}
-            {isExpired && (
+            {/* Empty Cart Message - اولویت اول */}
+            {isEmpty ? (
+              <div className="lg:col-span-3 mb-4 flex justify-center">
+                <div className="inline-block px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                  <p className="text-base font-bold text-gray-800 mb-2">
+                    سبد خرید شما خالی است
+                  </p>
+                  <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
+                    <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                    برای ادامه خرید، محصولات را دوباره اضافه کنید
+                  </p>
+                </div>
+              </div>
+            ) : isExpired ? (
+              /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
               <div className="lg:col-span-3 mb-4 flex justify-center">
                 <div className="inline-block px-6 py-4 bg-red-50 border border-red-200 rounded-lg text-center">
                   <p className="text-base font-bold text-red-800 mb-2">
@@ -712,7 +732,7 @@ function CheckoutPage() {
                   </p>
                 </div>
               </div>
-            )}
+            ) : null}
 
             {/* Cart Items - Left Side */}
             <div className="lg:col-span-2">
@@ -901,14 +921,14 @@ function CheckoutPage() {
                   {/* Continue Button */}
                   <button
                     onClick={() => setActiveTab("shipping")}
-                    disabled={isExpired}
+                    disabled={isEmpty || isExpired}
                     className={`w-full py-2 text-sm font-medium transition-colors mt-3 rounded ${
-                      isExpired
+                      isEmpty || isExpired
                         ? "bg-gray-400 text-gray-600 cursor-not-allowed"
                         : "bg-white hover:bg-white/90 text-primary"
                     }`}
                   >
-                    {isExpired ? "زمان تمام شده" : "ادامه خرید"}
+                    {isEmpty || isExpired ? "زمان تمام شده" : "ادامه خرید"}
                   </button>
                 </div>
               </div>
@@ -919,8 +939,21 @@ function CheckoutPage() {
         {/* Shipping Tab */}
         {activeTab === "shipping" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Expired Message */}
-            {isExpired && (
+            {/* Empty Cart Message - اولویت اول */}
+            {isEmpty ? (
+              <div className="lg:col-span-3 mb-4 flex justify-center">
+                <div className="inline-block px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                  <p className="text-base font-bold text-gray-800 mb-2">
+                    سبد خرید شما خالی است
+                  </p>
+                  <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
+                    <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                    برای ادامه خرید، محصولات را دوباره اضافه کنید
+                  </p>
+                </div>
+              </div>
+            ) : isExpired ? (
+              /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
               <div className="lg:col-span-3 mb-4 flex justify-center">
                 <div className="inline-block px-6 py-4 bg-red-50 border border-red-200 rounded-lg text-center">
                   <p className="text-base font-bold text-red-800 mb-2">
@@ -932,7 +965,7 @@ function CheckoutPage() {
                   </p>
                 </div>
               </div>
-            )}
+            ) : null}
             {/* Shipping Form - Left Side */}
             <div className="lg:col-span-2 space-y-6">
               {/* Address Section */}
@@ -1187,14 +1220,14 @@ function CheckoutPage() {
                   {/* Continue Button */}
                   <button
                     onClick={() => setActiveTab("payment")}
-                    disabled={isExpired}
+                    disabled={isEmpty || isExpired}
                     className={`w-full py-2 text-sm font-medium transition-colors mt-3 rounded ${
-                      isExpired
+                      isEmpty || isExpired
                         ? "bg-gray-400 text-gray-600 cursor-not-allowed"
                         : "bg-white hover:bg-white/90 text-primary"
                     }`}
                   >
-                    {isExpired ? "زمان تمام شده" : "ادامه خرید"}
+                    {isEmpty || isExpired ? "زمان تمام شده" : "ادامه خرید"}
                   </button>
                 </div>
               </div>
@@ -1205,8 +1238,21 @@ function CheckoutPage() {
         {/* Payment Tab */}
         {activeTab === "payment" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Expired Message */}
-            {isExpired && (
+            {/* Empty Cart Message - اولویت اول */}
+            {isEmpty ? (
+              <div className="lg:col-span-3 mb-4 flex justify-center">
+                <div className="inline-block px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                  <p className="text-base font-bold text-gray-800 mb-2">
+                    سبد خرید شما خالی است
+                  </p>
+                  <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
+                    <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                    برای ادامه خرید، محصولات را دوباره اضافه کنید
+                  </p>
+                </div>
+              </div>
+            ) : isExpired ? (
+              /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
               <div className="lg:col-span-3 mb-4 flex justify-center">
                 <div className="inline-block px-6 py-4 bg-red-50 border border-red-200 rounded-lg text-center">
                   <p className="text-base font-bold text-red-800 mb-2">
@@ -1218,7 +1264,7 @@ function CheckoutPage() {
                   </p>
                 </div>
               </div>
-            )}
+            ) : null}
             {/* Payment Form - Left Side */}
             <div className="lg:col-span-2 space-y-4">
               {/* Payment Gateway Selection */}
@@ -1478,16 +1524,19 @@ function CheckoutPage() {
                 {/* Action Button */}
                 <button
                   disabled={
-                    isExpired || isProcessingPayment || !selectedAddressId
+                    isEmpty ||
+                    isExpired ||
+                    isProcessingPayment ||
+                    !selectedAddressId
                   }
                   onClick={handlePayment}
                   className={`w-full py-2 text-sm font-medium transition-colors rounded ${
-                    isExpired || !selectedAddressId
+                    isEmpty || isExpired || !selectedAddressId
                       ? "bg-gray-400 text-gray-600 cursor-not-allowed"
                       : "bg-white text-primary hover:bg-gray-100"
                   }`}
                 >
-                  {isExpired
+                  {isEmpty || isExpired
                     ? "زمان تمام شده"
                     : isProcessingPayment
                     ? "در حال پردازش..."
