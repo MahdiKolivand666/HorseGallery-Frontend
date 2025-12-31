@@ -647,41 +647,50 @@ function CheckoutPage() {
         {/* Tabs */}
         <div className="flex justify-center gap-2 sm:gap-4 mb-8 border-b border-gray-200 overflow-x-auto">
           <button
-            onClick={() => setActiveTab("cart")}
+            onClick={() => !isExpired && setActiveTab("cart")}
+            disabled={isExpired}
             className={`pb-3 sm:pb-4 px-2 sm:px-4 text-xs sm:text-base font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-              activeTab === "cart"
+              isExpired
+                ? "text-gray-400 cursor-not-allowed opacity-60"
+                : activeTab === "cart"
                 ? "text-primary"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
             ۱. سبد خرید
-            {activeTab === "cart" && (
+            {activeTab === "cart" && !isExpired && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
             )}
           </button>
           <button
-            onClick={() => setActiveTab("shipping")}
+            onClick={() => !isExpired && setActiveTab("shipping")}
+            disabled={isExpired}
             className={`pb-3 sm:pb-4 px-2 sm:px-4 text-xs sm:text-base font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-              activeTab === "shipping"
+              isExpired
+                ? "text-gray-400 cursor-not-allowed opacity-60"
+                : activeTab === "shipping"
                 ? "text-primary"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
             ۲. آدرس و نحوه ارسال
-            {activeTab === "shipping" && (
+            {activeTab === "shipping" && !isExpired && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
             )}
           </button>
           <button
-            onClick={() => setActiveTab("payment")}
+            onClick={() => !isExpired && setActiveTab("payment")}
+            disabled={isExpired}
             className={`pb-3 sm:pb-4 px-2 sm:px-4 text-xs sm:text-base font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-              activeTab === "payment"
+              isExpired
+                ? "text-gray-400 cursor-not-allowed opacity-60"
+                : activeTab === "payment"
                 ? "text-primary"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
             ۳. پرداخت
-            {activeTab === "payment" && (
+            {activeTab === "payment" && !isExpired && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
             )}
           </button>
