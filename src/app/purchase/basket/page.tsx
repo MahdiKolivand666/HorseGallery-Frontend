@@ -753,7 +753,7 @@ function CheckoutPage() {
                       {/* Discount Badge - از backend */}
                       {item.discount && item.discount > 0 && (
                         <div className="absolute top-1 right-1 z-10 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                          {item.discount}٪
+                          {item.discount.toLocaleString("fa-IR")}٪
                         </div>
                       )}
                     </Link>

@@ -297,7 +297,7 @@ export default function SearchPage() {
                             {/* Discount Badge */}
                             {product.onSale && product.discount && (
                               <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 text-xs font-bold z-10">
-                                {product.discount}٪ تخفیف
+                                {product.discount.toLocaleString("fa-IR")}٪ تخفیف
                               </div>
                             )}
 

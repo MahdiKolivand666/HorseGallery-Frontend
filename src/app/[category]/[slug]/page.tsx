@@ -398,7 +398,7 @@ const ProductDetailPage = () => {
                 {productData.discount && productData.discount > 0 ? (
                   <div className="absolute top-4 right-4 z-20">
                     <div className="bg-red-500 text-white px-4 py-2 rounded text-sm font-bold">
-                      {productData.discount}٪ تخفیف
+                      {productData.discount.toLocaleString("fa-IR")}٪ تخفیف
                     </div>
                   </div>
                 ) : (
@@ -656,7 +656,8 @@ const ProductDetailPage = () => {
                         {/* Badge تخفیف - بالای قیمت */}
                         <div className="flex items-center gap-2 mb-1">
                           <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
-                            {productData.discount}٪ تخفیف
+                            {productData.discount.toLocaleString("fa-IR")}٪
+                            تخفیف
                           </span>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">

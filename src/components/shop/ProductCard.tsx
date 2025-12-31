@@ -41,7 +41,7 @@ export default function ProductCard({ product, category }: ProductCardProps) {
             {/* Discount Badge - اولویت اول */}
             {product.onSale && product.discount && product.discount > 0 && (
               <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                {product.discount}% تخفیف
+                {product.discount.toLocaleString("fa-IR")}% تخفیف
               </div>
             )}
             {/* Low Commission Badge - پیشنهاد ویژه (کم اجرت) - فقط اگر تخفیف نداشته باشد */}
