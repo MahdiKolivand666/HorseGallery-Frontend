@@ -830,7 +830,7 @@ function CheckoutPage() {
                     <Clock className="w-3.5 h-3.5" />
                     <p className="text-[11px]">
                       برای تکمیل خرید خود{" "}
-                      <span className="font-bold font-mono text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded">
+                      <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded">
                         {formatTime(timeLeft)}
                       </span>{" "}
                       زمان دارید!
@@ -1076,7 +1076,7 @@ function CheckoutPage() {
                     <Clock className="w-3.5 h-3.5" />
                     <p className="text-[11px]">
                       برای تکمیل خرید خود{" "}
-                      <span className="font-bold font-mono text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded">
+                      <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded">
                         {formatTime(timeLeft)}
                       </span>{" "}
                       زمان دارید!
@@ -1381,7 +1381,7 @@ function CheckoutPage() {
                     <Clock className="w-3.5 h-3.5" />
                     <p className="text-[11px]">
                       برای تکمیل خرید خود{" "}
-                      <span className="font-bold font-mono text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded">
+                      <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded">
                         {formatTime(timeLeft)}
                       </span>{" "}
                       زمان دارید!

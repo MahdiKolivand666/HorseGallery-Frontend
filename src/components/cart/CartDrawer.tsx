@@ -114,7 +114,17 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs
       .toString()
-      .padStart(2, "0")}`;
+      .padStart(2, "0")}`
+      .replace(/0/g, "۰")
+      .replace(/1/g, "۱")
+      .replace(/2/g, "۲")
+      .replace(/3/g, "۳")
+      .replace(/4/g, "۴")
+      .replace(/5/g, "۵")
+      .replace(/6/g, "۶")
+      .replace(/7/g, "۷")
+      .replace(/8/g, "۸")
+      .replace(/9/g, "۹");
   };
 
   const handleRemoveItem = async (itemId: string) => {
@@ -178,7 +188,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-gray-700">مهلت خرید:</span>
                 <span
-                  className={`text-xs font-bold text-white font-mono px-2 py-0.5 rounded ${
+                  className={`text-xs font-bold text-white px-2 py-0.5 rounded ${
                     timeLeft < 60 ? "bg-red-600" : "bg-red-500"
                   }`}
                 >
