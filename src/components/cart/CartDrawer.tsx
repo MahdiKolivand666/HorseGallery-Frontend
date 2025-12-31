@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Info,
   AlarmClockMinus,
+  TriangleAlert,
 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/contexts/CartContext";
@@ -205,9 +206,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                   {formatTime(timeLeft)}
                 </span>
                 {timeLeft < 60 && (
-                  <span className="text-[10px] text-red-600 font-medium">
-                    ⚠️
-                  </span>
+                  <TriangleAlert className="w-3 h-3 text-yellow-500" />
                 )}
               </div>
             )}
