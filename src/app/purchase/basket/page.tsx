@@ -77,8 +77,14 @@ interface CartItem {
 function CheckoutPage() {
   const router = useRouter();
   const pathname = usePathname();
-  const { cart, removeFromCart, remainingSeconds, reloadCart, clearCart } =
-    useCart();
+  const {
+    cart,
+    loading,
+    removeFromCart,
+    remainingSeconds,
+    reloadCart,
+    clearCart,
+  } = useCart();
   const [activeTab, setActiveTab] = useState<"cart" | "shipping" | "payment">(
     "cart"
   );
@@ -489,6 +495,13 @@ function CheckoutPage() {
   const isEmpty = cartItemsFiltered.length === 0;
   const isExpired = cart?.expired === true;
 
+  // ✅ Redirect به صفحه اصلی اگر سبد خرید خالی است
+  useEffect(() => {
+    if (!loading && isEmpty) {
+      router.push("/");
+    }
+  }, [isEmpty, loading, router]);
+
   useEffect(() => {
     // ✅ اگر cart expired است، timeLeft را به‌روز نکن (0 نگه دار)
     const isExpired = cart?.expired === true || remainingSeconds <= 0;
@@ -782,10 +795,13 @@ function CheckoutPage() {
                       {/* Weight */}
                       <p className="text-xs text-gray-600 mb-0.5">
                         وزن:{" "}
-                        {item.weight ||
-                          (item.goldInfo?.weight
-                            ? `${item.goldInfo.weight} گرم`
-                            : "نامشخص")}
+                        {item.weight
+                          ? englishToPersian(item.weight)
+                          : item.goldInfo?.weight
+                          ? `${englishToPersian(
+                              String(item.goldInfo.weight)
+                            )} گرم`
+                          : "نامشخص"}
                       </p>
 
                       {/* Size/MintYear and Price */}
@@ -798,7 +814,7 @@ function CheckoutPage() {
                           </p>
                         ) : item.size ? (
                           <p className="text-xs text-gray-600">
-                            سایز: {item.size}
+                            سایز: {englishToPersian(item.size)}
                           </p>
                         ) : null}
                         {/* Price - از backend */}
@@ -1124,7 +1140,10 @@ function CheckoutPage() {
                         </p>
                         <p className="text-xs text-white/80">{item.code}</p>
                         <p className="text-xs text-white/80">
-                          وزن: {item.weight}
+                          وزن:{" "}
+                          {item.weight
+                            ? englishToPersian(item.weight)
+                            : "نامشخص"}
                         </p>
                         {/* برای سکه: سال ضرب، برای بقیه: سایز */}
                         {item.productType === "coin" &&
@@ -1134,7 +1153,7 @@ function CheckoutPage() {
                           </p>
                         ) : item.size ? (
                           <p className="text-xs text-white/80">
-                            سایز: {item.size}
+                            سایز: {englishToPersian(item.size)}
                           </p>
                         ) : null}
                       </div>
@@ -1438,7 +1457,12 @@ function CheckoutPage() {
                         <p className="text-sm font-medium mb-1">{item.name}</p>
                         <div className="space-y-0.5 text-xs">
                           <p className="text-white/80">{item.code}</p>
-                          <p className="text-white/80">وزن: {item.weight}</p>
+                          <p className="text-white/80">
+                            وزن:{" "}
+                            {item.weight
+                              ? englishToPersian(item.weight)
+                              : "نامشخص"}
+                          </p>
                           {/* برای سکه: سال ضرب، برای بقیه: سایز */}
                           {item.productType === "coin" &&
                           item.goldInfo?.mintYear ? (
@@ -1446,7 +1470,9 @@ function CheckoutPage() {
                               سال ضرب: {item.goldInfo.mintYear}
                             </p>
                           ) : item.size ? (
-                            <p className="text-white/80">سایز: {item.size}</p>
+                            <p className="text-white/80">
+                              سایز: {englishToPersian(item.size)}
+                            </p>
                           ) : null}
                         </div>
                       </div>

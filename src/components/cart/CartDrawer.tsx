@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/contexts/CartContext";
+import { englishToPersian } from "@/lib/utils/persianNumber";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -356,10 +357,13 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                                 <p className="text-xs text-gray-600 mb-1">
                                   <span className="text-gray-500">وزن: </span>
                                   <span className="font-medium">
-                                    {product.weight ||
-                                      (product.goldInfo.weight
-                                        ? `${product.goldInfo.weight} گرم`
-                                        : "نامشخص")}
+                                    {product.weight
+                                      ? englishToPersian(product.weight)
+                                      : product.goldInfo.weight
+                                      ? `${englishToPersian(
+                                          String(product.goldInfo.weight)
+                                        )} گرم`
+                                      : "نامشخص"}
                                   </span>
                                 </p>
                                 {product.goldInfo.mintYear && (
@@ -382,10 +386,13 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                               <p className="text-xs text-gray-600 mb-1">
                                 <span className="text-gray-500">وزن: </span>
                                 <span className="font-medium">
-                                  {product.weight ||
-                                    (product.goldInfo?.weight
-                                      ? `${product.goldInfo.weight} گرم`
-                                      : "نامشخص")}
+                                  {product.weight
+                                    ? englishToPersian(product.weight)
+                                    : product.goldInfo?.weight
+                                    ? `${englishToPersian(
+                                        String(product.goldInfo.weight)
+                                      )} گرم`
+                                    : "نامشخص"}
                                 </span>
                               </p>
                               {/* سایز */}
@@ -393,7 +400,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                                 <p className="text-xs text-gray-600">
                                   <span className="text-gray-500">سایز: </span>
                                   <span className="font-medium">
-                                    {item.size}
+                                    {englishToPersian(item.size)}
                                   </span>
                                 </p>
                               )}

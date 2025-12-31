@@ -23,6 +23,7 @@ import { getProductBySlug, RelatedProduct, GoldInfo } from "@/lib/api/products";
 import GoldInfoCard from "@/components/GoldInfoCard";
 import AuthModal from "@/components/auth/AuthModal";
 import { ErrorHandler } from "@/lib/utils/errorHandler";
+import { englishToPersian, persianToEnglish } from "@/lib/utils/persianNumber";
 
 interface ProductDetail {
   id: string | number;
@@ -212,8 +213,13 @@ const ProductDetailPage = () => {
           : String(productData.id);
 
       // برای سکه size نداریم، برای بقیه selectedSize
+      // ✅ تبدیل size از فارسی به انگلیسی برای ارسال به backend
       const size =
-        productData.productType === "coin" ? undefined : selectedSize;
+        productData.productType === "coin"
+          ? undefined
+          : selectedSize
+          ? persianToEnglish(selectedSize)
+          : undefined;
 
       await addToCart(productId, 1, size, () => {
         // اگر کاربر لاگین نیست، modal را باز کن
@@ -529,7 +535,7 @@ const ProductDetailPage = () => {
                             : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                         }`}
                       >
-                        {size}
+                        {englishToPersian(size)}
                       </button>
                     ))}
                   </div>
@@ -559,7 +565,7 @@ const ProductDetailPage = () => {
                   </span>
                   <div className="flex-1 border-b border-dotted border-gray-300" />
                   <span className="text-gray-700 whitespace-nowrap">
-                    {productData.specifications.weight}
+                    {englishToPersian(productData.specifications.weight)}
                   </span>
                 </div>
 
