@@ -4,7 +4,15 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { X, ShoppingBag, Trash2, AlertCircle, Info } from "lucide-react";
+import {
+  X,
+  ShoppingBag,
+  ShoppingCart,
+  Trash2,
+  AlertCircle,
+  Info,
+  AlarmClockMinus,
+} from "lucide-react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/contexts/CartContext";
 
@@ -65,11 +73,11 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     // ✅ اگر cart expired است، timeLeft را به‌روز نکن (0 نگه دار)
     const isExpired = cart?.expired === true || remainingSeconds <= 0;
     if (isExpired) {
-      setTimeLeft(0);
+      setTimeout(() => setTimeLeft(0), 0);
       return;
     }
     // Update timer when remainingSeconds changes from backend
-    setTimeLeft(remainingSeconds);
+    setTimeout(() => setTimeLeft(remainingSeconds), 0);
   }, [remainingSeconds, cart]);
 
   // ✅ Polling کاملاً حذف شد - فقط یکبار وقتی drawer باز می‌شود reload می‌شود
@@ -94,7 +102,8 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
           const currentCartItems = (cart?.items || []).filter(
             (item) => item.product.productType !== "melted_gold"
           );
-          const currentIsExpired = cart?.expired === true || remainingSeconds <= 0;
+          const currentIsExpired =
+            cart?.expired === true || remainingSeconds <= 0;
           if (currentCartItems.length > 0 && !currentIsExpired) {
             setTimeout(() => {
               reloadCartRef.current();
@@ -227,14 +236,12 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
           ) : isEmpty ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="bg-gray-100 rounded-full p-6 mb-4">
-                <ShoppingBag className="w-16 h-16 text-gray-400" />
+                <ShoppingCart className="w-16 h-16 text-gray-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center justify-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
                 سبد خرید شما خالی است
               </h3>
-              <p className="text-sm text-gray-500 mb-6">
-                برای مشاهده محصولات و افزودن به سبد خرید، به فروشگاه بروید
-              </p>
               <Link
                 href="/products/women"
                 onClick={onClose}
@@ -246,11 +253,12 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
           ) : isExpired ? (
             // ✅ نمایش پیام expired
             <div className="flex flex-col items-center justify-center h-full text-center py-12 px-4">
-              <div className="bg-red-50 rounded-full p-6 mb-4">
-                <AlertCircle className="w-16 h-16 text-red-500" />
+              <div className="bg-red-100 rounded-full p-6 mb-4">
+                <AlarmClockMinus className="w-16 h-16 text-red-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                ⏰ مدت زمان خرید شما به پایان رسیده است
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center justify-center gap-2">
+                <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
+                مدت زمان خرید شما به پایان رسیده است
               </h3>
               <p className="text-sm text-gray-600 mb-6 flex items-center gap-2 justify-center">
                 <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />

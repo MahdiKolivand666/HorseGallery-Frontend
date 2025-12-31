@@ -7,7 +7,8 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   Trash2,
-  Clock,
+  AlarmClockMinus,
+  ShoppingCart,
   ArrowRight,
   MapPin,
   User,
@@ -710,21 +711,19 @@ function CheckoutPage() {
             {isEmpty ? (
               <div className="lg:col-span-3 mb-4 flex justify-center">
                 <div className="inline-block px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                  <p className="text-base font-bold text-gray-800 mb-2">
+                  <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2">
+                    <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
                     سبد خرید شما خالی است
-                  </p>
-                  <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
-                    <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                    برای ادامه خرید، محصولات را دوباره اضافه کنید
                   </p>
                 </div>
               </div>
             ) : isExpired ? (
               /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
               <div className="lg:col-span-3 mb-4 flex justify-center">
-                <div className="inline-block px-6 py-4 bg-red-50 border border-red-200 rounded-lg text-center">
-                  <p className="text-base font-bold text-red-800 mb-2">
-                    ⏰ مدت زمان خرید شما به پایان رسیده است
+                <div className="inline-block px-6 py-4 bg-red-100 border border-red-300 rounded-lg text-center">
+                  <p className="text-base font-bold text-red-800 mb-2 flex items-center justify-center gap-2">
+                    <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
+                    مدت زمان خرید شما به پایان رسیده است
                   </p>
                   <p className="text-sm text-red-700 flex items-center justify-center gap-2">
                     <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
@@ -847,7 +846,7 @@ function CheckoutPage() {
                 {/* Timer Warning */}
                 <div className="mb-5 py-1.5 px-3 border border-white/30 rounded text-center">
                   <div className="flex items-center justify-center gap-1.5 text-white">
-                    <Clock className="w-3.5 h-3.5" />
+                    <AlarmClockMinus className="w-3.5 h-3.5" />
                     <p className="text-[11px]">
                       برای تکمیل خرید خود{" "}
                       <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded inline-block text-center tabular-nums min-w-[3rem]">
@@ -943,21 +942,19 @@ function CheckoutPage() {
             {isEmpty ? (
               <div className="lg:col-span-3 mb-4 flex justify-center">
                 <div className="inline-block px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                  <p className="text-base font-bold text-gray-800 mb-2">
+                  <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2">
+                    <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
                     سبد خرید شما خالی است
-                  </p>
-                  <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
-                    <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                    برای ادامه خرید، محصولات را دوباره اضافه کنید
                   </p>
                 </div>
               </div>
             ) : isExpired ? (
               /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
               <div className="lg:col-span-3 mb-4 flex justify-center">
-                <div className="inline-block px-6 py-4 bg-red-50 border border-red-200 rounded-lg text-center">
-                  <p className="text-base font-bold text-red-800 mb-2">
-                    ⏰ مدت زمان خرید شما به پایان رسیده است
+                <div className="inline-block px-6 py-4 bg-red-100 border border-red-300 rounded-lg text-center">
+                  <p className="text-base font-bold text-red-800 mb-2 flex items-center justify-center gap-2">
+                    <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
+                    مدت زمان خرید شما به پایان رسیده است
                   </p>
                   <p className="text-sm text-red-700 flex items-center justify-center gap-2">
                     <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
@@ -1106,7 +1103,7 @@ function CheckoutPage() {
                 {/* Timer Warning */}
                 <div className="mb-5 py-1.5 px-3 border border-white/30 rounded text-center">
                   <div className="flex items-center justify-center gap-1.5 text-white">
-                    <Clock className="w-3.5 h-3.5" />
+                    <AlarmClockMinus className="w-3.5 h-3.5" />
                     <p className="text-[11px]">
                       برای تکمیل خرید خود{" "}
                       <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded inline-block text-center tabular-nums min-w-[3rem]">
@@ -1242,21 +1239,19 @@ function CheckoutPage() {
             {isEmpty ? (
               <div className="lg:col-span-3 mb-4 flex justify-center">
                 <div className="inline-block px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                  <p className="text-base font-bold text-gray-800 mb-2">
+                  <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2">
+                    <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
                     سبد خرید شما خالی است
-                  </p>
-                  <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
-                    <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                    برای ادامه خرید، محصولات را دوباره اضافه کنید
                   </p>
                 </div>
               </div>
             ) : isExpired ? (
               /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
               <div className="lg:col-span-3 mb-4 flex justify-center">
-                <div className="inline-block px-6 py-4 bg-red-50 border border-red-200 rounded-lg text-center">
-                  <p className="text-base font-bold text-red-800 mb-2">
-                    ⏰ مدت زمان خرید شما به پایان رسیده است
+                <div className="inline-block px-6 py-4 bg-red-100 border border-red-300 rounded-lg text-center">
+                  <p className="text-base font-bold text-red-800 mb-2 flex items-center justify-center gap-2">
+                    <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
+                    مدت زمان خرید شما به پایان رسیده است
                   </p>
                   <p className="text-sm text-red-700 flex items-center justify-center gap-2">
                     <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
@@ -1424,7 +1419,7 @@ function CheckoutPage() {
                 {/* Timer */}
                 <div className="mb-5 py-1.5 px-3 border border-white/30 rounded text-center">
                   <div className="flex items-center justify-center gap-1.5 text-white">
-                    <Clock className="w-3.5 h-3.5" />
+                    <AlarmClockMinus className="w-3.5 h-3.5" />
                     <p className="text-[11px]">
                       برای تکمیل خرید خود{" "}
                       <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded inline-block text-center tabular-nums min-w-[3rem]">
