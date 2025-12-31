@@ -692,12 +692,12 @@ function CheckoutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Expired Message */}
             {isExpired && (
-              <div className="lg:col-span-3 mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div>
-                  <p className="text-sm font-semibold text-red-800 mb-2">
+              <div className="lg:col-span-3 mb-4 flex justify-center">
+                <div className="inline-block px-6 py-4 bg-red-50 border border-red-200 rounded-lg text-center">
+                  <p className="text-base font-bold text-red-800 mb-2">
                     ⏰ مدت زمان خرید شما به پایان رسیده است
                   </p>
-                  <p className="text-xs text-red-700 flex items-center gap-2">
+                  <p className="text-sm text-red-700 flex items-center justify-center gap-2">
                     <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
                     لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید
                   </p>
@@ -910,6 +910,20 @@ function CheckoutPage() {
         {/* Shipping Tab */}
         {activeTab === "shipping" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Expired Message */}
+            {isExpired && (
+              <div className="lg:col-span-3 mb-4 flex justify-center">
+                <div className="inline-block px-6 py-4 bg-red-50 border border-red-200 rounded-lg text-center">
+                  <p className="text-base font-bold text-red-800 mb-2">
+                    ⏰ مدت زمان خرید شما به پایان رسیده است
+                  </p>
+                  <p className="text-sm text-red-700 flex items-center justify-center gap-2">
+                    <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
+                    لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید
+                  </p>
+                </div>
+              </div>
+            )}
             {/* Shipping Form - Left Side */}
             <div className="lg:col-span-2 space-y-6">
               {/* Address Section */}
@@ -1182,6 +1196,20 @@ function CheckoutPage() {
         {/* Payment Tab */}
         {activeTab === "payment" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Expired Message */}
+            {isExpired && (
+              <div className="lg:col-span-3 mb-4 flex justify-center">
+                <div className="inline-block px-6 py-4 bg-red-50 border border-red-200 rounded-lg text-center">
+                  <p className="text-base font-bold text-red-800 mb-2">
+                    ⏰ مدت زمان خرید شما به پایان رسیده است
+                  </p>
+                  <p className="text-sm text-red-700 flex items-center justify-center gap-2">
+                    <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
+                    لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید
+                  </p>
+                </div>
+              </div>
+            )}
             {/* Payment Form - Left Side */}
             <div className="lg:col-span-2 space-y-4">
               {/* Payment Gateway Selection */}
