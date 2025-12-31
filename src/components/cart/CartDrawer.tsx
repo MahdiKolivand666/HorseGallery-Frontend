@@ -188,7 +188,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-gray-700">مهلت خرید:</span>
                 <span
-                  className={`text-xs font-bold text-white px-2 py-0.5 rounded ${
+                  className={`text-xs font-bold text-white px-2 py-0.5 rounded inline-block text-center tabular-nums min-w-[2.5rem] ${
                     timeLeft < 60 ? "bg-red-600" : "bg-red-500"
                   }`}
                 >
