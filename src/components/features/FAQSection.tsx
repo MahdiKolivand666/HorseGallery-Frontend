@@ -18,7 +18,8 @@ interface Props {
 }
 
 const FAQSection = ({ faqs }: Props) => {
-  const t = useTranslations("common");
+  const t = useTranslations("navbar");
+  const tCommon = useTranslations("common");
   const [openId, setOpenId] = useState<string | null>(null);
 
   // اگر سوالی نبود، چیزی نشون نده
@@ -47,7 +48,7 @@ const FAQSection = ({ faqs }: Props) => {
           >
             <Image
               src="/images/aboutUs/logan.webp"
-              alt={t("alt.faq")}
+              alt={tCommon("alt.faq")}
               fill
               className="object-cover"
               sizes="50vw"
@@ -66,7 +67,7 @@ const FAQSection = ({ faqs }: Props) => {
           >
             <Image
               src="/images/aboutUs/Main_Photos1.webp"
-              alt={t("alt.faq")}
+              alt={tCommon("alt.faq")}
               fill
               className="object-cover"
               sizes="100vw"
@@ -86,7 +87,7 @@ const FAQSection = ({ faqs }: Props) => {
             {/* Section Header */}
             <div className="text-right mb-4 sm:mb-6">
               <h2 className="text-sm sm:text-base md:text-lg font-medium text-gray-700">
-                {t("navbar.menu.faq")}
+                {t("menu.faq")}
               </h2>
             </div>
 
