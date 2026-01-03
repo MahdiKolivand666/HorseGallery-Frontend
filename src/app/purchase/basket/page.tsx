@@ -45,6 +45,8 @@ import {
   englishToPersian,
   isPersianOnly,
 } from "@/lib/utils/persianNumber";
+import { ErrorHandler } from "@/lib/utils/errorHandler";
+import { type ErrorResponse } from "@/types/errors";
 import {
   getProvinces,
   getCities,
@@ -274,24 +276,55 @@ function CheckoutPage() {
         // Reload addresses
         await loadAddresses();
       } catch (error) {
-        console.error("Error saving address:", error);
+        // ✅ استفاده از ErrorHandler
+        const handledError = ErrorHandler.handle(
+          error as Error & {
+            data?: ErrorResponse;
+            statusCode?: number;
+            code?: string;
+          }
+        );
 
-        // ✅ Handle MAX_ADDRESSES_EXCEEDED error
-        const errorWithCode = error as Error & {
-          code?: string;
-          statusCode?: number;
-        };
-        if (errorWithCode.code === "MAX_ADDRESSES_EXCEEDED") {
-          toast.error(t("error.maxAddresses"));
-          // ✅ بستن modal و reload addresses
-          setIsAddressModalOpen(false);
-          await loadAddresses();
-          return;
+        // ✅ Handle کردن بر اساس type
+        switch (handledError.type) {
+          case "duplicate_entry":
+            // ✅ Handle MAX_ADDRESSES_EXCEEDED یا duplicate entry
+            toast.error(handledError.message || t("error.maxAddresses"));
+            setIsAddressModalOpen(false);
+            await loadAddresses();
+            return;
+
+          case "validation_error":
+            // ✅ نمایش خطاهای validation در فیلدها
+            if (handledError.errors) {
+              const fieldErrors: Partial<
+                Record<keyof AddressFormData, string>
+              > = {};
+              Object.entries(handledError.errors).forEach(
+                ([field, messages]) => {
+                  fieldErrors[field as keyof AddressFormData] = messages[0];
+                }
+              );
+              setFormErrors(fieldErrors);
+            }
+            toast.error(
+              Array.isArray(handledError.message)
+                ? handledError.message[0]
+                : handledError.message || t("error.validation")
+            );
+            return;
+
+          case "rate_limit":
+          case "generic_error":
+          case "not_found":
+          default:
+            // ✅ Type guard برای message
+            if ("message" in handledError) {
+              toast.error(handledError.message || t("error.saveAddress"));
+            } else {
+              toast.error(t("error.saveAddress"));
+            }
         }
-
-        const errorMessage =
-          error instanceof Error ? error.message : t("error.saveAddress");
-        toast.error(errorMessage);
       } finally {
         setIsSavingAddress(false);
       }

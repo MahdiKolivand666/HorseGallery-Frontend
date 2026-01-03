@@ -164,40 +164,75 @@ export async function apiRequest<T>(
     // ✅ Handle Rate Limit (429)
     if (response.status === 429) {
       const errorData = await response.json().catch(() => ({
-        message: "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً کمی صبر کنید",
+        message: ["تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً کمی صبر کنید"], // ✅ Backend همیشه string[] می‌فرستد
         code: "RATE_LIMIT_EXCEEDED",
       }));
 
+      // ✅ گرفتن requestId از header
+      const requestId = response.headers.get("X-Request-ID") || errorData.requestId;
+
+      // ✅ اطمینان از اینکه message همیشه array است (مطابق با Backend)
+      if (!Array.isArray(errorData.message)) {
+        errorData.message = [errorData.message || "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً کمی صبر کنید"];
+      }
+
+      // ✅ اضافه کردن requestId به errorData
+      if (requestId) {
+        errorData.requestId = requestId;
+      }
+
       const error = new Error(
-        typeof errorData.message === "string"
-          ? errorData.message
-          : Array.isArray(errorData.message)
+        Array.isArray(errorData.message)
           ? errorData.message.join(", ")
-          : "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً کمی صبر کنید"
-      ) as Error & { statusCode?: number; data?: any; code?: string };
+          : errorData.message || "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً کمی صبر کنید"
+      ) as Error & {
+        statusCode?: number;
+        data?: any;
+        code?: string;
+        requestId?: string; // ✅ اضافه کردن requestId به error object
+      };
 
       error.statusCode = 429;
       error.code = errorData.code || "RATE_LIMIT_EXCEEDED";
       error.data = errorData;
+      error.requestId = requestId; // ✅ اضافه کردن requestId به error object
       throw error;
     }
 
     // ✅ اگر response موفق نبود، error throw کن
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({
-        message: "خطا در درخواست",
+        message: ["خطا در درخواست"], // ✅ Backend همیشه string[] می‌فرستد
       }));
 
+      // ✅ گرفتن requestId از header
+      const requestId = response.headers.get("X-Request-ID") || errorData.requestId;
+
+      // ✅ اطمینان از اینکه message همیشه array است (مطابق با Backend)
+      if (!Array.isArray(errorData.message)) {
+        errorData.message = [errorData.message || "خطا در درخواست"];
+      }
+
+      // ✅ اضافه کردن requestId به errorData
+      if (requestId) {
+        errorData.requestId = requestId;
+      }
+
       const error = new Error(
-        typeof errorData.message === "string"
-          ? errorData.message
-          : Array.isArray(errorData.message)
+        Array.isArray(errorData.message)
           ? errorData.message.join(", ")
-          : "خطا در درخواست"
-      ) as Error & { statusCode?: number; data?: any };
+          : errorData.message || "خطا در درخواست"
+      ) as Error & {
+        statusCode?: number;
+        data?: any;
+        code?: string;
+        requestId?: string; // ✅ اضافه کردن requestId به error object
+      };
 
       error.statusCode = response.status;
       error.data = errorData;
+      error.code = errorData.code;
+      error.requestId = requestId; // ✅ اضافه کردن requestId به error object
       throw error;
     }
 

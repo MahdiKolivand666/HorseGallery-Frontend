@@ -34,7 +34,7 @@ export enum ErrorCode {
 
 export interface IncompleteRegistrationError {
   statusCode: 403;
-  message: string | string[];
+  message: string | string[]; // ✅ Backend همیشه string[] می‌فرستد
   code: ErrorCode.INCOMPLETE_REGISTRATION;
   requiresRegistration: true;
   isAuthenticated: true;
@@ -42,11 +42,12 @@ export interface IncompleteRegistrationError {
   timestamp?: string;
   path?: string;
   method?: string;
+  requestId?: string; // ✅ Request ID برای tracking
 }
 
 export interface OtpRequiredError {
   statusCode: 403;
-  message: string | string[];
+  message: string | string[]; // ✅ Backend همیشه string[] می‌فرستد
   code: ErrorCode.OTP_REQUIRED;
   requiresRegistration: true;
   isAuthenticated: true;
@@ -55,11 +56,12 @@ export interface OtpRequiredError {
   timestamp?: string;
   path?: string;
   method?: string;
+  requestId?: string; // ✅ Request ID برای tracking
 }
 
 export interface OtpVerificationExpiredError {
   statusCode: 403;
-  message: string | string[];
+  message: string | string[]; // ✅ Backend همیشه string[] می‌فرستد
   code: ErrorCode.OTP_VERIFICATION_EXPIRED;
   requiresRegistration: true;
   isAuthenticated: false;
@@ -67,37 +69,42 @@ export interface OtpVerificationExpiredError {
   timestamp?: string;
   path?: string;
   method?: string;
+  requestId?: string; // ✅ Request ID برای tracking
 }
 
 // ✅ خطای انقضای OTP
 export interface OtpExpiredError {
   statusCode: 400;
-  message: string | string[];
+  message: string | string[]; // ✅ Backend همیشه string[] می‌فرستد
   code: ErrorCode.OTP_EXPIRED;
   timestamp?: string;
   path?: string;
   method?: string;
+  requestId?: string; // ✅ Request ID برای tracking
 }
 
 // ✅ خطای نامعتبر بودن OTP
 export interface OtpInvalidError {
   statusCode: 400;
-  message: string | string[];
+  message: string | string[]; // ✅ Backend همیشه string[] می‌فرستد
   code: ErrorCode.OTP_INVALID;
   remainingAttempts?: number | null;
   timestamp?: string;
   path?: string;
   method?: string;
+  requestId?: string; // ✅ Request ID برای tracking
 }
 
 // ✅ Error Response استاندارد از Backend
+// مطابق با StandardErrorResponse در Backend
 export interface ErrorResponse {
   statusCode: number;
-  message: string | string[];
+  message: string | string[]; // ✅ Backend همیشه string[] می‌فرستد
   code?: ErrorCode; // ✅ همیشه وجود دارد (از Backend جدید)
   timestamp?: string;
   path?: string;
   method?: string;
+  requestId?: string; // ✅ Request ID برای tracking (از header X-Request-ID)
 
   // فیلدهای خاص برای Registration Errors
   requiresRegistration?: boolean;

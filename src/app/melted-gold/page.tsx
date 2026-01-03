@@ -13,11 +13,7 @@ import {
 } from "@/lib/api/gold-investment";
 import { isLoggedIn } from "@/lib/api/auth";
 import AuthModal from "@/components/auth/AuthModal";
-import {
-  isIncompleteRegistrationError,
-  isOtpVerificationExpiredError,
-  isOtpRequiredError,
-} from "@/types/errors";
+import { ErrorHandler } from "@/lib/utils/errorHandler";
 
 export default function MeltedGoldPage() {
   const router = useRouter();
@@ -355,77 +351,63 @@ export default function MeltedGoldPage() {
       // هدایت مستقیم به صفحه سبد خرید
       router.push("/purchase/basket");
     } catch (error: unknown) {
-      // error ممکن است یک Error instance با properties اضافی باشد
-      const errorWithDetails = error as Error & {
-        statusCode?: number;
-        code?: string;
-        requiresRegistration?: boolean;
-        isAuthenticated?: boolean;
-        requiresOtpVerification?: boolean;
-        phoneNumber?: string | null;
-      };
-
-      // ✅ مهم: اول چک کن که آیا OTP_REQUIRED است
-      if (isOtpRequiredError(errorWithDetails)) {
-        // ✅ کاربر لاگین است اما OTP verify نشده - باید modal OTP باز شود
-        // ✅ پاک کردن سایر state ها
-        setOtpExpiredPhone(null);
-        setIncompleteRegistrationPhone(null);
-        // ✅ باز کردن modal با step="otp" برای verify OTP
-        setOtpRequiredPhone(errorWithDetails.phoneNumber || null);
-        setIsAuthModalOpen(true);
-        return; // ✅ return کن تا خطا نمایش داده نشود
-      }
-
-      // ✅ سپس چک کن که آیا OTP_VERIFICATION_EXPIRED است
-      if (isOtpVerificationExpiredError(errorWithDetails)) {
-        // ✅ احراز هویت منقضی شده - کاربر باید دوباره OTP بگیرد
-        // ✅ پاک کردن token و pendingOtpCode
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("token");
-          localStorage.removeItem("pendingOtpCode");
-          localStorage.removeItem("userInfo");
+      // ✅ استفاده از ErrorHandler
+      const handledError = ErrorHandler.handle(
+        error as Error & {
+          data?: any;
+          statusCode?: number;
+          code?: string;
         }
-        // ✅ باز کردن modal با step="phone" برای دریافت OTP جدید
-        setOtpExpiredPhone(errorWithDetails.phoneNumber || null);
-        setIncompleteRegistrationPhone(null); // پاک کردن incomplete registration phone
-        setIsAuthModalOpen(true);
-        return; // ✅ return کن تا خطا نمایش داده نشود
+      );
+
+      // ✅ Handle کردن بر اساس type
+      switch (handledError.type) {
+        case "otp_required":
+          // ✅ پاک کردن سایر state ها
+          setOtpExpiredPhone(null);
+          setIncompleteRegistrationPhone(null);
+          // ✅ باز کردن modal با step="otp" برای verify OTP
+          setOtpRequiredPhone(handledError.phoneNumber);
+          setIsAuthModalOpen(true);
+          return; // ✅ return کن تا خطا نمایش داده نشود
+
+        case "otp_verification_expired":
+          // ✅ پاک کردن tokens (در ErrorHandler انجام شده)
+          // ✅ باز کردن modal با step="phone" برای دریافت OTP جدید
+          setOtpExpiredPhone(handledError.phoneNumber);
+          setIncompleteRegistrationPhone(null);
+          setOtpRequiredPhone(null);
+          setIsAuthModalOpen(true);
+          return; // ✅ return کن تا خطا نمایش داده نشود
+
+        case "incomplete_registration":
+          // ✅ کاربر لاگین است اما اطلاعات کامل ندارد
+          setIncompleteRegistrationPhone(handledError.phoneNumber);
+          setOtpRequiredPhone(null);
+          setOtpExpiredPhone(null);
+          setIsAuthModalOpen(true);
+          return; // ✅ return کن تا خطا نمایش داده نشود
+
+        case "rate_limit":
+        case "generic_error":
+        default:
+          // ✅ نمایش error برای سایر موارد
+          let errorMessage = handledError.message || "خطا در افزودن به purchase";
+          
+          // بهبود پیام خطا برای انواع مختلف
+          if (errorMessage.includes("درخواست‌های زیادی")) {
+            errorMessage =
+              "⚠️ درخواست‌های زیادی ارسال شده است. لطفاً چند دقیقه صبر کنید و دوباره تلاش کنید.";
+          } else if (errorMessage.includes("قیمت لحظه‌ای")) {
+            errorMessage =
+              "⚠️ خطا در دریافت قیمت لحظه‌ای طلا. لطفاً چند لحظه صبر کنید و دوباره تلاش کنید.";
+          } else if (errorMessage.includes("اتصال به سرور")) {
+            errorMessage =
+              "⚠️ خطا در اتصال به سرور. لطفاً اتصال اینترنت را بررسی کنید.";
+          }
+
+          alert(errorMessage);
       }
-
-      // ✅ سپس چک کن که آیا INCOMPLETE_REGISTRATION است
-      if (isIncompleteRegistrationError(errorWithDetails)) {
-        // ✅ کاربر لاگین است اما اطلاعات کامل ندارد
-        // ✅ اول باید OTP را verify کند، سپس به register برود
-        // ✅ فقط modal را باز کن - خطا را نمایش نده
-        // ⚠️ خطا را در console نمایش نده - این یک flow عادی است
-        setIncompleteRegistrationPhone(errorWithDetails.phoneNumber || null);
-        setOtpRequiredPhone(null); // پاک کردن otpRequiredPhone
-        setOtpExpiredPhone(null); // پاک کردن otpExpiredPhone
-        setIsAuthModalOpen(true);
-        return; // ✅ return کن تا خطا نمایش داده نشود
-      }
-
-      // ✅ فقط برای سایر خطاها، خطا را نمایش بده
-      let errorMessage = "خطا در افزودن به purchase";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-
-        // بهبود پیام خطا برای انواع مختلف
-        if (error.message.includes("درخواست‌های زیادی")) {
-          errorMessage =
-            "⚠️ درخواست‌های زیادی ارسال شده است. لطفاً چند دقیقه صبر کنید و دوباره تلاش کنید.";
-        } else if (error.message.includes("قیمت لحظه‌ای")) {
-          errorMessage =
-            "⚠️ خطا در دریافت قیمت لحظه‌ای طلا. لطفاً چند لحظه صبر کنید و دوباره تلاش کنید.";
-        } else if (error.message.includes("اتصال به سرور")) {
-          errorMessage =
-            "⚠️ خطا در اتصال به سرور. لطفاً اتصال اینترنت را بررسی کنید.";
-        }
-      }
-
-      console.error("Error adding to purchase:", error);
-      alert(errorMessage);
     } finally {
       setAddingToCart(false);
     }
