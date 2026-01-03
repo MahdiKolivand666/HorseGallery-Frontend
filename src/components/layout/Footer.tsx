@@ -10,6 +10,7 @@ import {
   Phone,
   MapPin,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const Footer = () => {
   const t = useTranslations("footer");

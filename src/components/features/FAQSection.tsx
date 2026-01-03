@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 interface FAQ {
   _id: string;
@@ -17,6 +18,7 @@ interface Props {
 }
 
 const FAQSection = ({ faqs }: Props) => {
+  const t = useTranslations("common");
   const [openId, setOpenId] = useState<string | null>(null);
 
   // اگر سوالی نبود، چیزی نشون نده
@@ -84,7 +86,7 @@ const FAQSection = ({ faqs }: Props) => {
             {/* Section Header */}
             <div className="text-right mb-4 sm:mb-6">
               <h2 className="text-sm sm:text-base md:text-lg font-medium text-gray-700">
-                سوالات متداول
+                {t("navbar.menu.faq")}
               </h2>
             </div>
 

@@ -347,6 +347,9 @@
   },
   "product": {
     "detail": {
+      "loading": "در حال بارگذاری جزئیات محصول...",
+      "notFound": "محصول مورد نظر یافت نشد.",
+      "backToHome": "بازگشت به صفحه اصلی",
       "defaultCategory": "عمومی",
       "defaultBrand": "گالری اسب",
       "defaultWarranty": "گارانتی اصالت",
@@ -364,7 +367,30 @@
       },
       "features": {
         "goldPlating": "آبکاری طلا",
-        "goldPrice": "قیمت روز طلای 18 عیار"
+        "goldPrice": "قیمت روز طلای 18 عیار",
+        "uniqueDesign": "طراحی منحصر به فرد و دست‌ساز",
+        "adjustableChain": "قابلیت تنظیم طول زنجیر",
+        "luxuryPackaging": "بسته‌بندی لوکس و مناسب هدیه"
+      },
+      "discount": "تخفیف",
+      "discountPercent": "٪ تخفیف",
+      "code": "کد محصول:",
+      "sizes": {
+        "available": "سایزهای موجود:",
+        "guide": "راهنمای انتخاب سایز"
+      },
+      "specifications": {
+        "commission": "۲۵۰,۰۰۰ تومان",
+        "coatingType": "نوع پوشش",
+        "suitableFor": "مناسب برای",
+        "ladies": "خانم‌ها"
+      },
+      "price": {
+        "label": "قیمت:",
+        "original": "قیمت اصلی:",
+        "withDiscount": "قیمت با تخفیف:",
+        "currency": "تومان",
+        "calculation": "نحوه محاسبه قیمت"
       },
       "shipping": {
         "free": "ارسال رایگان",
