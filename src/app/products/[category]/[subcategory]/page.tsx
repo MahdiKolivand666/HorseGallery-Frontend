@@ -409,7 +409,7 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
-                aria-label="صفحه قبل"
+                aria-label={t("ariaLabels.previousPage")}
               >
                 <ChevronRight className="w-5 h-5 text-gray-600" />
               </button>
@@ -444,7 +444,7 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
-                aria-label="صفحه بعد"
+                aria-label={t("ariaLabels.nextPage")}
               >
                 <ChevronLeft className="w-5 h-5 text-gray-600" />
               </button>

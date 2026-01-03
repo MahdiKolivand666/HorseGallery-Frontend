@@ -22,6 +22,8 @@ interface BlogPost {
 }
 
 const BlogPage = () => {
+  const t = useTranslations("common");
+  const tBlog = useTranslations("blog");
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 6; // 3 rows × 2 posts
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -44,8 +46,8 @@ const BlogPage = () => {
             content: post.content || "",
             image: post.image || "/images/blogs/Blog_Square.webp",
             date: new Date(post.publishedAt || post.createdAt).toLocaleDateString("fa-IR"),
-            author: `${post.author?.firstName || ""} ${post.author?.lastName || ""}`.trim() || "نویسنده",
-            category: post.category?.name || "عمومی",
+            author: `${post.author?.firstName || ""} ${post.author?.lastName || ""}`.trim() || tBlog("defaultAuthor"),
+            category: post.category?.name || tBlog("defaultCategory"),
             slug: post.slug,
             publishedAt: post.publishedAt,
             createdAt: post.createdAt,
@@ -77,7 +79,7 @@ const BlogPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">در حال بارگذاری...</p>
+            <p className="mt-4 text-gray-600">{tBlog("loading")}</p>
           </div>
         </div>
       </div>
@@ -89,7 +91,7 @@ const BlogPage = () => {
       <div className="min-h-screen pt-[100px] pb-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-20">
-            <p className="text-gray-600">هیچ مقاله‌ای یافت نشد.</p>
+            <p className="text-gray-600">{tBlog("notFound")}</p>
           </div>
         </div>
       </div>
@@ -116,10 +118,10 @@ const BlogPage = () => {
               className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
             >
               <Home className="w-4 h-4" />
-              <span>خانه</span>
+              <span>{t("navbar.menu.home")}</span>
             </Link>
             <ChevronLeft className="w-4 h-4 text-primary" />
-            <span className="text-primary font-medium">بلاگ</span>
+            <span className="text-primary font-medium">{t("navbar.menu.blog")}</span>
           </nav>
         </div>
       </div>
@@ -187,7 +189,7 @@ const BlogPage = () => {
 
                     {/* Read More Link */}
                     <div className="mt-3 flex items-center gap-2 text-primary text-xs font-medium group-hover:gap-3 transition-all justify-end">
-                      <span>ادامه مطلب</span>
+                      <span>{tBlog("readMore")}</span>
                       <ChevronLeft className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
@@ -266,7 +268,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
             ? 'border-gray-200 text-gray-400 cursor-not-allowed'
             : 'border-gray-300 text-gray-700 hover:bg-gray-100'
         }`}
-        aria-label="صفحه قبل"
+        aria-label={t("ariaLabels.previousPage")}
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
@@ -303,7 +305,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
             ? 'border-gray-200 text-gray-400 cursor-not-allowed'
             : 'border-gray-300 text-gray-700 hover:bg-gray-100'
         }`}
-        aria-label="صفحه بعد"
+        aria-label={t("ariaLabels.nextPage")}
       >
         <ChevronRight className="w-4 h-4" />
       </button>

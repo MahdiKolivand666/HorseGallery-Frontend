@@ -6,6 +6,7 @@ import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { createPortal } from "react-dom";
 import { Slider } from "@/components/ui/slider";
 import type { FilterState } from "./FilterSidebar";
+import { useTranslations } from "next-intl";
 
 interface FilterDrawerProps {
   isOpen: boolean;
@@ -22,6 +23,8 @@ const FilterDrawer = ({
   initialFilters,
   onClearAll,
 }: FilterDrawerProps) => {
+  const t = useTranslations("common");
+  const tFilters = useTranslations("filters");
   const [mounted, setMounted] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([
@@ -85,27 +88,42 @@ const FilterDrawer = ({
 
   const brands = [
     "Horse Gallery",
-    "برند 2",
-    "برند 3",
-    "برند 4",
-    "برند 5",
-    "برند 6",
+    tFilters("options.brands.brand2"),
+    tFilters("options.brands.brand3"),
+    tFilters("options.brands.brand4"),
+    tFilters("options.brands.brand5"),
+    tFilters("options.brands.brand6"),
   ];
 
-  const branches = ["Horse Gallery", "شعبه 2", "شعبه 3"];
+  const branches = [
+    "Horse Gallery",
+    tFilters("options.branches.branch2"),
+    tFilters("options.branches.branch3"),
+  ];
 
-  const wages = ["کم", "متوسط", "زیاد"];
+  const wages = [
+    tFilters("options.wages.low"),
+    tFilters("options.wages.medium"),
+    tFilters("options.wages.high"),
+  ];
 
-  const sizes = ["کوچک", "متوسط", "بزرگ"];
+  const sizes = [
+    tFilters("options.sizes.small"),
+    tFilters("options.sizes.medium"),
+    tFilters("options.sizes.large"),
+  ];
 
-  const coatings = ["رودیوم", "طلا", "بدون پوشش"];
+  const coatings = [
+    tFilters("options.coatings.rhodium"),
+    tFilters("options.coatings.gold"),
+    tFilters("options.coatings.none"),
+  ];
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   // Initialize filters from props (فقط یکبار در mount)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (initialFilters) {
       if (initialFilters.priceRange) {
@@ -142,6 +160,7 @@ const FilterDrawer = ({
         setInStock(initialFilters.inStock);
       if (initialFilters.onSale !== undefined) setOnSale(initialFilters.onSale);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // فقط یکبار در mount اجرا بشه
 
   useEffect(() => {
@@ -301,11 +320,13 @@ const FilterDrawer = ({
           >
             {/* Header */}
             <div className="flex items-center justify-between py-2 px-4 border-b border-gray-200 bg-white sticky top-0 z-10">
-              <h2 className="text-base font-normal text-gray-900">فیلترها</h2>
+              <h2 className="text-base font-normal text-gray-900">
+                {tFilters("title")}
+              </h2>
               <button
                 onClick={onClose}
                 className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label="بستن"
+                aria-label={t("ariaLabels.close")}
               >
                 <X className="w-4 h-4 text-gray-500" />
               </button>
@@ -341,7 +362,7 @@ const FilterDrawer = ({
               {/* Price Range Filter - Always Visible */}
               <div className="border-b border-gray-200 pb-2">
                 <h3 className="text-sm font-medium text-gray-900 mb-2">
-                  محدوده قیمت
+                  {tFilters("priceRange")}
                 </h3>
                 <div className="space-y-3">
                   <div className="pt-1 pb-1" dir="ltr">
@@ -365,7 +386,7 @@ const FilterDrawer = ({
                   <div className="grid grid-cols-2 gap-2">
                     <div className="text-right">
                       <label className="text-sm text-gray-600 mb-1 block">
-                        از (تومان)
+                        {tFilters("from")} ({tFilters("currency")})
                       </label>
                       <input
                         type="text"
@@ -385,12 +406,12 @@ const FilterDrawer = ({
                           ]);
                         }}
                         className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
-                        placeholder="۰"
+                        placeholder={t("filters.placeholders.min")}
                       />
                     </div>
                     <div className="text-right">
                       <label className="text-sm text-gray-600 mb-1 block">
-                        تا (تومان)
+                        {tFilters("to")} ({tFilters("currency")})
                       </label>
                       <input
                         type="text"
@@ -410,7 +431,7 @@ const FilterDrawer = ({
                           ]);
                         }}
                         className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
-                        placeholder="۹۰۰,۰۰۰,۰۰۰"
+                        placeholder={t("filters.placeholders.max")}
                       />
                     </div>
                   </div>
@@ -424,7 +445,7 @@ const FilterDrawer = ({
                   className="w-full flex items-center justify-between py-1"
                 >
                   <h3 className="text-sm font-medium text-gray-900">
-                    وزن محصول
+                    {tFilters("weight.title")}
                   </h3>
                   {openSections.includes("weight") ? (
                     <ChevronUp className="w-4 h-4 text-gray-600" />
@@ -455,7 +476,7 @@ const FilterDrawer = ({
                     <div className="grid grid-cols-2 gap-2">
                       <div className="text-right">
                         <label className="text-sm text-gray-600 mb-1 block">
-                          از (گرم)
+                          {tFilters("from")} ({tFilters("weight.unit")})
                         </label>
                         <input
                           type="text"
@@ -478,12 +499,12 @@ const FilterDrawer = ({
                             ]);
                           }}
                           className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
-                          placeholder="۰"
+                          placeholder={t("filters.placeholders.min")}
                         />
                       </div>
                       <div className="text-right">
                         <label className="text-sm text-gray-600 mb-1 block">
-                          تا (گرم)
+                          {tFilters("to")} ({tFilters("weight.unit")})
                         </label>
                         <input
                           type="text"
@@ -506,7 +527,7 @@ const FilterDrawer = ({
                             ]);
                           }}
                           className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
-                          placeholder="۱۰۰"
+                          placeholder={t("filters.placeholders.percentage")}
                         />
                       </div>
                     </div>
@@ -520,7 +541,9 @@ const FilterDrawer = ({
                   onClick={() => toggleSection("color")}
                   className="w-full flex items-center justify-between py-1"
                 >
-                  <h3 className="text-sm font-medium text-gray-900">رنگ</h3>
+                  <h3 className="text-sm font-medium text-gray-900">
+                    {tFilters("color")}
+                  </h3>
                   {openSections.includes("color") ? (
                     <ChevronUp className="w-4 h-4 text-gray-600" />
                   ) : (
@@ -560,7 +583,7 @@ const FilterDrawer = ({
                   className="w-full flex items-center justify-between py-1"
                 >
                   <h3 className="text-sm font-medium text-gray-900">
-                    عیار طلا
+                    {tFilters("karat.title")}
                   </h3>
                   {openSections.includes("karat") ? (
                     <ChevronUp className="w-4 h-4 text-gray-600" />
@@ -582,7 +605,7 @@ const FilterDrawer = ({
                           className="w-3.5 h-3.5 text-primary border-gray-300 focus:ring-primary focus:ring-offset-0"
                         />
                         <span className="text-sm text-gray-700">
-                          {karat} عیار
+                          {karat} {tFilters("karat.unit")}
                         </span>
                       </label>
                     ))}
@@ -596,7 +619,9 @@ const FilterDrawer = ({
                   onClick={() => toggleSection("brand")}
                   className="w-full flex items-center justify-between py-1"
                 >
-                  <h3 className="text-sm font-medium text-gray-900">برند</h3>
+                  <h3 className="text-sm font-medium text-gray-900">
+                    {tFilters("brand")}
+                  </h3>
                   {openSections.includes("brand") ? (
                     <ChevronUp className="w-4 h-4 text-gray-600" />
                   ) : (
@@ -629,7 +654,9 @@ const FilterDrawer = ({
                   onClick={() => toggleSection("branch")}
                   className="w-full flex items-center justify-between py-1"
                 >
-                  <h3 className="text-sm font-medium text-gray-900">شعبه</h3>
+                  <h3 className="text-sm font-medium text-gray-900">
+                    {tFilters("branch")}
+                  </h3>
                   {openSections.includes("branch") ? (
                     <ChevronUp className="w-4 h-4 text-gray-600" />
                   ) : (
@@ -662,7 +689,9 @@ const FilterDrawer = ({
                   onClick={() => toggleSection("wage")}
                   className="w-full flex items-center justify-between py-1"
                 >
-                  <h3 className="text-sm font-medium text-gray-900">اجرت</h3>
+                  <h3 className="text-sm font-medium text-gray-900">
+                    {tFilters("wage")}
+                  </h3>
                   {openSections.includes("wage") ? (
                     <ChevronUp className="w-4 h-4 text-gray-600" />
                   ) : (
@@ -695,7 +724,9 @@ const FilterDrawer = ({
                   onClick={() => toggleSection("size")}
                   className="w-full flex items-center justify-between py-1"
                 >
-                  <h3 className="text-sm font-medium text-gray-900">سایز</h3>
+                  <h3 className="text-sm font-medium text-gray-900">
+                    {tFilters("size")}
+                  </h3>
                   {openSections.includes("size") ? (
                     <ChevronUp className="w-4 h-4 text-gray-600" />
                   ) : (
@@ -728,7 +759,9 @@ const FilterDrawer = ({
                   onClick={() => toggleSection("coating")}
                   className="w-full flex items-center justify-between py-1"
                 >
-                  <h3 className="text-sm font-medium text-gray-900">پوشش</h3>
+                  <h3 className="text-sm font-medium text-gray-900">
+                    {tFilters("coating")}
+                  </h3>
                   {openSections.includes("coating") ? (
                     <ChevronUp className="w-4 h-4 text-gray-600" />
                   ) : (
@@ -759,7 +792,7 @@ const FilterDrawer = ({
               <div className="border-b border-gray-200 pb-2">
                 <label className="flex items-center justify-between cursor-pointer py-1">
                   <h3 className="text-sm font-medium text-gray-900">
-                    محصولات موجود
+                    {tFilters("inStock")}
                   </h3>
                   <input
                     type="checkbox"
@@ -784,7 +817,7 @@ const FilterDrawer = ({
               <div className="border-b border-gray-200 pb-2">
                 <label className="flex items-center justify-between cursor-pointer py-1">
                   <h3 className="text-sm font-medium text-gray-900">
-                    محصولات تخفیف‌دار
+                    {tFilters("onSale")}
                   </h3>
                   <input
                     type="checkbox"
@@ -809,7 +842,7 @@ const FilterDrawer = ({
               <div className="border-b border-gray-200 pb-2">
                 <label className="flex items-center justify-between cursor-pointer py-1">
                   <h3 className="text-sm font-medium text-gray-900">
-                    محصولات با کارمزد کم
+                    {tFilters("lowCommission")}
                   </h3>
                   <input
                     type="checkbox"
@@ -837,13 +870,13 @@ const FilterDrawer = ({
                 onClick={applyFilters}
                 className="w-full bg-primary text-white py-2 hover:bg-primary/90 transition-colors text-sm font-medium"
               >
-                اعمال فیلترها
+                {tFilters("apply")}
               </button>
               <button
                 onClick={clearAllFilters}
                 className="w-full bg-gray-100 text-gray-700 py-2 hover:bg-gray-200 transition-colors text-sm font-medium"
               >
-                پاک کردن همه
+                {tFilters("clearAll")}
               </button>
             </div>
           </motion.div>

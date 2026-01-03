@@ -21,6 +21,27 @@
       "faq": "سوالات متداول",
       "blog": "بلاگ",
       "coin-gold": "سکه و شمش"
+    },
+    "categories": {
+      "women": "زنانه",
+      "men": "مردانه",
+      "kids": "کودکانه"
+    },
+    "products": {
+      "necklace": "گردنبند",
+      "necklaceMen": "گردنبند مردانه",
+      "bracelet": "دستبند",
+      "braceletMen": "دستبند مردانه",
+      "leatherGoldBracelet": "دستبند چرم و طلا",
+      "earring": "گوشواره",
+      "ring": "انگشتر",
+      "pendant": "آویز گردنبند",
+      "piercing": "پیرسینگ",
+      "anklet": "پابند"
+    },
+    "status": {
+      "fetching": "در حال دریافت...",
+      "user": "کاربر"
     }
   },
   "home": {
@@ -68,6 +89,472 @@
     "delete": "حذف",
     "edit": "ویرایش",
     "add": "افزودن",
-    "back": "بازگشت"
+    "back": "بازگشت",
+    "ariaLabels": {
+      "close": "بستن",
+      "closeSearch": "بستن جستجو",
+      "search": "جستجو",
+      "scrollToTop": "برگشت به بالا",
+      "previousPage": "صفحه قبل",
+      "nextPage": "صفحه بعد"
+    },
+    "alt": {
+      "coin": "سکه",
+      "coinGold": "سکه طلا",
+      "meltedGold": "شمش طلا",
+      "gold": "طلا",
+      "shopProducts": "محصولات فروشگاه",
+      "specialOffers": "پیشنهادات ویژه",
+      "faq": "سوالات متداول",
+      "gallery": "گالری اسب",
+      "team": "تیم گالری اسب"
+    }
+  },
+  "cart": {
+    "drawer": {
+      "warning": "در صورت روشن بودن لطفا ابتدا فیلترشکن خود را خاموش و سپس مراحل خرید را دنبال کنید",
+      "title": "سبد خرید",
+      "purchaseDeadline": "مهلت خرید:",
+      "loading": "در حال بارگذاری...",
+      "close": "بستن",
+      "empty": {
+        "title": "سبد خرید شما خالی است",
+        "viewProducts": "مشاهده محصولات"
+      },
+      "expired": {
+        "title": "مدت زمان خرید شما به پایان رسیده است",
+        "message": "لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید",
+        "backToProducts": "بازگشت به محصولات"
+      },
+      "product": {
+        "type": "نوع",
+        "weight": "وزن",
+        "size": "سایز",
+        "mintYear": "سال ضرب",
+        "price": "قیمت",
+        "unknown": "نامشخص",
+        "gram": "گرم",
+        "remove": "حذف محصول"
+      },
+      "summary": {
+        "subtotal": "جمع سبد با تخفیف کالاها:",
+        "currency": "تومان",
+        "continueShopping": "ادامه خرید",
+        "completePurchase": "تکمیل خرید"
+      }
+    }
+  },
+  "auth": {
+    "modal": {
+      "title": {
+        "phone": "ورود / ثبت‌نام",
+        "register": "تکمیل اطلاعات",
+        "otp": "تأیید شماره موبایل"
+      },
+      "phone": {
+        "label": "شماره موبایل",
+        "placeholder": "شماره موبایل خود را وارد کنید",
+        "hint": "کد تأیید به این شماره ارسال می‌شود",
+        "submit": "دریافت کد تأیید",
+        "sending": "در حال ارسال...",
+        "rateLimit": "لطفاً {minutes}:{seconds} صبر کنید",
+        "error": {
+          "sendOtp": "خطا در ارسال کد تأیید",
+          "rateLimit": "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً 2 دقیقه صبر کنید"
+        }
+      },
+      "otp": {
+        "message": "کد ارسال شده به شماره {phoneNumber} را وارد کنید",
+        "expired": "کد تأیید منقضی شده است. روی ارسال مجدد کد کلیک کنید و کد جدید را وارد نمایید",
+        "notFound": "کد تأیید یافت نشد. لطفاً به مرحله قبل برگردید و کد جدید دریافت کنید",
+        "submit": "تأیید کد",
+        "verifying": "در حال تأیید...",
+        "error": {
+          "verify": "خطا در تأیید کد"
+        },
+        "resend": {
+          "label": "ارسال مجدد کد",
+          "disabled": "لطفاً روی ارسال مجدد کد کلیک کنید"
+        },
+        "devMode": "Development Mode - کد تأیید:"
+      },
+      "register": {
+        "incompleteInfo": "لطفاً اطلاعات خود را تکمیل کنید",
+        "incompleteInfoMessage": "✅ شماره موبایل شما تأیید شده است. لطفاً اطلاعات خود را تکمیل کنید.",
+        "incompleteRegistration": "اطلاعات شما ناقص است. لطفاً بعد از وارد کردن کد تأیید، اطلاعات خود را تکمیل نمایید",
+        "editPhone": "ویرایش شماره موبایل",
+        "firstName": {
+          "label": "نام",
+          "placeholder": "نام",
+          "required": "(الزامی)",
+          "error": "لطفاً نام را به فارسی وارد کنید"
+        },
+        "lastName": {
+          "label": "نام خانوادگی",
+          "placeholder": "نام خانوادگی",
+          "required": "(الزامی)",
+          "error": "لطفاً نام خانوادگی را به فارسی وارد کنید"
+        },
+        "nationalId": {
+          "label": "کد ملی",
+          "placeholder": "کد ملی ۱۰ رقمی",
+          "required": "(الزامی)"
+        },
+        "email": {
+          "label": "ایمیل",
+          "placeholder": "example@email.com",
+          "optional": "(اختیاری)",
+          "error": {
+            "englishOnly": "ایمیل باید به انگلیسی وارد شود",
+            "invalidFormat": "فرمت ایمیل صحیح نیست"
+          }
+        },
+        "submit": "ثبت‌نام و ورود",
+        "registering": "در حال ثبت‌نام...",
+        "error": {
+          "register": "خطا در ثبت‌نام",
+          "saveToken": "خطا در ذخیره token",
+          "saveInfo": "خطا در ذخیره اطلاعات. لطفاً دوباره تلاش کنید.",
+          "validation": "خطا در اعتبارسنجی فرم. لطفاً فیلدها را بررسی کنید.",
+          "alreadyRegistered": "این شماره موبایل قبلاً ثبت‌نام شده است. لطفاً وارد حساب کاربری خود شوید",
+          "login": "خطا در ورود"
+        },
+        "footer": {
+          "terms": "با ورود و ثبت‌نام در سایت، شما {termsLink} استفاده از خدمات را می‌پذیرید.",
+          "termsLink": "قوانین و مقررات"
+        }
+      }
+    }
+  },
+  "checkout": {
+    "error": {
+      "fetchProvinces": "خطا در دریافت لیست استان‌ها",
+      "fetchCities": "خطا در دریافت لیست شهرها",
+      "noCities": "شهری برای این استان یافت نشد. لطفاً با پشتیبانی تماس بگیرید.",
+      "saveAddress": "خطا در ذخیره آدرس",
+      "deleteAddress": "خطا در حذف آدرس",
+      "maxAddresses": "بیشتر از ۲ آدرس نمی‌توانید اضافه کنید",
+      "validation": "خطا در اعتبارسنجی فرم. لطفاً فیلدها را بررسی کنید.",
+      "createOrder": "خطا در ایجاد سفارش",
+      "cartExpired": "زمان شما تمام شده است. لطفاً مجدداً محصول را به سبد خرید اضافه کنید",
+      "selectAddress": "لطفاً آدرس و روش ارسال را انتخاب کنید"
+    },
+    "success": {
+      "addressUpdated": "آدرس با موفقیت به‌روزرسانی شد",
+      "addressAdded": "آدرس با موفقیت اضافه شد",
+      "addressDeleted": "آدرس با موفقیت حذف شد",
+      "orderCreated": "سفارش با موفقیت ایجاد شد"
+    },
+    "tabs": {
+      "cart": "سبد خرید",
+      "shipping": "آدرس و نحوه ارسال",
+      "payment": "پرداخت"
+    },
+    "cart": {
+      "empty": "سبد خرید شما خالی است",
+      "expired": {
+        "title": "مدت زمان خرید شما به پایان رسیده است",
+        "message": "لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید"
+      },
+      "timeLeft": "زمان دارید!",
+      "subtotal": "مجموع مبلغ کالاهای سبد",
+      "discount": "مجموع تخفیف محصولات",
+      "shipping": "هزینه ارسال",
+      "continue": "ادامه خرید",
+      "expiredButton": "زمان تمام شده"
+    },
+    "address": {
+      "title": "آدرس تحویل",
+      "addNew": "افزودن آدرس جدید",
+      "noAddress": "هنوز آدرسی ثبت نشده است",
+      "edit": "ویرایش آدرس",
+      "delete": "حذف آدرس",
+      "shippingMethod": "نحوه ارسال",
+      "selectShipping": "انتخاب نحوه ارسال"
+    },
+    "payment": {
+      "selectGateway": "انتخاب درگاه پرداخت",
+      "saman": "درگاه پرداخت بانک سامان",
+      "mellat": "درگاه پرداخت بانک ملت",
+      "zarinpal": "درگاه پرداخت زرین‌پال",
+      "online": "پرداخت آنلاین",
+      "gateways": {
+        "saman": "بانک سامان",
+        "mellat": "بانک ملت"
+      }
+    },
+    "form": {
+      "title": {
+        "label": "عنوان آدرس",
+        "placeholder": "مثلاً: منزل، محل کار",
+        "error": "عنوان آدرس باید فقط به فارسی وارد شود"
+      },
+      "province": {
+        "label": "استان",
+        "select": "انتخاب استان"
+      },
+      "city": {
+        "label": "شهر",
+        "selectProvince": "ابتدا استان را انتخاب کنید",
+        "select": "انتخاب شهر"
+      },
+      "address": {
+        "label": "آدرس",
+        "placeholder": "آدرس کامل خود را وارد کنید...",
+        "error": "آدرس باید فقط به فارسی وارد شود"
+      },
+      "recipient": "مشخصات سفارش دهنده",
+      "default": "تنظیم به عنوان آدرس پیش‌فرض",
+      "save": "ذخیره آدرس",
+      "update": "به‌روزرسانی آدرس",
+      "guide": "راهنمای ارسال",
+      "discountCode": {
+        "placeholder": "کد تخفیف خود را وارد کنید"
+      },
+      "postalCode": {
+        "placeholder": "کد پستی ۱۰ رقمی"
+      },
+      "firstName": {
+        "placeholder": "نام",
+        "error": "نام باید فقط به فارسی وارد شود"
+      },
+      "lastName": {
+        "placeholder": "نام خانوادگی",
+        "error": "نام خانوادگی باید فقط به فارسی وارد شود"
+      },
+      "nationalId": {
+        "placeholder": "کد ملی ۱۰ رقمی"
+      },
+      "mobile": {
+        "placeholder": "۰۹۱۲۳۴۵۶۷۸۹"
+      },
+      "notes": {
+        "placeholder": "توضیحات تکمیلی ...",
+        "error": "توضیحات باید فقط به فارسی وارد شود"
+      },
+      "saving": "در حال ذخیره..."
+    },
+    "deleteConfirm": {
+      "title": "حذف آدرس",
+      "message": "آیا مطمئن هستید که می‌خواهید این آدرس را حذف کنید؟",
+      "cancel": "لغو",
+      "confirm": "حذف"
+    },
+    "common": {
+      "loading": "در حال بارگذاری...",
+      "processing": "در حال پردازش..."
+    }
+  },
+  "product": {
+    "detail": {
+      "defaultCategory": "عمومی",
+      "defaultBrand": "گالری اسب",
+      "defaultWarranty": "گارانتی اصالت",
+      "defaultFeature": "طلای 18 عیار با گارانتی اصالت",
+      "coin": "سکه طلا",
+      "meltedGold": "شمش طلا",
+      "addToCart": "افزودن به سبد خرید",
+      "error": {
+        "addToCart": "خطا در افزودن محصول به سبد خرید"
+      },
+      "image": {
+        "previous": "تصویر قبلی",
+        "next": "تصویر بعدی",
+        "alt": "{name} - تصویر {number}"
+      },
+      "features": {
+        "goldPlating": "آبکاری طلا",
+        "goldPrice": "قیمت روز طلای 18 عیار"
+      },
+      "shipping": {
+        "free": "ارسال رایگان",
+        "description": "برای خریدهای بالای 5 میلیون تومان"
+      },
+      "warranty": {
+        "title": "ضمانت اصالت",
+        "description": "تضمین اصل بودن کالا"
+      },
+      "payment": {
+        "title": "پرداخت امن",
+        "description": "درگاه پرداخت معتبر و امن"
+      },
+      "guarantee": {
+        "title": "گارانتی محصولات",
+        "description": "ضمانت 7 روزه بازگشت کالا"
+      },
+      "related": {
+        "coins": "سکه‌های مشابه",
+        "meltedGold": "شمش‌های مشابه",
+        "products": "محصولات مرتبط"
+      },
+      "help": {
+        "buyGuide": "راهنمای خرید",
+        "shippingGuide": "راهنمای ارسال",
+        "faq": "سوالات متداول",
+        "contact": "تماس با ما"
+      }
+    }
+  },
+  "footer": {
+    "sections": {
+      "company": "شرکت",
+      "customer": "خدمات مشتریان",
+      "help": "راهنما"
+    },
+    "company": {
+      "about": "درباره ما",
+      "contact": "تماس با ما",
+      "careers": "فرصت‌های شغلی",
+      "story": "داستان ما"
+    },
+    "customer": {
+      "account": "حساب کاربری",
+      "orders": "سفارش‌های من",
+      "wishlist": "علاقه‌مندی‌ها",
+      "track": "پیگیری سفارش"
+    },
+    "help": {
+      "guide": "راهنمای خرید",
+      "faq": "پرسش‌های متداول",
+      "payment": "شیوه‌های پرداخت",
+      "return": "ضمانت بازگشت"
+    },
+    "legal": {
+      "terms": "قوانین و مقررات",
+      "privacy": "حریم خصوصی",
+      "conditions": "شرایط استفاده"
+    },
+    "description": "گالری اسب، فروشگاه آنلاین محصولات با کیفیت. ما با ارائه بهترین کالاها و خدمات، تلاش می‌کنیم تجربه خریدی لذت‌بخش و به‌یادماندنی برای شما فراهم کنیم.",
+    "copyright": "© {year} گالری اسب. تمامی حقوق محفوظ است."
+  },
+  "search": {
+    "title": "جستجو در محصولات",
+    "description": "لطفاً کلمه کلیدی خود را در باکس جستجو وارد کنید",
+    "emptyDescription": "از منوی بالا می‌توانید محصولات را جستجو کنید",
+    "results": "نتایج جستجو",
+    "pagination": {
+      "previous": "صفحه قبل",
+      "next": "صفحه بعد"
+    },
+    "alt": {
+      "search": "جستجو در محصولات",
+      "results": "نتایج جستجو"
+    }
+  },
+  "filters": {
+    "title": "فیلترها",
+    "priceRange": "محدوده قیمت",
+    "from": "از",
+    "to": "تا",
+    "currency": "تومان",
+    "weight": {
+      "title": "وزن محصول",
+      "unit": "گرم"
+    },
+    "color": "رنگ",
+    "karat": {
+      "title": "عیار طلا",
+      "unit": "عیار"
+    },
+    "brand": "برند",
+    "branch": "شعبه",
+    "wage": "اجرت",
+    "size": "سایز",
+    "coating": "پوشش",
+    "inStock": "محصولات موجود",
+    "onSale": "محصولات تخفیف‌دار",
+    "lowCommission": "محصولات با کارمزد کم",
+    "apply": "اعمال فیلترها",
+    "clearAll": "پاک کردن همه",
+    "placeholders": {
+      "min": "۰",
+      "max": "۹۰۰,۰۰۰,۰۰۰",
+      "percentage": "۱۰۰"
+    },
+    "options": {
+      "colors": {
+        "gold": "طلایی",
+        "silver": "نقره‌ای",
+        "roseGold": "رزگلد",
+        "whiteGold": "طلای سفید",
+        "white": "سفید"
+      },
+      "brands": {
+        "brand2": "برند 2",
+        "brand3": "برند 3",
+        "brand4": "برند 4",
+        "brand5": "برند 5",
+        "brand6": "برند 6"
+      },
+      "branches": {
+        "branch2": "شعبه 2",
+        "branch3": "شعبه 3"
+      },
+      "wages": {
+        "low": "کم",
+        "medium": "متوسط",
+        "high": "زیاد"
+      },
+      "sizes": {
+        "small": "کوچک",
+        "medium": "متوسط",
+        "large": "بزرگ"
+      },
+      "coatings": {
+        "rhodium": "رودیوم",
+        "gold": "طلا",
+        "none": "بدون پوشش"
+      },
+      "karat": {
+        "18": "۱۸ عیار",
+        "21": "۲۱ عیار",
+        "24": "۲۴ عیار"
+      }
+    }
+  },
+  "blog": {
+    "loading": "در حال بارگذاری...",
+    "notFound": "هیچ مقاله‌ای یافت نشد.",
+    "readMore": "ادامه مطلب",
+    "defaultAuthor": "نویسنده",
+    "defaultCategory": "عمومی"
+  },
+  "products": {
+    "loading": "در حال بارگذاری محصولات...",
+    "sort": {
+      "label": "مرتب‌سازی",
+      "newest": "جدیدترین",
+      "oldest": "قدیمی‌ترین",
+      "priceLow": "ارزان‌ترین",
+      "priceHigh": "گران‌ترین",
+      "popular": "محبوب‌ترین"
+    },
+    "coin": {
+      "inStock": "موجود",
+      "outOfStock": "ناموجود",
+      "weightDesc": "از بیشترین وزن به کمترین",
+      "weightAsc": "از کمترین وزن به بیشترین"
+    }
+  },
+  "meltedGold": {
+    "placeholder": "مثال: ۱۰,۰۰۰,۰۰۰",
+    "errors": {
+      "amountRequired": "لطفاً مبلغ را وارد کنید",
+      "amountMustBePositive": "مبلغ باید بیشتر از صفر باشد",
+      "minAmount": "حداقل مبلغ {amount} تومان است",
+      "maxAmount": "حداکثر مبلغ {amount} تومان است",
+      "goldPriceUnavailable": "قیمت طلا در دسترس نیست. لطفاً چند لحظه صبر کنید و دوباره تلاش کنید."
+    },
+    "status": {
+      "fetching": "در حال دریافت...",
+      "calculating": "در حال محاسبه",
+      "updating": "در حال بروزرسانی",
+      "unknown": "نامشخص"
+    },
+    "labels": {
+      "minPurchase": "حداقل خرید:",
+      "maxPurchase": "حداکثر خرید:",
+      "commission": "کارمزد خرید:"
+    }
   }
 }

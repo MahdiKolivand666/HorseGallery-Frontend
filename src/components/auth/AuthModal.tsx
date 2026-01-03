@@ -6,6 +6,7 @@ import { X, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import { useCart } from "@/contexts/CartContext";
+import { useTranslations } from "next-intl";
 import {
   sendOtp,
   verifyOtp,
@@ -47,6 +48,7 @@ const AuthModal = ({
   initialStep = "phone",
   isFromIncompleteRegistration: propIsFromIncompleteRegistration = false,
 }: AuthModalProps) => {
+  const t = useTranslations("auth.modal");
   const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber || "");
   const [phoneNumberDisplay, setPhoneNumberDisplay] = useState(
     initialPhoneNumber ? convertEnglishToPersian(initialPhoneNumber) : ""
@@ -145,7 +147,7 @@ const AuthModal = ({
               }
             } catch (err) {
               const errorMessage =
-                err instanceof Error ? err.message : "خطا در ارسال کد تأیید";
+                err instanceof Error ? err.message : t("phone.error.sendOtp");
               setError(errorMessage);
             } finally {
               setIsLoading(false);
@@ -261,7 +263,7 @@ const AuthModal = ({
       if (error.statusCode === 429 || error.code === "RATE_LIMIT_EXCEEDED") {
         setRateLimitCooldown(120); // ✅ 2 دقیقه cooldown
         setError(
-          error.message || "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً 2 دقیقه صبر کنید"
+          error.message || t("phone.error.rateLimit")
         );
       } else {
         setError(err instanceof Error ? err.message : "خطا در ارسال کد تأیید");
@@ -285,9 +287,7 @@ const AuthModal = ({
 
         // اگر کد منقضی شده باشد
         if (remaining === 0 && step === "register") {
-          setError(
-            "کد تأیید منقضی شده است. روی ارسال مجدد کد کلیک کنید و کد جدید را وارد نمایید."
-          );
+          setError(t("otp.expired"));
           // ✅ برگرداندن کاربر به مرحله OTP برای دریافت کد جدید
           setStep("otp");
           setOtp(["", "", "", "", "", ""]);
@@ -400,10 +400,10 @@ const AuthModal = ({
       if (error.statusCode === 429 || error.code === "RATE_LIMIT_EXCEEDED") {
         setRateLimitCooldown(120); // ✅ 2 دقیقه cooldown
         setError(
-          error.message || "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً 2 دقیقه صبر کنید"
+          error.message || t("phone.error.rateLimit")
         );
       } else {
-        setError(err instanceof Error ? err.message : "خطا در ارسال مجدد کد");
+        setError(err instanceof Error ? err.message : t("phone.error.sendOtp"));
       }
     } finally {
       setIsLoading(false);
@@ -551,7 +551,7 @@ const AuthModal = ({
         default:
           // ✅ نمایش error برای سایر موارد
           const errorMessage =
-            err instanceof Error ? err.message : "خطا در تأیید کد";
+            err instanceof Error ? err.message : t("otp.error.verify");
           setError(handledError.message || errorMessage);
       }
     } finally {
@@ -586,7 +586,7 @@ const AuthModal = ({
       if (!isPersianOnly(registerForm.firstName)) {
         setFormErrors({
           ...formErrors,
-          firstName: "لطفاً نام را به فارسی وارد کنید",
+          firstName: t("register.firstName.error"),
         });
         return;
       }
@@ -594,7 +594,7 @@ const AuthModal = ({
       if (!isPersianOnly(registerForm.lastName)) {
         setFormErrors({
           ...formErrors,
-          lastName: "لطفاً نام خانوادگی را به فارسی وارد کنید",
+          lastName: t("register.lastName.error"),
         });
         return;
       }
@@ -658,7 +658,7 @@ const AuthModal = ({
               console.error(
                 "🔴 [AuthModal] Access token missing after register!"
               );
-              throw new Error("خطا در ذخیره token");
+              throw new Error(t("register.error.saveToken"));
             }
 
             // ✅ به‌روزرسانی user info از localStorage
@@ -687,7 +687,7 @@ const AuthModal = ({
             const errorMessage =
               registerError instanceof Error
                 ? registerError.message
-                : "خطا در ثبت‌نام";
+                : t("register.error.register");
 
             // ✅ اگر خطای مربوط به کد OTP منقضی شده باشد
             const errorWithOtpFlag = registerError as Error & {
@@ -709,7 +709,7 @@ const AuthModal = ({
               setIsFromIncompleteRegistration(false);
 
               setError(
-                "کد تأیید منقضی شده است. روی ارسال مجدد کد کلیک کنید و کد جدید را وارد نمایید."
+                t("otp.expired")
               );
               // ✅ اگر از خطای INCOMPLETE_REGISTRATION آمده بود، به مرحله phone برگرد
               // چون کاربر باید دوباره کد OTP دریافت کند
@@ -747,7 +747,7 @@ const AuthModal = ({
 
           if (!finalAccessToken) {
             console.error("🔴 [AuthModal] Access token missing before reload!");
-            setError("خطا در ذخیره اطلاعات. لطفاً دوباره تلاش کنید.");
+            setError(t("register.error.saveInfo"));
             setIsLoading(false);
             return;
           }
@@ -807,7 +807,7 @@ const AuthModal = ({
       // ✅ اگر کد OTP موجود نیست، خطا بده
       if (!otpCode) {
         setError(
-          "کد تأیید یافت نشد. لطفاً به مرحله قبل برگردید و کد جدید دریافت کنید."
+          t("otp.notFound")
         );
         setStep("otp");
         return;
@@ -819,7 +819,7 @@ const AuthModal = ({
     if (!isPersianOnly(registerForm.firstName)) {
       setFormErrors({
         ...formErrors,
-        firstName: "لطفاً نام را به فارسی وارد کنید",
+        firstName: t("register.firstName.error"),
       });
       return;
     }
@@ -1019,7 +1019,7 @@ const AuthModal = ({
               } else {
                 // اگر کاربر pending باشد یا اطلاعات کامل نداشته باشد، خطا نمایش بده
                 setError(
-                  "این شماره موبایل قبلاً ثبت‌نام شده است. لطفاً وارد حساب کاربری خود شوید"
+                  t("register.error.alreadyRegistered")
                 );
                 return;
               }
@@ -1028,10 +1028,10 @@ const AuthModal = ({
               const verifyErrorMessage =
                 verifyError instanceof Error
                   ? verifyError.message
-                  : "خطا در ورود";
+                  : t("register.error.login");
               setError(
                 verifyErrorMessage ||
-                  "این شماره موبایل قبلاً ثبت‌نام شده است. لطفاً وارد حساب کاربری خود شوید"
+                  t("register.error.alreadyRegistered")
               );
               return;
             }
@@ -1111,7 +1111,7 @@ const AuthModal = ({
       } catch (err) {
         // نمایش خطا - اگر خطا مربوط به validation backend باشد، در formErrors نمایش داده می‌شود
         const errorMessage =
-          err instanceof Error ? err.message : "خطا در ثبت‌نام";
+          err instanceof Error ? err.message : t("register.error.register");
 
         // اگر خطا مربوط به کد OTP است، آن را در formErrors نمایش بده
         if (errorMessage.includes("کد تأیید")) {
@@ -1141,7 +1141,7 @@ const AuthModal = ({
         setFormErrors(errors);
       } else {
         console.error("Validation error:", error);
-        setError("خطا در اعتبارسنجی فرم. لطفاً فیلدها را بررسی کنید.");
+        setError(t("register.error.validation"));
       }
     }
   };
@@ -1175,15 +1175,15 @@ const AuthModal = ({
               <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-900">
                   {step === "phone"
-                    ? "ورود / ثبت‌نام"
+                    ? t("title.phone")
                     : step === "register"
-                    ? "تکمیل اطلاعات"
-                    : "تأیید شماره موبایل"}
+                    ? t("title.register")
+                    : t("title.otp")}
                 </h2>
                 <button
                   onClick={onClose}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  aria-label="بستن"
+                  aria-label={t("common.close")}
                 >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
@@ -1198,7 +1198,7 @@ const AuthModal = ({
                         htmlFor="phone"
                         className="block text-sm font-medium text-gray-700 mb-2 text-right"
                       >
-                        شماره موبایل
+                        {t("phone.label")}
                       </label>
                       <input
                         id="phone"
@@ -1218,7 +1218,7 @@ const AuthModal = ({
                             setPhoneNumberDisplay(persianValue);
                           }
                         }}
-                        placeholder="شماره موبایل خود را وارد کنید"
+                        placeholder={t("phone.placeholder")}
                         className="w-full px-4 py-3 border border-gray-300 bg-white focus:border-primary focus:outline-none text-center text-lg tracking-wider text-gray-900"
                         dir="ltr"
                         inputMode="numeric"
@@ -1226,8 +1226,8 @@ const AuthModal = ({
                         maxLength={11}
                         autoFocus
                       />
-                      <p className="mt-2 text-xs text-gray-500 text-right">
-                        کد تأیید به این شماره ارسال می‌شود
+                      <p className="mt-2 text-xs text-gray-500 text-right leading-relaxed">
+                        {t("phone.hint")}
                       </p>
                     </div>
 
@@ -1255,10 +1255,13 @@ const AuthModal = ({
                       className="w-full bg-primary hover:bg-primary/90 text-white py-3 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading
-                        ? "در حال ارسال..."
+                        ? t("phone.sending")
                         : rateLimitCooldown > 0
-                        ? `لطفاً ${Math.floor(rateLimitCooldown / 60)}:${String(rateLimitCooldown % 60).padStart(2, "0")} صبر کنید`
-                        : "دریافت کد تأیید"}
+                        ? t("phone.rateLimit", {
+                            minutes: Math.floor(rateLimitCooldown / 60),
+                            seconds: String(rateLimitCooldown % 60).padStart(2, "0"),
+                          })
+                        : t("phone.submit")}
                     </button>
                   </form>
                 ) : step === "register" ? (
@@ -1266,16 +1269,15 @@ const AuthModal = ({
                     <div>
                       <div className="flex items-center justify-center gap-2 mb-4">
                         <Info className="w-5 h-5 text-red-600 flex-shrink-0" />
-                        <p className="text-sm text-red-600 font-bold text-center">
-                          لطفاً اطلاعات خود را تکمیل کنید
+                        <p className="text-sm text-red-600 font-bold text-center leading-relaxed">
+                          {t("register.incompleteInfo")}
                         </p>
                       </div>
                       {/* ✅ اگر از خطای INCOMPLETE_REGISTRATION آمده باشد، پیام مناسب نمایش بده */}
                       {isFromIncompleteRegistration && (
                         <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded text-center">
-                          <p className="text-xs text-blue-700">
-                            ✅ شماره موبایل شما تأیید شده است. لطفاً اطلاعات خود
-                            را تکمیل کنید.
+                          <p className="text-xs text-blue-700 leading-relaxed">
+                            {t("register.incompleteInfoMessage")}
                           </p>
                         </div>
                       )}
@@ -1284,9 +1286,9 @@ const AuthModal = ({
                     {/* نام */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1 text-right">
-                        نام{" "}
+                        {t("register.firstName.label")}{" "}
                         <span className="text-red-500 text-[10px]">
-                          (الزامی)
+                          {t("register.firstName.required")}
                         </span>
                       </label>
                       <input
@@ -1300,7 +1302,7 @@ const AuthModal = ({
                             // ✅ اگر حروف انگلیسی یا کاراکترهای غیرفارسی دارد، error نشان بده
                             setFormErrors({
                               ...formErrors,
-                              firstName: "لطفاً نام را به فارسی وارد کنید",
+                              firstName: t("register.firstName.error"),
                             });
                             return;
                           }
@@ -1322,7 +1324,7 @@ const AuthModal = ({
                             ? "border-red-500"
                             : "border-gray-300"
                         }`}
-                        placeholder="نام"
+                        placeholder={t("register.firstName.placeholder")}
                         inputMode="text"
                         lang="fa"
                         dir="rtl"
@@ -1333,9 +1335,9 @@ const AuthModal = ({
                     {/* نام خانوادگی */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1 text-right">
-                        نام خانوادگی{" "}
+                        {t("register.lastName.label")}{" "}
                         <span className="text-red-500 text-[10px]">
-                          (الزامی)
+                          {t("register.lastName.required")}
                         </span>
                       </label>
                       <input
@@ -1349,8 +1351,7 @@ const AuthModal = ({
                             // ✅ اگر حروف انگلیسی یا کاراکترهای غیرفارسی دارد، error نشان بده
                             setFormErrors({
                               ...formErrors,
-                              lastName:
-                                "لطفاً نام خانوادگی را به فارسی وارد کنید",
+                              lastName: t("register.lastName.error"),
                             });
                             return;
                           }
@@ -1372,7 +1373,7 @@ const AuthModal = ({
                             ? "border-red-500"
                             : "border-gray-300"
                         }`}
-                        placeholder="نام خانوادگی"
+                        placeholder={t("register.lastName.placeholder")}
                         inputMode="text"
                         lang="fa"
                         dir="rtl"
@@ -1383,9 +1384,9 @@ const AuthModal = ({
                     {/* کد ملی */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1 text-right">
-                        کد ملی{" "}
+                        {t("register.nationalId.label")}{" "}
                         <span className="text-red-500 text-[10px]">
-                          (الزامی)
+                          {t("register.nationalId.required")}
                         </span>
                       </label>
                       <input
@@ -1421,7 +1422,7 @@ const AuthModal = ({
                             ? "border-red-500"
                             : "border-gray-300"
                         }`}
-                        placeholder="کد ملی ۱۰ رقمی"
+                        placeholder={t("register.nationalId.placeholder")}
                         inputMode="numeric"
                         lang="fa"
                         dir="ltr"
@@ -1432,9 +1433,9 @@ const AuthModal = ({
                     {/* ایمیل */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1 text-right">
-                        ایمیل{" "}
+                        {t("register.email.label")}{" "}
                         <span className="text-gray-500 text-[10px]">
-                          (اختیاری)
+                          {t("register.email.optional")}
                         </span>
                       </label>
                       <input
@@ -1448,7 +1449,7 @@ const AuthModal = ({
                           if (value && !englishOnlyRegex.test(value)) {
                             setFormErrors({
                               ...formErrors,
-                              email: "ایمیل باید به انگلیسی وارد شود",
+                              email: t("register.email.error.englishOnly"),
                             });
                             return;
                           }
@@ -1459,7 +1460,7 @@ const AuthModal = ({
                             if (!emailRegex.test(value)) {
                               setFormErrors({
                                 ...formErrors,
-                                email: "فرمت ایمیل صحیح نیست",
+                                email: t("register.email.error.invalidFormat"),
                               });
                             } else {
                               // ✅ اگر فرمت صحیح است، error را پاک کن
@@ -1530,7 +1531,7 @@ const AuthModal = ({
                       disabled={isLoading || isExpired || resendTimer === 0}
                       className="w-full bg-primary hover:bg-primary/90 text-white py-3 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isLoading ? "در حال ثبت‌نام..." : "ثبت‌نام و ورود"}
+                      {isLoading ? t("register.registering") : t("register.submit")}
                     </button>
 
                     {/* دکمه ارسال مجدد کد */}
@@ -1542,7 +1543,7 @@ const AuthModal = ({
                     >
                       {rateLimitCooldown > 0 ? (
                         <>
-                          <span className="text-red-600">ارسال مجدد کد</span> (
+                          <span className="text-red-600">{t("otp.resend.label")}</span> (
                           <span className="text-red-600 font-semibold">
                             {englishToPersian(
                               Math.floor(rateLimitCooldown / 60)
@@ -1558,7 +1559,7 @@ const AuthModal = ({
                         </>
                       ) : resendTimer > 0 ? (
                         <>
-                          <span className="text-red-600">ارسال مجدد کد</span> (
+                          <span className="text-red-600">{t("otp.resend.label")}</span> (
                           <span className="text-red-600 font-semibold">
                             {englishToPersian(
                               Math.floor(resendTimer / 60)
@@ -1590,20 +1591,17 @@ const AuthModal = ({
                             transition={{ duration: 0.3 }}
                             className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-center"
                           >
-                            <p className="text-sm text-red-600 font-medium">
-                              اطلاعات شما ناقص است. لطفاً بعد از وارد کردن کد
-                              تأیید، اطلاعات خود را تکمیل نمایید
+                            <p className="text-sm text-red-600 font-medium leading-relaxed">
+                              {t("register.incompleteRegistration")}
                             </p>
                           </motion.div>
                         )}
                       </AnimatePresence>
 
-                      <p className="text-sm text-gray-600 text-center mb-4">
-                        کد ارسال شده به شماره{" "}
-                        <span className="font-semibold text-gray-900" dir="ltr">
-                          {englishToPersian(phoneNumber)}
-                        </span>{" "}
-                        را وارد کنید
+                      <p className="text-sm text-gray-600 text-center mb-4 leading-relaxed">
+                        {t("otp.message", {
+                          phoneNumber: englishToPersian(phoneNumber),
+                        })}
                       </p>
 
                       {/* نمایش کد OTP در development mode */}
@@ -1617,7 +1615,7 @@ const AuthModal = ({
                             className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-center"
                           >
                             <p className="text-xs text-yellow-800 mb-1">
-                              Development Mode - کد تأیید:
+                              {t("otp.devMode")}
                             </p>
                             <p
                               className="text-lg font-bold text-yellow-900"
@@ -1664,10 +1662,8 @@ const AuthModal = ({
                             transition={{ duration: 0.3 }}
                             className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-center"
                           >
-                            <p className="text-sm text-red-600 font-medium">
-                              کد تأیید منقضی شده است. لطفاً روی{" "}
-                              <span className="font-semibold">ارسال مجدد کد</span>{" "}
-                              کلیک کنید.
+                            <p className="text-sm text-red-600 font-medium leading-relaxed">
+                              {t("otp.expired")}
                             </p>
                           </motion.div>
                         )}
@@ -1685,7 +1681,7 @@ const AuthModal = ({
                         }}
                         className="text-sm text-primary hover:text-primary/80 transition-colors block mx-auto"
                       >
-                        ویرایش شماره موبایل
+                        {t("register.editPhone")}
                       </button>
                     </div>
 
@@ -1713,7 +1709,7 @@ const AuthModal = ({
                       }
                       className="w-full bg-primary hover:bg-primary/90 text-white py-3 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isLoading ? "در حال تأیید..." : "ادامه"}
+                      {isLoading ? t("otp.verifying") : t("otp.submit")}
                     </button>
 
                     <button
@@ -1724,7 +1720,7 @@ const AuthModal = ({
                     >
                       {resendTimer > 0 ? (
                         <>
-                          <span className="text-red-600">ارسال مجدد کد</span> (
+                          <span className="text-red-600">{t("otp.resend.label")}</span> (
                           <span className="text-red-600 font-semibold">
                             {englishToPersian(
                               Math.floor(resendTimer / 60)
@@ -1749,11 +1745,11 @@ const AuthModal = ({
               {/* Footer */}
               <div className="px-6 pb-6">
                 <p className="text-xs text-gray-500 text-center leading-relaxed">
-                  با ورود و ثبت‌نام در سایت، شما{" "}
+                  {t("register.footer.terms").split("{termsLink}")[0]}
                   <Link href="/terms" className="text-primary hover:underline">
-                    قوانین و مقررات
-                  </Link>{" "}
-                  استفاده از خدمات را می‌پذیرید.
+                    {t("register.footer.termsLink")}
+                  </Link>
+                  {t("register.footer.terms").split("{termsLink}")[1]}
                 </p>
               </div>
             </motion.div>

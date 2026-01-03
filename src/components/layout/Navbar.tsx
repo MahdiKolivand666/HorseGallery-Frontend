@@ -1160,13 +1160,13 @@ const Navbar = () => {
                               <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
                                 <Image
                                   src="/images/products/qadimtamam.png"
-                                  alt="سکه"
+                                  alt={t("common.alt.coin")}
                                   width={35}
                                   height={35}
                                   className="object-contain"
                                 />
                               </div>
-                              <span>سکه</span>
+                              <span>{t("menu.coin-gold")}</span>
                             </Link>
                             <Link
                               href="/melted-gold"
@@ -1179,7 +1179,7 @@ const Navbar = () => {
                               <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
                                 <Image
                                   src="/images/products/shemsh.png"
-                                  alt="شمش طلا"
+                                  alt={t("common.alt.meltedGold")}
                                   width={35}
                                   height={35}
                                   className="object-contain"
@@ -1320,7 +1320,7 @@ const Navbar = () => {
                     setSearchQuery("");
                   }}
                   className="text-white hover:text-white/70 transition-colors flex-shrink-0"
-                  aria-label="بستن جستجو"
+                  aria-label={t("common.ariaLabels.closeSearch")}
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -1333,7 +1333,7 @@ const Navbar = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyPress={handleSearchKeyPress}
-                    placeholder="جستجوی محصولات"
+                    placeholder={t("search.placeholder")}
                     autoFocus
                     className="flex-1 bg-transparent border-0 border-b-2 border-white/40 px-4 py-2 text-base sm:text-lg text-white placeholder:text-white/50 outline-none focus:border-white transition-colors text-center"
                   />
@@ -1342,7 +1342,7 @@ const Navbar = () => {
                   <button
                     onClick={handleSearch}
                     className="text-white hover:text-white/80 transition-colors flex-shrink-0"
-                    aria-label="جستجو"
+                    aria-label={t("common.ariaLabels.search")}
                   >
                     <Search className="w-5 h-5 sm:w-6 sm:h-6" />
                   </button>
@@ -1443,7 +1443,7 @@ const Navbar = () => {
                   <div className="relative w-20 h-20 rounded-full overflow-hidden group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
                     <Image
                       src="/images/products/qadimtamam.png"
-                      alt="سکه طلا"
+                      alt={t("common.alt.coinGold")}
                       width={70}
                       height={70}
                       className="object-contain"
@@ -1464,17 +1464,17 @@ const Navbar = () => {
                   <div className="relative w-20 h-20 rounded-full overflow-hidden group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
                     <Image
                       src="/images/products/shemsh.png"
-                      alt="شمش طلا"
+                      alt={t("common.alt.meltedGold")}
                       width={70}
                       height={70}
                       className="object-contain"
                     />
                   </div>
                   <span className="text-white font-semibold text-lg">
-                    شمش طلا
+                    {t("common.alt.meltedGold")}
                   </span>
                   <span className="text-white/70 text-sm text-center">
-                    طلای آب شده
+                    {t("common.descriptions.meltedGoldTypes")}
                   </span>
                 </Link>
               </div>

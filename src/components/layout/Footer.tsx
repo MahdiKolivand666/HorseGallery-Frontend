@@ -12,31 +12,32 @@ import {
 } from "lucide-react";
 
 const Footer = () => {
+  const t = useTranslations("footer");
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
     company: [
-      { label: "درباره ما", href: "/about" },
-      { label: "تماس با ما", href: "/contact" },
-      { label: "فرصت‌های شغلی", href: "/careers" },
-      { label: "داستان ما", href: "/story" },
+      { label: t("company.about"), href: "/about" },
+      { label: t("company.contact"), href: "/contact" },
+      { label: t("company.careers"), href: "/careers" },
+      { label: t("company.story"), href: "/story" },
     ],
     customer: [
-      { label: "حساب کاربری", href: "/account" },
-      { label: "سفارش‌های من", href: "/orders" },
-      { label: "علاقه‌مندی‌ها", href: "/wishlist" },
-      { label: "پیگیری سفارش", href: "/track" },
+      { label: t("customer.account"), href: "/account" },
+      { label: t("customer.orders"), href: "/orders" },
+      { label: t("customer.wishlist"), href: "/wishlist" },
+      { label: t("customer.track"), href: "/track" },
     ],
     help: [
-      { label: "راهنمای خرید", href: "/guide" },
-      { label: "پرسش‌های متداول", href: "/faq" },
-      { label: "شیوه‌های پرداخت", href: "/payment" },
-      { label: "ضمانت بازگشت", href: "/return" },
+      { label: t("help.guide"), href: "/guide" },
+      { label: t("help.faq"), href: "/faq" },
+      { label: t("help.payment"), href: "/payment" },
+      { label: t("help.return"), href: "/return" },
     ],
     legal: [
-      { label: "قوانین و مقررات", href: "/terms" },
-      { label: "حریم خصوصی", href: "/privacy" },
-      { label: "شرایط استفاده", href: "/conditions" },
+      { label: t("legal.terms"), href: "/terms" },
+      { label: t("legal.privacy"), href: "/privacy" },
+      { label: t("legal.conditions"), href: "/conditions" },
     ],
   };
 
@@ -84,9 +85,7 @@ const Footer = () => {
 
             {/* Description */}
             <p className="text-white/80 text-sm leading-relaxed mb-6 text-center md:text-right">
-              گالری اسب، فروشگاه آنلاین محصولات با کیفیت. ما با ارائه بهترین
-              کالاها و خدمات، تلاش می‌کنیم تجربه خریدی لذت‌بخش و به‌یادماندنی
-              برای شما فراهم کنیم.
+              {t("description")}
             </p>
 
             {/* Social Links */}
@@ -111,7 +110,7 @@ const Footer = () => {
             {/* Company Links */}
             <div className="lg:order-2 text-center lg:text-right">
               <h3 className="text-white font-semibold text-sm lg:text-base mb-3 lg:mb-4">
-                شرکت
+                {t("sections.company")}
               </h3>
               <ul className="space-y-2 lg:space-y-2.5">
                 {footerLinks.company.map((link) => (
@@ -130,7 +129,7 @@ const Footer = () => {
             {/* Customer Links */}
             <div className="lg:order-3 text-center lg:text-right">
               <h3 className="text-white font-semibold text-sm lg:text-base mb-3 lg:mb-4">
-                خدمات مشتریان
+                {t("sections.customer")}
               </h3>
               <ul className="space-y-2 lg:space-y-2.5">
                 {footerLinks.customer.map((link) => (
@@ -149,7 +148,7 @@ const Footer = () => {
             {/* Help Links */}
             <div className="lg:order-4 text-center lg:text-right">
               <h3 className="text-white font-semibold text-sm lg:text-base mb-3 lg:mb-4">
-                راهنما
+                {t("sections.help")}
               </h3>
               <ul className="space-y-2 lg:space-y-2.5">
                 {footerLinks.help.map((link) => (
@@ -173,8 +172,8 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto py-3 px-4">
           <div className="flex justify-center items-center">
             {/* Copyright */}
-            <p className="text-white/70 text-xs text-center">
-              © {currentYear} گالری اسب. تمامی حقوق محفوظ است.
+            <p className="text-white/70 text-xs text-center leading-relaxed">
+              {t("copyright", { year: currentYear })}
             </p>
           </div>
         </div>

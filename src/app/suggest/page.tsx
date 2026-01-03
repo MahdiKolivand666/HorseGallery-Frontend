@@ -149,7 +149,7 @@ export default function SuggestPage() {
       <div className="relative w-full h-80 sm:h-96 lg:h-[28rem]">
         <Image
           src="/images/aboutUs/bridal.webp"
-          alt="پیشنهادات ویژه"
+          alt={t("alt.specialOffers")}
           fill
           className="object-cover"
           priority

@@ -45,7 +45,7 @@ const FAQSection = ({ faqs }: Props) => {
           >
             <Image
               src="/images/aboutUs/logan.webp"
-              alt="سوالات متداول"
+              alt={t("alt.faq")}
               fill
               className="object-cover"
               sizes="50vw"
@@ -64,7 +64,7 @@ const FAQSection = ({ faqs }: Props) => {
           >
             <Image
               src="/images/aboutUs/Main_Photos1.webp"
-              alt="سوالات متداول"
+              alt={t("alt.faq")}
               fill
               className="object-cover"
               sizes="100vw"

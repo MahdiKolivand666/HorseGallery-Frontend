@@ -51,6 +51,7 @@ import {
   type Province,
   type City,
 } from "@/lib/api/location";
+import { useTranslations } from "next-intl";
 
 interface CartItem {
   _id: string;
@@ -75,6 +76,7 @@ interface CartItem {
 // ✅ این صفحه فقط زمانی mount می‌شود که کاربر به /purchase/basket برود
 // ⚠️ مهم: استفاده از dynamic import برای جلوگیری از pre-fetch
 function CheckoutPage() {
+  const t = useTranslations("checkout");
   const router = useRouter();
   const pathname = usePathname();
   const {
@@ -159,14 +161,14 @@ function CheckoutPage() {
           setProvinces(data);
         } catch (error) {
           console.error("Error fetching provinces:", error);
-          toast.error("خطا در دریافت لیست استان‌ها");
+          toast.error(t("error.fetchProvinces"));
         } finally {
           setIsLoadingProvinces(false);
         }
       };
       fetchProvinces();
     }
-  }, [isAddressModalOpen, provinces.length]);
+  }, [isAddressModalOpen, provinces.length, t]);
 
   // ✅ دریافت لیست شهرها هنگام تغییر استان
   useEffect(() => {
@@ -181,15 +183,13 @@ function CheckoutPage() {
           });
 
           if (data.length === 0) {
-            toast.error(
-              "شهری برای این استان یافت نشد. لطفاً با پشتیبانی تماس بگیرید."
-            );
+            toast.error(t("error.noCities"));
           } else {
             setCities(data);
           }
         } catch (error) {
           console.error("Error fetching cities:", error);
-          toast.error("خطا در دریافت لیست شهرها");
+          toast.error(t("error.fetchCities"));
           setCities([]);
         } finally {
           setIsLoadingCities(false);
@@ -200,7 +200,7 @@ function CheckoutPage() {
       setCities([]);
       setAddressForm((prev) => ({ ...prev, city: "" }));
     }
-  }, [selectedProvinceExternalId, provinces]);
+  }, [selectedProvinceExternalId, provinces, t]);
 
   const loadAddresses = async () => {
     setIsLoadingAddresses(true);
@@ -242,11 +242,11 @@ function CheckoutPage() {
         // ✅ اگر در حال edit هستیم، updateAddress صدا بزنیم
         if (editingAddressId) {
           await updateAddress(editingAddressId, validatedData);
-          toast.success("آدرس با موفقیت به‌روزرسانی شد");
+          toast.success(t("success.addressUpdated"));
         } else {
           // ✅ اگر آدرس جدید است، createAddress صدا بزنیم
           await createAddress(validatedData);
-          toast.success("آدرس با موفقیت اضافه شد");
+          toast.success(t("success.addressAdded"));
         }
 
         // Reset form and close modal
@@ -282,7 +282,7 @@ function CheckoutPage() {
           statusCode?: number;
         };
         if (errorWithCode.code === "MAX_ADDRESSES_EXCEEDED") {
-          toast.error("بیشتر از ۲ آدرس نمی‌توانید اضافه کنید");
+          toast.error(t("error.maxAddresses"));
           // ✅ بستن modal و reload addresses
           setIsAddressModalOpen(false);
           await loadAddresses();
@@ -290,7 +290,7 @@ function CheckoutPage() {
         }
 
         const errorMessage =
-          error instanceof Error ? error.message : "خطا در ذخیره آدرس";
+          error instanceof Error ? error.message : t("error.saveAddress");
         toast.error(errorMessage);
       } finally {
         setIsSavingAddress(false);
@@ -308,7 +308,7 @@ function CheckoutPage() {
         setFormErrors(errors);
       } else {
         console.error("Validation error:", error);
-        toast.error("خطا در اعتبارسنجی فرم. لطفاً فیلدها را بررسی کنید.");
+        toast.error(t("error.validation"));
       }
     }
   };
@@ -367,7 +367,7 @@ function CheckoutPage() {
   const handleAddNewAddress = () => {
     // ✅ محدودیت 2 آدرس
     if (addresses.length >= 2) {
-      toast.error("بیشتر از ۲ آدرس نمی‌توانید اضافه کنید");
+      toast.error(t("error.maxAddresses"));
       return;
     }
 
@@ -412,12 +412,12 @@ function CheckoutPage() {
       if (selectedAddressId === deleteConfirm.addressId) {
         setSelectedAddressId(null);
       }
-      toast.success("آدرس با موفقیت حذف شد");
+      toast.success(t("success.addressDeleted"));
       setDeleteConfirm({ isOpen: false, addressId: null });
     } catch (error) {
       console.error("Error deleting address:", error);
       const errorMessage =
-        error instanceof Error ? error.message : "خطا در حذف آدرس";
+        error instanceof Error ? error.message : t("error.deleteAddress");
       toast.error(errorMessage);
     }
   };
@@ -425,7 +425,7 @@ function CheckoutPage() {
   // ✅ Handler برای پرداخت - با error handling برای cart expired
   const handlePayment = async () => {
     if (!cart?.cart?._id || !selectedAddressId) {
-      alert("لطفاً آدرس و روش ارسال را انتخاب کنید");
+      alert(t("error.selectAddress"));
       return;
     }
 
@@ -444,7 +444,7 @@ function CheckoutPage() {
       if (order.data.paymentUrl) {
         window.location.href = order.data.paymentUrl;
       } else {
-        alert("سفارش با موفقیت ایجاد شد");
+        alert(t("success.orderCreated"));
         // TODO: redirect to order details page
       }
     } catch (error: unknown) {
@@ -463,9 +463,7 @@ function CheckoutPage() {
       ) {
         // ✅ Cart از database حذف شده است
         clearCart();
-        alert(
-          "زمان شما تمام شده است. لطفاً مجدداً محصول را به سبد خرید اضافه کنید"
-        );
+        alert(t("error.cartExpired"));
         router.push("/products");
         return;
       }
@@ -473,7 +471,7 @@ function CheckoutPage() {
       // Handle سایر errors
       alert(
         errorWithDetails.message ||
-          (error instanceof Error ? error.message : "خطا در ایجاد سفارش")
+          (error instanceof Error ? error.message : t("error.createOrder"))
       );
     } finally {
       setIsProcessingPayment(false);
@@ -608,7 +606,7 @@ function CheckoutPage() {
       unitOriginalPrice: item.unitOriginalPrice,
       quantity: item.quantity,
       code: product.code,
-      weight: product.weight || "نامشخص",
+      weight: product.weight || t("cart.product.unknown"),
       size: item.size,
       slug: product.slug,
       category: categorySlug,
@@ -662,7 +660,7 @@ function CheckoutPage() {
           className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-3 group"
         >
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          <span className="text-sm">بازگشت به صفحه اصلی</span>
+          <span className="text-sm">{t("cart.backToHome")}</span>
         </Link>
 
         {/* Tabs */}
@@ -678,7 +676,7 @@ function CheckoutPage() {
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            ۱. سبد خرید
+            {t("tabs.cart")}
             {activeTab === "cart" && !isEmpty && !isExpired && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
             )}
@@ -694,7 +692,7 @@ function CheckoutPage() {
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            ۲. آدرس و نحوه ارسال
+            {t("tabs.shipping")}
             {activeTab === "shipping" && !isEmpty && !isExpired && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
             )}
@@ -710,7 +708,7 @@ function CheckoutPage() {
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            ۳. پرداخت
+            {t("tabs.payment")}
             {activeTab === "payment" && !isEmpty && !isExpired && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
             )}
@@ -726,7 +724,7 @@ function CheckoutPage() {
                 <div className="inline-block px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
                   <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2">
                     <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                    سبد خرید شما خالی است
+                    {t("cart.empty")}
                   </p>
                 </div>
               </div>
@@ -736,11 +734,11 @@ function CheckoutPage() {
                 <div className="inline-block px-6 py-4 bg-red-100 border border-red-300 rounded-lg text-center">
                   <p className="text-base font-bold text-red-800 mb-2 flex items-center justify-center gap-2">
                     <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    مدت زمان خرید شما به پایان رسیده است
+                    {t("cart.expired.title")}
                   </p>
                   <p className="text-sm text-red-700 flex items-center justify-center gap-2">
                     <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
-                    لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید
+                    {t("cart.expired.message")}
                   </p>
                 </div>
               </div>
@@ -783,7 +781,7 @@ function CheckoutPage() {
                         <button
                           onClick={() => handleRemoveItem(item._id)}
                           className="p-1 text-red-500 hover:bg-red-50 transition-colors flex-shrink-0 mr-2"
-                          aria-label="حذف"
+                          aria-label={t("address.delete")}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -801,7 +799,7 @@ function CheckoutPage() {
                           ? `${englishToPersian(
                               String(item.goldInfo.weight)
                             )} گرم`
-                          : "نامشخص"}
+                          : t("cart.product.unknown")}
                       </p>
 
                       {/* Size/MintYear and Price */}
@@ -868,7 +866,7 @@ function CheckoutPage() {
                       <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded inline-block text-center tabular-nums min-w-[3rem]">
                         {formatTime(timeLeft)}
                       </span>{" "}
-                      زمان دارید!
+                      {t("cart.timeLeft")}
                     </p>
                   </div>
                 </div>
@@ -878,7 +876,7 @@ function CheckoutPage() {
                   {/* Subtotal */}
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-white">مجموع مبلغ کالاهای سبد</span>
+                      <span className="text-white">{t("cart.subtotal")}</span>
                       <span className="text-xs text-white/80">
                         ({totalItems.toLocaleString("fa-IR")} کالا)
                       </span>
@@ -891,7 +889,7 @@ function CheckoutPage() {
                   {/* Discount */}
                   {totalDiscount > 0 && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-white">مجموع تخفیف محصولات</span>
+                      <span className="text-white">{t("cart.discount")}</span>
                       <span className="font-medium text-red-400">
                         {totalDiscount.toLocaleString("fa-IR")} تومان
                       </span>
@@ -900,7 +898,7 @@ function CheckoutPage() {
 
                   {/* Wallet */}
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-white">کیف پول</span>
+                    <span className="text-white">{t("cart.wallet")}</span>
                     <span className="font-medium text-white">
                       {walletAmount.toLocaleString("fa-IR")} تومان
                     </span>
@@ -908,9 +906,11 @@ function CheckoutPage() {
 
                   {/* Shipping */}
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-white">هزینه ارسال</span>
+                    <span className="text-white">{t("cart.shipping")}</span>
                     {shippingCost === 0 ? (
-                      <span className="font-medium text-white">رایگان</span>
+                      <span className="font-medium text-white">
+                        {t("cart.free")}
+                      </span>
                     ) : (
                       <span className="font-medium text-white">
                         {shippingCost.toLocaleString("fa-IR")} تومان
@@ -943,7 +943,9 @@ function CheckoutPage() {
                         : "bg-white hover:bg-white/90 text-primary"
                     }`}
                   >
-                    {isEmpty || isExpired ? "زمان تمام شده" : "ادامه خرید"}
+                    {isEmpty || isExpired
+                      ? t("cart.expiredButton")
+                      : t("cart.continue")}
                   </button>
                 </div>
               </div>
@@ -960,7 +962,7 @@ function CheckoutPage() {
                 <div className="inline-block px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
                   <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2">
                     <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                    سبد خرید شما خالی است
+                    {t("cart.empty")}
                   </p>
                 </div>
               </div>
@@ -970,11 +972,11 @@ function CheckoutPage() {
                 <div className="inline-block px-6 py-4 bg-red-100 border border-red-300 rounded-lg text-center">
                   <p className="text-base font-bold text-red-800 mb-2 flex items-center justify-center gap-2">
                     <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    مدت زمان خرید شما به پایان رسیده است
+                    {t("cart.expired.title")}
                   </p>
                   <p className="text-sm text-red-700 flex items-center justify-center gap-2">
                     <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
-                    لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید
+                    {t("cart.expired.message")}
                   </p>
                 </div>
               </div>
@@ -995,7 +997,7 @@ function CheckoutPage() {
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors rounded bg-primary hover:bg-primary/90 text-white"
                   >
                     <span>+</span>
-                    <span>افزودن آدرس جدید</span>
+                    <span>{t("address.addNew")}</span>
                   </button>
                 </div>
 
@@ -1005,7 +1007,7 @@ function CheckoutPage() {
                   </p>
                 ) : addresses.length === 0 ? (
                   <p className="text-gray-500 text-center py-8 text-sm">
-                    هنوز آدرسی ثبت نشده است
+                    {t("address.noAddress")}
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -1072,7 +1074,7 @@ function CheckoutPage() {
                                 handleEditAddress(addr);
                               }}
                               className="p-2 text-primary hover:bg-primary/10 transition-colors rounded border border-primary/30"
-                              aria-label="ویرایش آدرس"
+                              aria-label={t("address.edit")}
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
@@ -1082,7 +1084,7 @@ function CheckoutPage() {
                                 handleDeleteAddress(addr._id);
                               }}
                               className="p-2 text-red-600 hover:bg-red-50 transition-colors rounded border border-red-300"
-                              aria-label="حذف آدرس"
+                              aria-label={t("address.delete")}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -1104,11 +1106,11 @@ function CheckoutPage() {
                 <div className="flex items-center gap-2 mb-4">
                   <Truck className="w-5 h-5 text-primary" />
                   <h3 className="text-base font-bold text-gray-900">
-                    نحوه ارسال
+                    {t("address.shippingMethod")}
                   </h3>
                 </div>
                 <p className="text-gray-500 text-center py-8 text-sm">
-                  انتخاب نحوه ارسال
+                  {t("address.selectShipping")}
                 </p>
               </div>
             </div>
@@ -1125,7 +1127,7 @@ function CheckoutPage() {
                       <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded inline-block text-center tabular-nums min-w-[3rem]">
                         {formatTime(timeLeft)}
                       </span>{" "}
-                      زمان دارید!
+                      {t("cart.timeLeft")}
                     </p>
                   </div>
                 </div>
@@ -1143,7 +1145,7 @@ function CheckoutPage() {
                           وزن:{" "}
                           {item.weight
                             ? englishToPersian(item.weight)
-                            : "نامشخص"}
+                            : t("cart.product.unknown")}
                         </p>
                         {/* برای سکه: سال ضرب، برای بقیه: سایز */}
                         {item.productType === "coin" &&
@@ -1178,7 +1180,7 @@ function CheckoutPage() {
                   {/* Subtotal */}
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-white">مجموع مبلغ کالاهای سبد</span>
+                      <span className="text-white">{t("cart.subtotal")}</span>
                       <span className="text-xs text-white/80">
                         ({totalItems.toLocaleString("fa-IR")} کالا)
                       </span>
@@ -1191,7 +1193,7 @@ function CheckoutPage() {
                   {/* Discount */}
                   {totalDiscount > 0 && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-white">مجموع تخفیف محصولات</span>
+                      <span className="text-white">{t("cart.discount")}</span>
                       <span className="font-medium text-red-300">
                         {totalDiscount.toLocaleString("fa-IR")} تومان
                       </span>
@@ -1200,7 +1202,7 @@ function CheckoutPage() {
 
                   {/* Wallet */}
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-white">کیف پول</span>
+                    <span className="text-white">{t("cart.wallet")}</span>
                     <span className="font-medium text-white">
                       {walletAmount.toLocaleString("fa-IR")} تومان
                     </span>
@@ -1208,9 +1210,11 @@ function CheckoutPage() {
 
                   {/* Shipping */}
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-white">هزینه ارسال</span>
+                    <span className="text-white">{t("cart.shipping")}</span>
                     {shippingCost === 0 ? (
-                      <span className="font-medium text-white">رایگان</span>
+                      <span className="font-medium text-white">
+                        {t("cart.free")}
+                      </span>
                     ) : (
                       <span className="font-medium text-white">
                         {shippingCost.toLocaleString("fa-IR")} تومان
@@ -1243,7 +1247,9 @@ function CheckoutPage() {
                         : "bg-white hover:bg-white/90 text-primary"
                     }`}
                   >
-                    {isEmpty || isExpired ? "زمان تمام شده" : "ادامه خرید"}
+                    {isEmpty || isExpired
+                      ? t("cart.expiredButton")
+                      : t("cart.continue")}
                   </button>
                 </div>
               </div>
@@ -1260,7 +1266,7 @@ function CheckoutPage() {
                 <div className="inline-block px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
                   <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2">
                     <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                    سبد خرید شما خالی است
+                    {t("cart.empty")}
                   </p>
                 </div>
               </div>
@@ -1270,11 +1276,11 @@ function CheckoutPage() {
                 <div className="inline-block px-6 py-4 bg-red-100 border border-red-300 rounded-lg text-center">
                   <p className="text-base font-bold text-red-800 mb-2 flex items-center justify-center gap-2">
                     <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    مدت زمان خرید شما به پایان رسیده است
+                    {t("cart.expired.title")}
                   </p>
                   <p className="text-sm text-red-700 flex items-center justify-center gap-2">
                     <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
-                    لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید
+                    {t("cart.expired.message")}
                   </p>
                 </div>
               </div>
@@ -1309,13 +1315,13 @@ function CheckoutPage() {
                     <div className="relative w-8 h-8 flex-shrink-0">
                       <Image
                         src="/images/logo/saman.png"
-                        alt="بانک سامان"
+                        alt={t("payment.gateways.saman")}
                         fill
                         className="object-contain"
                       />
                     </div>
                     <span className="text-sm text-gray-900">
-                      درگاه پرداخت بانک سامان
+                      {t("payment.saman")}
                     </span>
                   </div>
                   <div
@@ -1337,13 +1343,13 @@ function CheckoutPage() {
                     <div className="relative w-8 h-8 flex-shrink-0">
                       <Image
                         src="/images/logo/mellatbank.png"
-                        alt="بانک ملت"
+                        alt={t("payment.gateways.mellat")}
                         fill
                         className="object-contain"
                       />
                     </div>
                     <span className="text-sm text-gray-900">
-                      درگاه پرداخت بانک ملت
+                      {t("payment.mellat")}
                     </span>
                   </div>
                   <div
@@ -1368,7 +1374,7 @@ function CheckoutPage() {
                       </span>
                     </div>
                     <span className="text-sm text-gray-900">
-                      درگاه پرداخت زرین‌پال
+                      {t("payment.zarinpal")}
                     </span>
                   </div>
                 </div>
@@ -1392,7 +1398,7 @@ function CheckoutPage() {
                   <div className="flex gap-3 flex-1 items-start">
                     <input
                       type="text"
-                      placeholder="کد تخفیف خود را وارد کنید"
+                      placeholder={t("form.discountCode.placeholder")}
                       className="flex-1 px-4 py-2.5 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
                     />
                     <button className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium transition-colors whitespace-nowrap rounded">
@@ -1444,7 +1450,7 @@ function CheckoutPage() {
                       <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded inline-block text-center tabular-nums min-w-[3rem]">
                         {formatTime(timeLeft)}
                       </span>{" "}
-                      زمان دارید!
+                      {t("cart.timeLeft")}
                     </p>
                   </div>
                 </div>
@@ -1461,7 +1467,7 @@ function CheckoutPage() {
                             وزن:{" "}
                             {item.weight
                               ? englishToPersian(item.weight)
-                              : "نامشخص"}
+                              : t("cart.product.unknown")}
                           </p>
                           {/* برای سکه: سال ضرب، برای بقیه: سایز */}
                           {item.productType === "coin" &&
@@ -1491,27 +1497,27 @@ function CheckoutPage() {
                 {/* Price Summary */}
                 <div className="space-y-3 mb-5">
                   <div className="flex items-center justify-between text-sm">
-                    <span>مبلغ کل کالاها:</span>
+                    <span>{t("cart.totalItems")}</span>
                     <span className="font-medium">
                       {cartSubtotal.toLocaleString("fa-IR")} تومان
                     </span>
                   </div>
                   {totalDiscount > 0 && (
                     <div className="flex items-center justify-between text-sm">
-                      <span>مجموع تخفیف محصولات:</span>
+                      <span>{t("cart.totalDiscount")}</span>
                       <span className="font-medium text-red-300">
                         {totalDiscount.toLocaleString("fa-IR")} تومان
                       </span>
                     </div>
                   )}
                   <div className="flex items-center justify-between text-sm">
-                    <span>کیف پول:</span>
+                    <span>{t("cart.walletLabel")}</span>
                     <span className="font-medium">
                       {walletAmount.toLocaleString("fa-IR")} تومان
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span>هزینه ارسال:</span>
+                    <span>{t("cart.shippingLabel")}</span>
                     <span className="font-medium">
                       {shippingCost.toLocaleString("fa-IR")} تومان
                     </span>
@@ -1558,12 +1564,12 @@ function CheckoutPage() {
                   }`}
                 >
                   {isEmpty || isExpired
-                    ? "زمان تمام شده"
+                    ? t("cart.expiredButton")
                     : isProcessingPayment
-                    ? "در حال پردازش..."
+                    ? t("common.loading")
                     : !selectedAddressId
-                    ? "لطفاً آدرس را انتخاب کنید"
-                    : "پرداخت آنلاین"}
+                    ? t("error.selectAddress")
+                    : t("payment.online")}
                 </button>
               </div>
             </div>
@@ -1606,7 +1612,7 @@ function CheckoutPage() {
                   setMobileDisplay("");
                 }}
                 className="p-0.5 rounded hover:bg-gray-50 transition-colors"
-                aria-label="بستن"
+                aria-label={t("common.close")}
               >
                 <span className="text-3xl text-gray-600">×</span>
               </button>
@@ -1626,7 +1632,9 @@ function CheckoutPage() {
                   <div className="flex items-center gap-2 mb-6">
                     <MapPin className="w-5 h-5 text-primary" />
                     <h3 className="text-lg font-bold text-primary">
-                      {editingAddressId ? "ویرایش آدرس" : "آدرس جدید"}
+                      {editingAddressId
+                        ? t("address.edit")
+                        : t("address.addNew")}
                     </h3>
                   </div>
                   <div className="space-y-2.5">
@@ -1648,7 +1656,7 @@ function CheckoutPage() {
                           if (value && !/^[\u0600-\u06FF\s،]+$/.test(value)) {
                             setFormErrors({
                               ...formErrors,
-                              title: "عنوان آدرس باید فقط به فارسی وارد شود",
+                              title: t("form.title.error"),
                             });
                             return;
                           }
@@ -1666,7 +1674,7 @@ function CheckoutPage() {
                             ? "border-red-500"
                             : "border-gray-300"
                         }`}
-                        placeholder="مثلاً: منزل، محل کار"
+                        placeholder={t("form.title.placeholder")}
                       />
                       <FieldError error={formErrors.title} />
                     </div>
@@ -1727,8 +1735,8 @@ function CheckoutPage() {
                         >
                           <option value="" className="text-gray-400">
                             {isLoadingProvinces
-                              ? "در حال بارگذاری..."
-                              : "انتخاب استان"}
+                              ? t("common.loading")
+                              : t("form.province.select")}
                           </option>
                           {provinces.map((province) => (
                             <option
@@ -1775,10 +1783,10 @@ function CheckoutPage() {
                         >
                           <option value="" className="text-gray-400">
                             {!selectedProvinceExternalId
-                              ? "ابتدا استان را انتخاب کنید"
+                              ? t("form.city.selectProvince")
                               : isLoadingCities
-                              ? "در حال بارگذاری..."
-                              : "انتخاب شهر"}
+                              ? t("common.loading")
+                              : t("form.city.select")}
                           </option>
                           {cities.map((city) => (
                             <option key={city._id} value={city.name}>
@@ -1831,7 +1839,7 @@ function CheckoutPage() {
                             ? "border-red-500"
                             : "border-gray-300"
                         }`}
-                        placeholder="کد پستی ۱۰ رقمی"
+                        placeholder={t("form.postalCode.placeholder")}
                         dir="ltr"
                         inputMode="numeric"
                       />
@@ -1864,7 +1872,7 @@ function CheckoutPage() {
                           ) {
                             setFormErrors({
                               ...formErrors,
-                              address: "آدرس باید فقط به فارسی وارد شود",
+                              address: t("form.address.error"),
                             });
                             return;
                           }
@@ -1884,7 +1892,7 @@ function CheckoutPage() {
                             ? "border-red-500"
                             : "border-gray-300"
                         }`}
-                        placeholder="آدرس کامل خود را وارد کنید..."
+                        placeholder={t("form.address.placeholder")}
                       />
                       <FieldError error={formErrors.address} />
                     </div>
@@ -1929,7 +1937,7 @@ function CheckoutPage() {
                             if (value && !isPersianOnly(value)) {
                               setFormErrors({
                                 ...formErrors,
-                                firstName: "نام باید فقط به فارسی وارد شود",
+                                firstName: t("form.firstName.error"),
                               });
                               return;
                             }
@@ -1949,7 +1957,7 @@ function CheckoutPage() {
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
-                          placeholder="نام"
+                          placeholder={t("form.firstName.placeholder")}
                         />
                         <FieldError error={formErrors.firstName} />
                       </div>
@@ -1971,8 +1979,7 @@ function CheckoutPage() {
                             if (value && !isPersianOnly(value)) {
                               setFormErrors({
                                 ...formErrors,
-                                lastName:
-                                  "نام خانوادگی باید فقط به فارسی وارد شود",
+                                lastName: t("form.lastName.error"),
                               });
                               return;
                             }
@@ -1992,7 +1999,7 @@ function CheckoutPage() {
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
-                          placeholder="نام خانوادگی"
+                          placeholder={t("form.lastName.placeholder")}
                         />
                         <FieldError error={formErrors.lastName} />
                       </div>
@@ -2042,7 +2049,7 @@ function CheckoutPage() {
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
-                          placeholder="کد ملی ۱۰ رقمی"
+                          placeholder={t("form.nationalId.placeholder")}
                           dir="ltr"
                           inputMode="numeric"
                         />
@@ -2091,7 +2098,7 @@ function CheckoutPage() {
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
-                          placeholder="۰۹۱۲۳۴۵۶۷۸۹"
+                          placeholder={t("form.mobile.placeholder")}
                           dir="ltr"
                           inputMode="numeric"
                         />
@@ -2170,7 +2177,7 @@ function CheckoutPage() {
                           ) {
                             setFormErrors({
                               ...formErrors,
-                              notes: "توضیحات باید فقط به فارسی وارد شود",
+                              notes: t("form.notes.error"),
                             });
                             return;
                           }
@@ -2187,7 +2194,7 @@ function CheckoutPage() {
                             ? "border-red-500"
                             : "border-gray-300"
                         }`}
-                        placeholder="توضیحات تکمیلی ..."
+                        placeholder={t("form.notes.placeholder")}
                       />
                       <FieldError error={formErrors.notes} />
                     </div>
@@ -2237,10 +2244,10 @@ function CheckoutPage() {
                   className="flex-1 sm:flex-none px-6 sm:px-12 py-2 bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm font-medium transition-colors rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSavingAddress
-                    ? "در حال ذخیره..."
+                    ? t("form.saving")
                     : editingAddressId
-                    ? "به‌روزرسانی آدرس"
-                    : "ذخیره آدرس"}
+                    ? t("form.update")
+                    : t("form.save")}
                 </button>
               </div>
             </div>
@@ -2299,14 +2306,14 @@ function CheckoutPage() {
                         setDeleteConfirm({ isOpen: false, addressId: null })
                       }
                     >
-                      لغو
+                      {t("deleteConfirm.cancel")}
                     </button>
                     <button
                       type="button"
                       className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
                       onClick={confirmDeleteAddress}
                     >
-                      حذف
+                      {t("deleteConfirm.confirm")}
                     </button>
                   </div>
                 </Dialog.Panel>

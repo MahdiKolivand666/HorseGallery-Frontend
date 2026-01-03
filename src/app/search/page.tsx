@@ -16,6 +16,7 @@ import {
 import { searchProducts, SearchResponse } from "@/lib/api/products";
 
 export default function SearchPage() {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
   const [searchResults, setSearchResults] = useState<SearchResponse | null>(
@@ -99,7 +100,7 @@ export default function SearchPage() {
         <div className="relative w-full h-64 sm:h-80 lg:h-96">
           <Image
             src="/images/aboutUs/search.webp"
-            alt="جستجو در محصولات"
+            alt={t("search.alt.search")}
             fill
             className="object-cover"
             priority
@@ -108,10 +109,10 @@ export default function SearchPage() {
             <div className="text-center">
               <Search className="w-16 h-16 text-white mx-auto mb-4 drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]" />
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] tracking-wide">
-                جستجو در محصولات
+                {t("search.title")}
               </h1>
-              <p className="text-white mt-4 text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
-                لطفاً کلمه کلیدی خود را در باکس جستجو وارد کنید
+              <p className="text-white mt-4 text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] leading-relaxed">
+                {t("search.description")}
               </p>
             </div>
           </div>
@@ -120,7 +121,7 @@ export default function SearchPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
             <p className="text-gray-600">
-              از منوی بالا می‌توانید محصولات را جستجو کنید
+              {t("search.emptyDescription")}
             </p>
           </div>
         </div>
@@ -134,7 +135,7 @@ export default function SearchPage() {
       <div className="relative w-full h-64 sm:h-80 lg:h-96">
         <Image
           src="/images/aboutUs/search.webp"
-          alt="نتایج جستجو"
+          alt={t("search.alt.results")}
           fill
           className="object-cover"
           priority
@@ -346,7 +347,7 @@ export default function SearchPage() {
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
                       className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      aria-label="صفحه قبل"
+                      aria-label={t("common.ariaLabels.previousPage")}
                     >
                       <ChevronRight className="w-5 h-5 text-gray-600" />
                     </button>
@@ -383,7 +384,7 @@ export default function SearchPage() {
                         currentPage === searchResults.pagination.totalPages
                       }
                       className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      aria-label="صفحه بعد"
+                      aria-label={t("common.ariaLabels.nextPage")}
                     >
                       <ChevronLeft className="w-5 h-5 text-gray-600" />
                     </button>

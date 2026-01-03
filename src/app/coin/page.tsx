@@ -113,7 +113,7 @@ export default function CoinPage() {
       <div className="relative w-full h-64 sm:h-80 lg:h-96">
         <Image
           src="/images/headerwallp/coinwall2.png"
-          alt="سکه طلا"
+          alt={t("alt.coinGold")}
           fill
           className="object-cover"
           priority
@@ -191,7 +191,7 @@ export default function CoinPage() {
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
               className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
-              aria-label="صفحه قبل"
+              aria-label={t("ariaLabels.previousPage")}
             >
               <ChevronRight className="w-5 h-5 text-gray-600" />
             </button>
@@ -223,7 +223,7 @@ export default function CoinPage() {
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
               className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
-              aria-label="صفحه بعد"
+              aria-label={t("ariaLabels.nextPage")}
             >
               <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>

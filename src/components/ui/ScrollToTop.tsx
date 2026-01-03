@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 const ScrollToTop = () => {
+  const t = useTranslations("common");
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -40,7 +42,7 @@ const ScrollToTop = () => {
           transition={{ duration: 0.2 }}
           onClick={scrollToTop}
           className="fixed bottom-6 right-6 z-50 bg-primary hover:bg-primary/90 text-white p-2 shadow-lg transition-all hover:shadow-xl rounded-lg"
-          aria-label="برگشت به بالا"
+          aria-label={t("ariaLabels.scrollToTop")}
         >
           <ChevronUp className="w-5 h-5" />
         </motion.button>

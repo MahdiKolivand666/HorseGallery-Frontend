@@ -24,6 +24,7 @@ import GoldInfoCard from "@/components/GoldInfoCard";
 import AuthModal from "@/components/auth/AuthModal";
 import { ErrorHandler } from "@/lib/utils/errorHandler";
 import { englishToPersian, persianToEnglish } from "@/lib/utils/persianNumber";
+import { useTranslations } from "next-intl";
 
 interface ProductDetail {
   id: string | number;
@@ -66,6 +67,7 @@ interface ProductDetail {
 }
 
 const ProductDetailPage = () => {
+  const t = useTranslations("product");
   const params = useParams();
   const category = params.category as string;
   const slug = params.slug as string;
@@ -108,7 +110,7 @@ const ProductDetailPage = () => {
             slug: product.slug,
             name: product.name,
             code: product.code || "N/A",
-            category: product.category?.name || "عمومی",
+            category: product.category?.name || t("detail.defaultCategory"),
             categorySlug: product.category?.slug || category,
             subcategory: product.subcategory?.name,
             subcategorySlug: product.subcategory?.slug,
@@ -136,19 +138,20 @@ const ProductDetailPage = () => {
               // ✨ جنس: اول از material در root استفاده کن، بعد specifications
               material:
                 product.material ?? product.specifications?.material ?? "N/A",
-              brand: product.specifications?.brand ?? "گالری اسب",
+              brand: product.specifications?.brand ?? t("detail.defaultBrand"),
               dimensions: product.specifications?.dimensions ?? "N/A",
-              warranty: product.specifications?.warranty ?? "گارانتی اصالت",
+              warranty:
+                product.specifications?.warranty ?? t("detail.defaultWarranty"),
               // ✨ خلوص و سال ضرب برای سکه و شمش
               purity: product.goldInfo?.purity,
               mintYear: product.goldInfo?.mintYear,
             },
             description: product.description || "",
             features: [
-              "طلای 18 عیار با گارانتی اصالت",
-              "طراحی منحصر به فرد و دست‌ساز",
-              "قابلیت تنظیم طول زنجیر",
-              "بسته‌بندی لوکس و مناسب هدیه",
+              t("detail.defaultFeature"),
+              t("detail.features.uniqueDesign"),
+              t("detail.features.adjustableChain"),
+              t("detail.features.luxuryPackaging"),
             ],
             sizes: ["40 سانتی‌متر", "45 سانتی‌متر", "50 سانتی‌متر"],
             relatedProducts: product.relatedProducts || [],
@@ -172,7 +175,7 @@ const ProductDetailPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [slug, category]);
+  }, [slug, category, t]);
 
   // Open PhotoSwipe Gallery
   const openGallery = (startIndex: number = 0) => {
@@ -275,12 +278,12 @@ const ProductDetailPage = () => {
                 handledError.type === "generic_error" ||
                 handledError.type === "rate_limit"
                   ? handledError.message
-                  : "خطا در افزودن محصول به سبد خرید";
+                  : t("detail.error.addToCart");
               alert(errorMessage);
             }
           } else {
             console.error("Error adding to cart:", error);
-            alert("خطا در افزودن محصول به سبد خرید");
+            alert(t("detail.error.addToCart"));
           }
       }
     }
@@ -306,7 +309,7 @@ const ProductDetailPage = () => {
       <div className="min-h-screen bg-white pt-24 sm:pt-28 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">در حال بارگذاری جزئیات محصول...</p>
+          <p className="text-gray-600">{t("detail.loading")}</p>
         </div>
       </div>
     );
@@ -316,12 +319,14 @@ const ProductDetailPage = () => {
     return (
       <div className="min-h-screen bg-white pt-24 sm:pt-28 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 text-lg mb-4">محصول مورد نظر یافت نشد.</p>
+          <p className="text-gray-600 text-lg mb-4 leading-relaxed">
+            {t("detail.notFound")}
+          </p>
           <Link
             href="/"
             className="text-primary hover:text-primary/80 underline"
           >
-            بازگشت به صفحه اصلی
+            {t("detail.backToHome")}
           </Link>
         </div>
       </div>
@@ -355,7 +360,9 @@ const ProductDetailPage = () => {
                   }
                   className="text-primary hover:text-primary/80 transition-colors"
                 >
-                  {productData.productType === "coin" ? "سکه طلا" : "شمش طلا"}
+                  {productData.productType === "coin"
+                    ? t("detail.coin")
+                    : t("detail.meltedGold")}
                 </Link>
               </>
             )}
@@ -404,7 +411,8 @@ const ProductDetailPage = () => {
                 {productData.discount && productData.discount > 0 ? (
                   <div className="absolute top-4 right-4 z-20">
                     <div className="bg-red-500 text-white px-4 py-2 rounded text-sm font-bold">
-                      {productData.discount.toLocaleString("fa-IR")}٪ تخفیف
+                      {productData.discount.toLocaleString("fa-IR")}
+                      {t("detail.discountPercent")}
                     </div>
                   </div>
                 ) : (
@@ -422,7 +430,10 @@ const ProductDetailPage = () => {
                 <div className="relative aspect-square">
                   <Image
                     src={productData.images[selectedImage]}
-                    alt={`${productData.name} - تصویر ${selectedImage + 1}`}
+                    alt={t("detail.image.alt", {
+                      name: productData.name,
+                      number: selectedImage + 1,
+                    })}
                     fill
                     className="object-cover"
                     priority
@@ -448,14 +459,14 @@ const ProductDetailPage = () => {
                       <button
                         onClick={handlePrevImage}
                         className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 border border-gray-300 rounded transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
-                        aria-label="تصویر قبلی"
+                        aria-label={t("detail.image.previous")}
                       >
                         <ChevronRight className="w-5 h-5 text-gray-700" />
                       </button>
                       <button
                         onClick={handleNextImage}
                         className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 border border-gray-300 rounded transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
-                        aria-label="تصویر بعدی"
+                        aria-label={t("detail.image.next")}
                       >
                         <ChevronLeft className="w-5 h-5 text-gray-700" />
                       </button>
@@ -482,7 +493,10 @@ const ProductDetailPage = () => {
                       >
                         <Image
                           src={image}
-                          alt={`${productData.name} - تصویر ${index + 1}`}
+                          alt={t("detail.image.alt", {
+                            name: productData.name,
+                            number: index + 1,
+                          })}
                           fill
                           className="object-cover"
                           sizes="(max-width: 768px) 20vw, 80px"
@@ -504,7 +518,7 @@ const ProductDetailPage = () => {
 
               {/* Product Code */}
               <p className="text-sm text-gray-500 mb-4 text-right">
-                کد محصول: {productData.code}
+                {t("detail.code")} {productData.code}
               </p>
 
               {/* Divider */}
@@ -515,13 +529,13 @@ const ProductDetailPage = () => {
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium text-gray-900">
-                      سایزهای موجود:
+                      {t("detail.sizes.available")}
                     </span>
                     <Link
                       href="#"
                       className="text-xs text-primary hover:text-primary/80 transition-colors border border-primary rounded px-3 py-1.5"
                     >
-                      راهنمای انتخاب سایز
+                      {t("detail.sizes.guide")}
                     </Link>
                   </div>
                   <div className="flex gap-2 justify-start">
@@ -617,34 +631,35 @@ const ProductDetailPage = () => {
                       </span>
                       <div className="flex-1 border-b border-dotted border-gray-300" />
                       <span className="text-gray-700 whitespace-nowrap">
-                        ۲۵۰,۰۰۰ تومان
+                        {t("detail.specifications.commission")}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-gray-900 font-medium whitespace-nowrap">
-                        نوع پوشش
+                        {t("detail.specifications.coatingType")}
                       </span>
                       <div className="flex-1 border-b border-dotted border-gray-300" />
                       <span className="text-gray-700 whitespace-nowrap">
-                        آبکاری طلا
+                        {t("detail.features.goldPlating")}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-gray-900 font-medium whitespace-nowrap">
-                        مناسب برای
+                        {t("detail.specifications.suitableFor")}
                       </span>
                       <div className="flex-1 border-b border-dotted border-gray-300" />
                       <span className="text-gray-700 whitespace-nowrap">
-                        خانم‌ها
+                        {t("detail.specifications.ladies")}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-gray-900 font-medium whitespace-nowrap">
-                        قیمت روز طلای 18 عیار
+                        {t("detail.features.goldPrice")}
                       </span>
                       <div className="flex-1 border-b border-dotted border-gray-300" />
                       <span className="text-gray-700 whitespace-nowrap">
-                        {productData.goldPrice.toLocaleString("fa-IR")} تومان
+                        {productData.goldPrice.toLocaleString("fa-IR")}{" "}
+                        {t("detail.price.currency")}
                       </span>
                     </div>
                   </>
@@ -662,35 +677,40 @@ const ProductDetailPage = () => {
                         {/* Badge تخفیف - بالای قیمت */}
                         <div className="flex items-center gap-2 mb-1">
                           <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
-                            {productData.discount.toLocaleString("fa-IR")}٪
-                            تخفیف
+                            {productData.discount.toLocaleString("fa-IR")}
+                            {t("detail.discountPercent")}
+                            {t("detail.discount")}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm text-gray-600">
-                            قیمت اصلی:
+                            {t("detail.price.original")}
                           </span>
                           <span className="text-lg text-gray-400 line-through">
-                            {productData.price.toLocaleString("fa-IR")} تومان
+                            {productData.price.toLocaleString("fa-IR")}{" "}
+                            {t("detail.price.currency")}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm text-gray-600">
-                            قیمت با تخفیف:
+                            {t("detail.price.withDiscount")}
                           </span>
                           <span className="text-2xl font-bold text-red-600">
                             {productData.discountPrice?.toLocaleString(
                               "fa-IR"
                             ) || productData.price.toLocaleString("fa-IR")}{" "}
-                            تومان
+                            {t("detail.price.currency")}
                           </span>
                         </div>
                       </>
                     ) : (
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-gray-600">قیمت:</span>
+                        <span className="text-sm text-gray-600">
+                          {t("detail.price.label")}
+                        </span>
                         <span className="text-2xl font-bold text-gray-900">
-                          {productData.price.toLocaleString("fa-IR")} تومان
+                          {productData.price.toLocaleString("fa-IR")}{" "}
+                          {t("detail.price.currency")}
                         </span>
                       </div>
                     )}
@@ -701,7 +721,7 @@ const ProductDetailPage = () => {
                       href="#"
                       className="text-xs text-primary hover:text-primary/80 transition-colors border border-primary rounded px-3 py-1.5 whitespace-nowrap self-start sm:self-center"
                     >
-                      نحوه محاسبه قیمت
+                      {t("detail.price.calculation")}
                     </Link>
                   )}
                 </div>
@@ -726,7 +746,7 @@ const ProductDetailPage = () => {
                   className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded transition-colors flex items-center justify-center gap-2"
                 >
                   <ShoppingCart className="w-5 h-5" />
-                  <span>افزودن به سبد خرید</span>
+                  <span>{t("detail.addToCart")}</span>
                 </button>
               </div>
 
@@ -737,25 +757,25 @@ const ProductDetailPage = () => {
                     href="/auth/guide"
                     className="text-sm text-gray-600 hover:text-primary hover:border-primary transition-colors text-center border border-gray-300 rounded px-3 py-2"
                   >
-                    راهنمای خرید
+                    {t("detail.help.buyGuide")}
                   </Link>
                   <Link
                     href="/auth/guide"
                     className="text-sm text-gray-600 hover:text-primary hover:border-primary transition-colors text-center border border-gray-300 rounded px-3 py-2"
                   >
-                    راهنمای ارسال
+                    {t("detail.help.shippingGuide")}
                   </Link>
                   <Link
                     href="/faq"
                     className="text-sm text-gray-600 hover:text-primary hover:border-primary transition-colors text-center border border-gray-300 rounded px-3 py-2"
                   >
-                    سوالات متداول
+                    {t("detail.help.faq")}
                   </Link>
                   <Link
                     href="/contact"
                     className="text-sm text-gray-600 hover:text-primary hover:border-primary transition-colors text-center border border-gray-300 rounded px-3 py-2"
                   >
-                    تماس با ما
+                    {t("detail.help.contact")}
                   </Link>
                 </div>
               </div>
@@ -771,64 +791,64 @@ const ProductDetailPage = () => {
                 <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-1.5 sm:mb-2">
                   <Image
                     src="/images/icons/free-shipping.webp"
-                    alt="ارسال رایگان"
+                    alt={t("detail.shipping.free")}
                     fill
                     className="object-contain"
                   />
                 </div>
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-0.5 sm:mb-1">
-                  ارسال رایگان
+                  {t("detail.shipping.free")}
                 </h3>
-                <p className="text-[10px] sm:text-xs text-gray-600 leading-tight">
-                  برای خریدهای بالای 5 میلیون تومان
+                <p className="text-[10px] sm:text-xs text-gray-600 leading-tight leading-relaxed">
+                  {t("detail.shipping.description")}
                 </p>
               </div>
               <div className="flex flex-col items-center text-center">
                 <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-1.5 sm:mb-2">
                   <Image
                     src="/images/icons/guarantee.webp"
-                    alt="ضمانت اصالت"
+                    alt={t("detail.warranty.title")}
                     fill
                     className="object-contain"
                   />
                 </div>
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-0.5 sm:mb-1">
-                  ضمانت اصالت
+                  {t("detail.warranty.title")}
                 </h3>
-                <p className="text-[10px] sm:text-xs text-gray-600 leading-tight">
-                  تضمین اصل بودن کالا
+                <p className="text-[10px] sm:text-xs text-gray-600 leading-tight leading-relaxed">
+                  {t("detail.warranty.description")}
                 </p>
               </div>
               <div className="hidden lg:flex flex-col items-center text-center">
                 <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-1.5 sm:mb-2">
                   <Image
                     src="/images/icons/payment.webp"
-                    alt="پرداخت امن"
+                    alt={t("detail.payment.title")}
                     fill
                     className="object-contain"
                   />
                 </div>
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-0.5 sm:mb-1">
-                  پرداخت امن
+                  {t("detail.payment.title")}
                 </h3>
-                <p className="text-[10px] sm:text-xs text-gray-600 leading-tight">
-                  درگاه پرداخت معتبر و امن
+                <p className="text-[10px] sm:text-xs text-gray-600 leading-tight leading-relaxed">
+                  {t("detail.payment.description")}
                 </p>
               </div>
               <div className="hidden lg:flex flex-col items-center text-center">
                 <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-1.5 sm:mb-2">
                   <Image
                     src="/images/icons/warranty.webp"
-                    alt="گارانتی محصولات"
+                    alt={t("detail.guarantee.title")}
                     fill
                     className="object-contain"
                   />
                 </div>
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-0.5 sm:mb-1">
-                  گارانتی محصولات
+                  {t("detail.guarantee.title")}
                 </h3>
-                <p className="text-[10px] sm:text-xs text-gray-600 leading-tight">
-                  ضمانت 7 روزه بازگشت کالا
+                <p className="text-[10px] sm:text-xs text-gray-600 leading-tight leading-relaxed">
+                  {t("detail.guarantee.description")}
                 </p>
               </div>
             </div>
@@ -875,10 +895,10 @@ const ProductDetailPage = () => {
                 >
                   <h2 className="text-sm sm:text-base md:text-lg font-medium text-gray-700">
                     {productData.productType === "coin"
-                      ? "سکه‌های مشابه"
+                      ? t("detail.related.coins")
                       : productData.productType === "melted_gold"
-                      ? "شمش‌های مشابه"
-                      : "محصولات مرتبط"}
+                      ? t("detail.related.meltedGold")
+                      : t("detail.related.products")}
                   </h2>
                 </motion.div>
 

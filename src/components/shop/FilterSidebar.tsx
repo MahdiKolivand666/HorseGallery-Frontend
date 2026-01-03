@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { SlidersHorizontal, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
+import { useTranslations } from "next-intl";
 
 export interface FilterState {
   selectedCategories: string[];
@@ -33,6 +34,7 @@ const FilterSidebar = ({
   initialFilters,
   onClearAll,
 }: FilterSidebarProps) => {
+  const tFilters = useTranslations("filters");
   // Filter states
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState([0, 900000000]);
@@ -199,33 +201,33 @@ const FilterSidebar = ({
   ];
 
   const karats = [
-    { id: "18", label: "۱۸ عیار" },
-    { id: "21", label: "۲۱ عیار" },
-    { id: "24", label: "۲۴ عیار" },
+    { id: "18", label: tFilters("options.karat.18") },
+    { id: "21", label: tFilters("options.karat.21") },
+    { id: "24", label: tFilters("options.karat.24") },
   ];
 
   const branches = [
     { id: "horse-gallery", label: "Horse Gallery" },
-    { id: "branch2", label: "شعبه 2" },
-    { id: "branch3", label: "شعبه 3" },
+    { id: "branch2", label: tFilters("options.branches.branch2") },
+    { id: "branch3", label: tFilters("options.branches.branch3") },
   ];
 
   const wages = [
-    { id: "low", label: "کم" },
-    { id: "medium", label: "متوسط" },
-    { id: "high", label: "زیاد" },
+    { id: "low", label: tFilters("options.wages.low") },
+    { id: "medium", label: tFilters("options.wages.medium") },
+    { id: "high", label: tFilters("options.wages.high") },
   ];
 
   const sizes = [
-    { id: "small", label: "کوچک" },
-    { id: "medium", label: "متوسط" },
-    { id: "large", label: "بزرگ" },
+    { id: "small", label: tFilters("options.sizes.small") },
+    { id: "medium", label: tFilters("options.sizes.medium") },
+    { id: "large", label: tFilters("options.sizes.large") },
   ];
 
   const coatings = [
-    { id: "rhodium", label: "رودیوم" },
-    { id: "gold", label: "طلا" },
-    { id: "none", label: "بدون پوشش" },
+    { id: "rhodium", label: tFilters("options.coatings.rhodium") },
+    { id: "gold", label: tFilters("options.coatings.gold") },
+    { id: "none", label: tFilters("options.coatings.none") },
   ];
 
   const toggleColor = (id: string) => {
@@ -341,7 +343,9 @@ const FilterSidebar = ({
       <div className="flex items-center justify-between p-2 border-b border-gray-200 bg-primary flex-shrink-0">
         <div className="flex items-center gap-3">
           <SlidersHorizontal className="w-5 h-5 text-white" />
-          <h2 className="text-lg font-normal text-white">فیلترها</h2>
+          <h2 className="text-lg font-normal text-white">
+            {tFilters("title")}
+          </h2>
         </div>
       </div>
 
@@ -418,7 +422,7 @@ const FilterSidebar = ({
                     ]);
                   }}
                   className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
-                  placeholder="۰"
+                  placeholder={tFilters("placeholders.min")}
                 />
               </div>
               <div className="text-right">
@@ -443,7 +447,7 @@ const FilterSidebar = ({
                     ]);
                   }}
                   className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
-                  placeholder="۹۰۰,۰۰۰,۰۰۰"
+                  placeholder={tFilters("placeholders.max")}
                 />
               </div>
             </div>
@@ -456,7 +460,9 @@ const FilterSidebar = ({
             onClick={() => toggleSection("weight")}
             className="flex items-center justify-between w-full text-right py-1"
           >
-            <h3 className="text-sm font-medium text-gray-900">وزن محصول</h3>
+            <h3 className="text-sm font-medium text-gray-900">
+              {tFilters("weight.title")}
+            </h3>
             <ChevronDown
               className={`w-4 h-4 text-gray-600 transition-transform ${
                 openSections.weight ? "rotate-180" : ""
@@ -514,7 +520,7 @@ const FilterSidebar = ({
                           ]);
                         }}
                         className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
-                        placeholder="۰"
+                        placeholder={tFilters("placeholders.min")}
                       />
                     </div>
                     <div className="text-right">
@@ -539,7 +545,7 @@ const FilterSidebar = ({
                           ]);
                         }}
                         className="w-full px-2 py-1.5 border border-gray-300 bg-[#faf6f0] text-sm text-gray-900 focus:border-primary focus:outline-none text-center"
-                        placeholder="۱۰۰"
+                        placeholder={tFilters("placeholders.percentage")}
                       />
                     </div>
                   </div>
@@ -555,7 +561,9 @@ const FilterSidebar = ({
             onClick={() => toggleSection("color")}
             className="flex items-center justify-between w-full text-right py-1"
           >
-            <h3 className="text-sm font-medium text-gray-900">رنگ</h3>
+            <h3 className="text-sm font-medium text-gray-900">
+              {tFilters("color")}
+            </h3>
             <ChevronDown
               className={`w-4 h-4 text-gray-600 transition-transform ${
                 openSections.color ? "rotate-180" : ""
@@ -607,7 +615,9 @@ const FilterSidebar = ({
             onClick={() => toggleSection("karat")}
             className="flex items-center justify-between w-full text-right py-1"
           >
-            <h3 className="text-sm font-medium text-gray-900">عیار طلا</h3>
+            <h3 className="text-sm font-medium text-gray-900">
+              {tFilters("karat.title")}
+            </h3>
             <ChevronDown
               className={`w-4 h-4 text-gray-600 transition-transform ${
                 openSections.karat ? "rotate-180" : ""
@@ -667,7 +677,9 @@ const FilterSidebar = ({
             onClick={() => toggleSection("brand")}
             className="flex items-center justify-between w-full text-right py-1"
           >
-            <h3 className="text-sm font-medium text-gray-900">برند</h3>
+            <h3 className="text-sm font-medium text-gray-900">
+              {tFilters("brand")}
+            </h3>
             <ChevronDown
               className={`w-4 h-4 text-gray-600 transition-transform ${
                 openSections.brand ? "rotate-180" : ""
@@ -727,7 +739,9 @@ const FilterSidebar = ({
             onClick={() => toggleSection("branch")}
             className="flex items-center justify-between w-full text-right py-1"
           >
-            <h3 className="text-sm font-medium text-gray-900">شعبه</h3>
+            <h3 className="text-sm font-medium text-gray-900">
+              {tFilters("branch")}
+            </h3>
             <ChevronDown
               className={`w-4 h-4 text-gray-600 transition-transform ${
                 openSections.branch ? "rotate-180" : ""
@@ -787,7 +801,9 @@ const FilterSidebar = ({
             onClick={() => toggleSection("wage")}
             className="flex items-center justify-between w-full text-right py-1"
           >
-            <h3 className="text-sm font-medium text-gray-900">اجرت</h3>
+            <h3 className="text-sm font-medium text-gray-900">
+              {tFilters("wage")}
+            </h3>
             <ChevronDown
               className={`w-4 h-4 text-gray-600 transition-transform ${
                 openSections.wage ? "rotate-180" : ""
@@ -847,7 +863,9 @@ const FilterSidebar = ({
             onClick={() => toggleSection("size")}
             className="flex items-center justify-between w-full text-right py-1"
           >
-            <h3 className="text-sm font-medium text-gray-900">سایز</h3>
+            <h3 className="text-sm font-medium text-gray-900">
+              {tFilters("size")}
+            </h3>
             <ChevronDown
               className={`w-4 h-4 text-gray-600 transition-transform ${
                 openSections.size ? "rotate-180" : ""
@@ -907,7 +925,9 @@ const FilterSidebar = ({
             onClick={() => toggleSection("coating")}
             className="flex items-center justify-between w-full text-right py-1"
           >
-            <h3 className="text-sm font-medium text-gray-900">پوشش</h3>
+            <h3 className="text-sm font-medium text-gray-900">
+              {tFilters("coating")}
+            </h3>
             <ChevronDown
               className={`w-4 h-4 text-gray-600 transition-transform ${
                 openSections.coating ? "rotate-180" : ""

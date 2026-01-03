@@ -17,6 +17,7 @@ import {
 import { createPortal } from "react-dom";
 import { useCart } from "@/contexts/CartContext";
 import { englishToPersian } from "@/lib/utils/persianNumber";
+import { useTranslations } from "next-intl";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ interface CartDrawerProps {
 
 const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   const router = useRouter();
+  const t = useTranslations("cart.drawer");
   const [mounted, setMounted] = useState(false);
   const hasReloadedRef = useRef(false);
   const {
@@ -174,10 +176,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
         {/* Warning Bar */}
         <div className="bg-white px-4 py-2 flex items-center gap-2">
           <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-          <p className="text-xs text-amber-800">
-            در صورت روشن بودن لطفا ابتدا فیلترشکن خود را خاموش و سپس مراحل خرید
-            را دنبال کنید
-          </p>
+          <p className="text-xs text-amber-800">{t("warning")}</p>
         </div>
 
         {/* Divider */}
@@ -190,14 +189,16 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold text-gray-900">
-              سبد خرید ({totalItems.toLocaleString("fa-IR")})
+              {t("title")} ({totalItems.toLocaleString("fa-IR")})
             </h2>
           </div>
           <div className="flex items-center gap-3">
             {/* Timer - از backend */}
             {!isEmpty && !isExpired && timeLeft > 0 && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-700">مهلت خرید:</span>
+                <span className="text-[10px] text-gray-700">
+                  {t("purchaseDeadline")}
+                </span>
                 <span
                   className={`text-xs font-bold text-white px-2 py-0.5 rounded inline-block text-center tabular-nums min-w-[2.5rem] ${
                     timeLeft < 60 ? "bg-red-600" : "bg-red-500"
@@ -214,7 +215,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
             <button
               onClick={onClose}
               className="p-2 rounded hover:bg-gray-50 transition-colors"
-              aria-label="بستن"
+              aria-label={t("close")}
             >
               <X className="w-5 h-5 text-gray-700" />
             </button>
@@ -231,7 +232,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
           {loading ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-              <p className="text-sm text-gray-500">در حال بارگذاری...</p>
+              <p className="text-sm text-gray-500">{t("loading")}</p>
             </div>
           ) : isEmpty ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
@@ -240,14 +241,14 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center justify-center gap-2">
                 <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                سبد خرید شما خالی است
+                {t("empty.title")}
               </h3>
               <Link
                 href="/products/women"
                 onClick={onClose}
                 className="px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-medium rounded"
               >
-                مشاهده محصولات
+                {t("empty.viewProducts")}
               </Link>
             </div>
           ) : isExpired ? (
@@ -258,11 +259,11 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center justify-center gap-2">
                 <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
-                مدت زمان خرید شما به پایان رسیده است
+                {t("expired.title")}
               </h3>
               <p className="text-sm text-gray-600 mb-6 flex items-center gap-2 justify-center">
                 <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                لطفاً مجدداً محصول مورد نظر را به سبد اضافه کنید
+                {t("expired.message")}
               </p>
               <button
                 onClick={() => {
@@ -272,7 +273,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                 }}
                 className="px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-medium rounded"
               >
-                بازگشت به محصولات
+                {t("expired.backToProducts")}
               </button>
             </div>
           ) : (
@@ -330,7 +331,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                             <button
                               onClick={() => handleRemoveItem(item._id)}
                               className="text-red-600 hover:text-red-700 transition-colors flex-shrink-0"
-                              aria-label="حذف محصول"
+                              aria-label={t("product.remove")}
                             >
                               <Trash2 className="w-5 h-5" />
                             </button>
@@ -346,7 +347,9 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                               <>
                                 {product.goldInfo.denomination && (
                                   <p className="text-xs text-gray-600 mb-1">
-                                    <span className="text-gray-500">نوع: </span>
+                                    <span className="text-gray-500">
+                                      {t("product.type")}:{" "}
+                                    </span>
                                     <span className="font-medium">
                                       {product.goldInfo.denomination}
                                     </span>
@@ -354,21 +357,23 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                                 )}
                                 {/* وزن */}
                                 <p className="text-xs text-gray-600 mb-1">
-                                  <span className="text-gray-500">وزن: </span>
+                                  <span className="text-gray-500">
+                                    {t("product.weight")}:{" "}
+                                  </span>
                                   <span className="font-medium">
                                     {product.weight
                                       ? englishToPersian(product.weight)
                                       : product.goldInfo.weight
                                       ? `${englishToPersian(
                                           String(product.goldInfo.weight)
-                                        )} گرم`
-                                      : "نامشخص"}
+                                        )} {t("product.gram")}`
+                                      : t("product.unknown")}
                                   </span>
                                 </p>
                                 {product.goldInfo.mintYear && (
                                   <p className="text-xs text-gray-600">
                                     <span className="text-gray-500">
-                                      سال ضرب:{" "}
+                                      {t("product.mintYear")}:{" "}
                                     </span>
                                     <span className="font-medium">
                                       {product.goldInfo.mintYear}
@@ -397,7 +402,9 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                               {/* سایز */}
                               {item.size && (
                                 <p className="text-xs text-gray-600">
-                                  <span className="text-gray-500">سایز: </span>
+                                  <span className="text-gray-500">
+                                    {t("product.size")}:{" "}
+                                  </span>
                                   <span className="font-medium">
                                     {englishToPersian(item.size)}
                                   </span>
@@ -411,7 +418,9 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                       {/* Footer - Price - از backend (بدون محاسبه) */}
                       <div className="flex items-center justify-end pt-2">
                         <div className="flex items-baseline gap-1">
-                          <span className="text-xs text-gray-500">قیمت:</span>
+                          <span className="text-xs text-gray-500">
+                            {t("product.price")}:
+                          </span>
                           {(() => {
                             // برای طلای آب‌شده از unitPrice استفاده می‌کنیم
                             const displayPrice =
@@ -434,7 +443,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                                   {displayOriginalPrice.toLocaleString("fa-IR")}
                                 </span>
                                 <span className="text-xs text-gray-500">
-                                  تومان
+                                  {t("summary.currency")}
                                 </span>
                               </div>
                             ) : (
@@ -443,7 +452,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                                   {displayPrice.toLocaleString("fa-IR")}
                                 </span>
                                 <span className="text-xs text-gray-500">
-                                  تومان
+                                  {t("summary.currency")}
                                 </span>
                               </>
                             );
@@ -465,7 +474,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                 {/* Subtotal */}
                 <div className="mb-4 flex items-baseline justify-between">
                   <p className="text-gray-700 font-medium text-sm">
-                    جمع سبد با تخفیف کالاها:
+                    {t("summary.subtotal")}
                   </p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-xl font-bold text-gray-900">
@@ -473,7 +482,9 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                         ? cart.prices.totalWithDiscount.toLocaleString("fa-IR")
                         : totalPrice.toLocaleString("fa-IR")}
                     </span>
-                    <span className="text-xs text-gray-600">تومان</span>
+                    <span className="text-xs text-gray-600">
+                      {t("summary.currency")}
+                    </span>
                   </div>
                 </div>
 
@@ -483,7 +494,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                     onClick={onClose}
                     className="w-1/3 bg-white hover:bg-gray-50 text-gray-700 text-center py-2 font-medium transition-colors border border-gray-300 rounded text-sm"
                   >
-                    ادامه خرید
+                    {t("summary.continueShopping")}
                   </button>
                   <Link
                     href="/purchase/basket"
@@ -495,7 +506,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                         : "bg-primary hover:bg-primary/90 text-white"
                     }`}
                   >
-                    تکمیل خرید
+                    {t("summary.completePurchase")}
                   </Link>
                 </div>
               </div>

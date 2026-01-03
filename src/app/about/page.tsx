@@ -85,7 +85,7 @@ const AboutPage = () => {
             <div className="relative w-full h-[400px] sm:h-[500px] overflow-hidden shadow-lg">
               <Image
                 src="/images/aboutUs/Main_Photos1.webp"
-                alt="گالری اسب"
+                alt={t("alt.gallery")}
                 fill
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
@@ -109,7 +109,7 @@ const AboutPage = () => {
               <div className="relative w-full h-[400px] sm:h-[500px] overflow-hidden shadow-lg">
                 <Image
                   src="/images/aboutUs/bridal.webp"
-                  alt="تیم گالری اسب"
+                  alt={t("alt.team")}
                   fill
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 50vw"

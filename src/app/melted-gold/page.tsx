@@ -313,13 +313,13 @@ export default function MeltedGoldPage() {
     }
 
     if (!amount || goldGrams <= 0) {
-      alert("لطفاً مبلغ را وارد کنید");
+      alert(t("meltedGold.errors.amountRequired"));
       return;
     }
 
     const numAmount = parseFloat(amount.replace(/,/g, ""));
     if (numAmount <= 0) {
-      alert("مبلغ باید بیشتر از صفر باشد");
+      alert(t("meltedGold.errors.amountMustBePositive"));
       return;
     }
 
@@ -330,15 +330,13 @@ export default function MeltedGoldPage() {
         return;
       }
       if (numAmount > investmentInfo.maxAmount) {
-        alert(
-          `حداکثر مبلغ ${formatNumber(investmentInfo.maxAmount)} تومان است`
-        );
+        alert(t("meltedGold.errors.maxAmount", { amount: formatNumber(investmentInfo.maxAmount) }));
         return;
       }
     } else {
       // Fallback در صورت عدم دریافت اطلاعات
       if (numAmount < 1000000) {
-        alert("حداقل مبلغ ۱,۰۰۰,۰۰۰ تومان است");
+        alert(t("meltedGold.errors.minAmount", { amount: "۱,۰۰۰,۰۰۰" }));
         return;
       }
     }
@@ -483,7 +481,7 @@ export default function MeltedGoldPage() {
             <div className="relative h-64 lg:h-[600px] rounded-lg overflow-hidden border border-gray-200">
               <Image
                 src="/images/products/goldbarphoto.webp"
-                alt="طلا"
+                alt={t("common.alt.gold")}
                 fill
                 className="object-cover"
               />
@@ -510,7 +508,7 @@ export default function MeltedGoldPage() {
                     onKeyPress={handleKeyPress}
                     onPaste={handlePaste}
                     inputMode="numeric"
-                    placeholder="مثال: ۱۰,۰۰۰,۰۰۰"
+                    placeholder={t("meltedGold.placeholder")}
                     dir="rtl"
                     className="flex-1 bg-transparent border-none focus:outline-none text-gray-900 placeholder:text-gray-400 text-[1.4rem] text-end"
                   />
