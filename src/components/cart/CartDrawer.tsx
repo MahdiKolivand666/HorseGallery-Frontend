@@ -18,6 +18,7 @@ import { createPortal } from "react-dom";
 import { useCart } from "@/contexts/CartContext";
 import { englishToPersian } from "@/lib/utils/persianNumber";
 import { useTranslations } from "next-intl";
+import { Loading } from "@/components/ui/Loading";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -231,8 +232,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
         <div className="flex-1 overflow-y-auto px-4 pb-4 bg-white">
           {loading ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-              <p className="text-sm text-gray-500">{t("loading")}</p>
+              <Loading size="md" text={t("loading")} />
             </div>
           ) : isEmpty ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">

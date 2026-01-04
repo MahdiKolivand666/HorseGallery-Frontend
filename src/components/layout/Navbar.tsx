@@ -61,6 +61,7 @@ const Navbar = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const productsMenuRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("navbar");
+  const tCommon = useTranslations("common");
   const { isCartOpen, openCart, closeCart } = useCart();
 
   const productCategories = [
@@ -1160,7 +1161,7 @@ const Navbar = () => {
                               <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
                                 <Image
                                   src="/images/products/qadimtamam.png"
-                                  alt={t("common.alt.coin")}
+                                  alt={tCommon("alt.coin")}
                                   width={35}
                                   height={35}
                                   className="object-contain"
@@ -1179,7 +1180,7 @@ const Navbar = () => {
                               <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
                                 <Image
                                   src="/images/products/shemsh.png"
-                                  alt={t("common.alt.meltedGold")}
+                                  alt={tCommon("alt.meltedGold")}
                                   width={35}
                                   height={35}
                                   className="object-contain"
@@ -1320,7 +1321,7 @@ const Navbar = () => {
                     setSearchQuery("");
                   }}
                   className="text-white hover:text-white/70 transition-colors flex-shrink-0"
-                  aria-label={t("common.ariaLabels.closeSearch")}
+                  aria-label={tCommon("ariaLabels.closeSearch")}
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -1342,7 +1343,7 @@ const Navbar = () => {
                   <button
                     onClick={handleSearch}
                     className="text-white hover:text-white/80 transition-colors flex-shrink-0"
-                    aria-label={t("common.ariaLabels.search")}
+                    aria-label={tCommon("ariaLabels.search")}
                   >
                     <Search className="w-5 h-5 sm:w-6 sm:h-6" />
                   </button>
@@ -1443,7 +1444,7 @@ const Navbar = () => {
                   <div className="relative w-20 h-20 rounded-full overflow-hidden group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
                     <Image
                       src="/images/products/qadimtamam.png"
-                      alt={t("common.alt.coinGold")}
+                      alt={tCommon("alt.coinGold")}
                       width={70}
                       height={70}
                       className="object-contain"
@@ -1464,17 +1465,17 @@ const Navbar = () => {
                   <div className="relative w-20 h-20 rounded-full overflow-hidden group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
                     <Image
                       src="/images/products/shemsh.png"
-                      alt={t("common.alt.meltedGold")}
+                      alt={tCommon("alt.meltedGold")}
                       width={70}
                       height={70}
                       className="object-contain"
                     />
                   </div>
                   <span className="text-white font-semibold text-lg">
-                    {t("common.alt.meltedGold")}
+                    {tCommon("alt.meltedGold")}
                   </span>
                   <span className="text-white/70 text-sm text-center">
-                    {t("common.descriptions.meltedGoldTypes")}
+                    {tCommon("descriptions.meltedGoldTypes")}
                   </span>
                 </Link>
               </div>

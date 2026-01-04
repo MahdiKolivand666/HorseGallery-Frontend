@@ -14,6 +14,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { searchProducts, SearchResponse } from "@/lib/api/products";
+import { useTranslations } from "next-intl";
+import { Loading } from "@/components/ui/Loading";
 
 export default function SearchPage() {
   const t = useTranslations();
@@ -217,9 +219,8 @@ export default function SearchPage() {
 
         {/* Loading State */}
         {loading && (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-primary mb-4"></div>
-            <p className="text-gray-600">در حال جستجو...</p>
+          <div className="text-center py-20 px-4">
+            <Loading size="lg" text="در حال جستجو..." />
           </div>
         )}
 

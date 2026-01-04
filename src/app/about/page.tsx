@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 const AboutPage = () => {
+  const t = useTranslations("common");
   return (
     <div className="min-h-screen bg-white">
       {/* Full Width Video at Top */}
@@ -22,7 +24,7 @@ const AboutPage = () => {
       <div className="bg-white py-8 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 text-center">
-            درباره گالری اسب
+            {t("about.title")}
           </h1>
         </div>
       </div>

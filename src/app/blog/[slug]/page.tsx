@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Home, ChevronLeft, Calendar, User, Eye, Heart, Tag } from "lucide-react";
 import { motion } from "framer-motion";
 import { getBlogBySlug, BlogPost } from "@/lib/api/blog";
+import { Loading } from "@/components/ui/Loading";
 
 const BlogDetailPage = () => {
   const params = useParams();
@@ -45,10 +46,7 @@ const BlogDetailPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">در حال بارگذاری...</p>
-        </div>
+        <Loading fullScreen size="lg" text="در حال بارگذاری..." />
       </div>
     );
   }

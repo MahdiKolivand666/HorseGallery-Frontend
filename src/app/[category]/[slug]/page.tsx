@@ -25,6 +25,7 @@ import AuthModal from "@/components/auth/AuthModal";
 import { ErrorHandler } from "@/lib/utils/errorHandler";
 import { englishToPersian, persianToEnglish } from "@/lib/utils/persianNumber";
 import { useTranslations } from "next-intl";
+import { Loading } from "@/components/ui/Loading";
 
 interface ProductDetail {
   id: string | number;
@@ -306,11 +307,8 @@ const ProductDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white pt-24 sm:pt-28 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">{t("detail.loading")}</p>
-        </div>
+      <div className="min-h-screen bg-white pt-24 sm:pt-28 flex items-center justify-center px-4">
+        <Loading fullScreen={false} size="lg" text={t("detail.loading")} />
       </div>
     );
   }

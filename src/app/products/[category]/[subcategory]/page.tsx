@@ -17,6 +17,7 @@ import ProductCard from "@/components/shop/ProductCard";
 import { getCategoryData, getSubcategoryData } from "@/constants/categories";
 import { notFound } from "next/navigation";
 import { getProducts } from "@/lib/api/products";
+import { Loading } from "@/components/ui/Loading";
 
 interface Product {
   _id: string;
@@ -361,10 +362,7 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {loading ? (
               <div className="flex items-center justify-center py-20">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-gray-600">در حال بارگذاری محصولات...</p>
-                </div>
+                <Loading size="lg" text="در حال بارگذاری محصولات..." />
               </div>
             ) : currentProducts.length === 0 ? (
               <div className="text-center py-20">

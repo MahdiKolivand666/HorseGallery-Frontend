@@ -20,6 +20,8 @@ import ProductCard from "@/components/shop/ProductCard";
 import FilterSidebar from "@/components/shop/FilterSidebar";
 import FilterDrawer from "@/components/shop/FilterDrawer";
 import { SlidersHorizontal } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Loading } from "@/components/ui/Loading";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -42,6 +44,8 @@ interface Product {
 }
 
 export default function SuggestPage() {
+  const t = useTranslations("suggest");
+  const tCommon = useTranslations("common");
   const [saleProducts, setSaleProducts] = useState<Product[]>([]);
   const [specialProducts, setSpecialProducts] = useState<Product[]>([]);
   const [popularProducts, setPopularProducts] = useState<Product[]>([]);
@@ -134,11 +138,8 @@ export default function SuggestPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">در حال بارگذاری پیشنهادات ویژه...</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <Loading size="lg" text={t("loading")} />
       </div>
     );
   }
@@ -149,7 +150,7 @@ export default function SuggestPage() {
       <div className="relative w-full h-80 sm:h-96 lg:h-[28rem]">
         <Image
           src="/images/aboutUs/bridal.webp"
-          alt={t("alt.specialOffers")}
+          alt={tCommon("alt.specialOffers")}
           fill
           className="object-cover"
           priority

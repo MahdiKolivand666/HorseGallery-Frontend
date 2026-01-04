@@ -54,6 +54,7 @@ import {
   type City,
 } from "@/lib/api/location";
 import { useTranslations } from "next-intl";
+import { Loading } from "@/components/ui/Loading";
 
 interface CartItem {
   _id: string;
@@ -79,6 +80,7 @@ interface CartItem {
 // ⚠️ مهم: استفاده از dynamic import برای جلوگیری از pre-fetch
 function CheckoutPage() {
   const t = useTranslations("checkout");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const pathname = usePathname();
   const {
@@ -1599,7 +1601,7 @@ function CheckoutPage() {
                   {isEmpty || isExpired
                     ? t("cart.expiredButton")
                     : isProcessingPayment
-                    ? t("common.loading")
+                    ? tCommon("loading")
                     : !selectedAddressId
                     ? t("error.selectAddress")
                     : t("payment.online")}
@@ -1645,7 +1647,7 @@ function CheckoutPage() {
                   setMobileDisplay("");
                 }}
                 className="p-0.5 rounded hover:bg-gray-50 transition-colors"
-                aria-label={t("common.close")}
+                aria-label={tCommon("close")}
               >
                 <span className="text-3xl text-gray-600">×</span>
               </button>
@@ -1768,7 +1770,7 @@ function CheckoutPage() {
                         >
                           <option value="" className="text-gray-400">
                             {isLoadingProvinces
-                              ? t("common.loading")
+                              ? tCommon("loading")
                               : t("form.province.select")}
                           </option>
                           {provinces.map((province) => (
@@ -1818,7 +1820,7 @@ function CheckoutPage() {
                             {!selectedProvinceExternalId
                               ? t("form.city.selectProvince")
                               : isLoadingCities
-                              ? t("common.loading")
+                              ? tCommon("loading")
                               : t("form.city.select")}
                           </option>
                           {cities.map((city) => (
@@ -2366,7 +2368,7 @@ export default dynamic(() => Promise.resolve(CheckoutPage), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <Loading fullScreen size="lg" />
     </div>
   ),
 });

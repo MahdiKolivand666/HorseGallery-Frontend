@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Calculator, Clock, Home, ChevronLeft, Info } from "lucide-react";
+import { Calculator, Clock, Home, ChevronLeft, Info, Loader2 } from "lucide-react";
 import { getGoldPrice } from "@/lib/api/gold";
 import {
   addGoldToPurchase,
@@ -619,7 +619,7 @@ export default function MeltedGoldPage() {
               >
                 {addingToCart ? (
                   <>
-                    <Clock className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                     <span>در حال اضافه کردن...</span>
                   </>
                 ) : (

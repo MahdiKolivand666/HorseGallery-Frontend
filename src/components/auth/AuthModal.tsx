@@ -49,6 +49,7 @@ const AuthModal = ({
   isFromIncompleteRegistration: propIsFromIncompleteRegistration = false,
 }: AuthModalProps) => {
   const t = useTranslations("auth.modal");
+  const tCommon = useTranslations("common");
   const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber || "");
   const [phoneNumberDisplay, setPhoneNumberDisplay] = useState(
     initialPhoneNumber ? convertEnglishToPersian(initialPhoneNumber) : ""
@@ -1183,7 +1184,7 @@ const AuthModal = ({
                 <button
                   onClick={onClose}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  aria-label={t("common.close")}
+                  aria-label={tCommon("close")}
                 >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
@@ -1745,11 +1746,17 @@ const AuthModal = ({
               {/* Footer */}
               <div className="px-6 pb-6">
                 <p className="text-xs text-gray-500 text-center leading-relaxed">
-                  {t("register.footer.terms").split("{termsLink}")[0]}
-                  <Link href="/terms" className="text-primary hover:underline">
-                    {t("register.footer.termsLink")}
-                  </Link>
-                  {t("register.footer.terms").split("{termsLink}")[1]}
+                  {t.rich("register.footer.terms", {
+                    termsLink: (
+                      <Link
+                        key="terms-link"
+                        href="/terms"
+                        className="text-primary hover:underline"
+                      >
+                        {t("register.footer.termsLink")}
+                      </Link>
+                    ),
+                  })}
                 </p>
               </div>
             </motion.div>

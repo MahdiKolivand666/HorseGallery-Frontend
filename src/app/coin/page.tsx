@@ -6,6 +6,8 @@ import Link from "next/link";
 import { ChevronDown, ChevronLeft, ChevronRight, Home } from "lucide-react";
 import { getProducts } from "@/lib/api/products";
 import CoinGoldProductCard from "@/components/shop/CoinGoldProductCard";
+import { Loading } from "@/components/ui/Loading";
+import { useTranslations } from "next-intl";
 
 interface Product {
   _id: string;
@@ -23,6 +25,8 @@ interface Product {
 }
 
 export default function CoinPage() {
+  const tProducts = useTranslations("products");
+  const tCommon = useTranslations("common");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -98,11 +102,8 @@ export default function CoinPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">در حال بارگذاری محصولات...</p>
-        </div>
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <Loading size="lg" text={tProducts("loading")} />
       </div>
     );
   }
@@ -113,7 +114,7 @@ export default function CoinPage() {
       <div className="relative w-full h-64 sm:h-80 lg:h-96">
         <Image
           src="/images/headerwallp/coinwall2.png"
-          alt={t("alt.coinGold")}
+          alt={tCommon("alt.coinGold")}
           fill
           className="object-cover"
           priority
@@ -191,7 +192,7 @@ export default function CoinPage() {
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
               className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
-              aria-label={t("ariaLabels.previousPage")}
+              aria-label={tCommon("ariaLabels.previousPage")}
             >
               <ChevronRight className="w-5 h-5 text-gray-600" />
             </button>
@@ -223,7 +224,7 @@ export default function CoinPage() {
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
               className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
-              aria-label={t("ariaLabels.nextPage")}
+              aria-label={tCommon("ariaLabels.nextPage")}
             >
               <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>

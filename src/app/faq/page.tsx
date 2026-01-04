@@ -6,6 +6,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronDown, Home } from "lucide-react";
 import { getFAQs } from "@/lib/api/faq";
+import { Loading } from "@/components/ui/Loading";
 
 interface FAQ {
   _id: string;
@@ -51,11 +52,8 @@ const FAQPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white pt-24 sm:pt-28 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">در حال بارگذاری سوالات...</p>
-        </div>
+      <div className="min-h-screen bg-white pt-24 sm:pt-28 flex items-center justify-center px-4">
+        <Loading size="lg" text="در حال بارگذاری سوالات..." />
       </div>
     );
   }

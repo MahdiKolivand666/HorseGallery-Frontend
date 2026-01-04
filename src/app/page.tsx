@@ -14,6 +14,7 @@ import FAQSection from "@/components/features/FAQSection";
 import FeaturesBar from "@/components/features/FeaturesBar";
 import ImageCards from "@/components/features/ImageCards";
 import Divider from "@/components/ui/Divider";
+import { Loading } from "@/components/ui/Loading";
 import { getProducts } from "@/lib/api/products";
 import { getBlogs } from "@/lib/api/blog";
 import { getFAQs } from "@/lib/api/faq";
@@ -52,7 +53,7 @@ export default function Home() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // ✅ استفاده از useRef برای جلوگیری از double call در development mode
   // ✅ استفاده از sessionStorage برای حفظ lastPathname در navigation
   const hasFetchedRef = useRef(false);
@@ -61,13 +62,16 @@ export default function Home() {
 
   useEffect(() => {
     // ✅ بررسی pathname قبلی از sessionStorage
-    const storedLastPathname = typeof window !== 'undefined' ? sessionStorage.getItem('homePage_lastPathname') : null;
-    
+    const storedLastPathname =
+      typeof window !== "undefined"
+        ? sessionStorage.getItem("homePage_lastPathname")
+        : null;
+
     // ✅ فقط اگر pathname "/" نیست، return کن
     if (pathname !== "/") {
       // ✅ Save current pathname to sessionStorage
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('homePage_lastPathname', pathname);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("homePage_lastPathname", pathname);
       }
       // ✅ Cancel any ongoing fetch
       if (fetchControllerRef.current) {
@@ -78,8 +82,9 @@ export default function Home() {
       return;
     }
 
-    const isPathnameChanged = storedLastPathname !== null && storedLastPathname !== "/";
-    
+    const isPathnameChanged =
+      storedLastPathname !== null && storedLastPathname !== "/";
+
     // ✅ اگر pathname تغییر کرده است (از صفحه دیگری آمده‌ایم)، همیشه fetch کن
     if (isPathnameChanged) {
       // ✅ Reset refs و state ها برای fetch مجدد
@@ -93,21 +98,24 @@ export default function Home() {
       setBlogPosts([]);
       setFaqs([]);
       // ✅ Update sessionStorage
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('homePage_lastPathname', pathname);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("homePage_lastPathname", pathname);
       }
     }
 
     // ✅ جلوگیری از double call: اگر در حال fetch هستیم یا قبلاً fetch کرده‌ایم و pathname تغییر نکرده، skip کن
-    if (fetchInProgressRef.current || (hasFetchedRef.current && !isPathnameChanged)) {
+    if (
+      fetchInProgressRef.current ||
+      (hasFetchedRef.current && !isPathnameChanged)
+    ) {
       return;
     }
-    
+
     hasFetchedRef.current = true;
     fetchInProgressRef.current = true;
     // ✅ Update sessionStorage
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('homePage_lastPathname', pathname);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("homePage_lastPathname", pathname);
     }
 
     // ✅ استفاده از AbortController برای مدیریت cleanup بهتر
@@ -123,7 +131,8 @@ export default function Home() {
           isBestSelling: true,
           limit: 10,
         });
-        if (isMounted.current && !controller.signal.aborted) setBestSellingProducts(bestSellingResponse.data);
+        if (isMounted.current && !controller.signal.aborted)
+          setBestSellingProducts(bestSellingResponse.data);
 
         // گرفتن محصولات هدیه
         const giftsResponse = await getProducts({
@@ -131,7 +140,8 @@ export default function Home() {
           isGift: true,
           limit: 12,
         });
-        if (isMounted.current && !controller.signal.aborted) setGiftProducts(giftsResponse.data);
+        if (isMounted.current && !controller.signal.aborted)
+          setGiftProducts(giftsResponse.data);
 
         // گرفتن محصولات جدید
         const newProductsResponse = await getProducts({
@@ -139,17 +149,19 @@ export default function Home() {
           isNewArrival: true,
           limit: 12,
         });
-        if (isMounted.current && !controller.signal.aborted) setNewArrivals(newProductsResponse.data);
+        if (isMounted.current && !controller.signal.aborted)
+          setNewArrivals(newProductsResponse.data);
 
         // گرفتن بلاگ ها
         const { posts } = await getBlogs({ isFeatured: true, limit: 2 });
-        if (isMounted.current && !controller.signal.aborted) setBlogPosts(posts);
+        if (isMounted.current && !controller.signal.aborted)
+          setBlogPosts(posts);
 
         // گرفتن سوالات متداول
         const faqData = await getFAQs();
         if (isMounted.current && !controller.signal.aborted) setFaqs(faqData);
       } catch (error) {
-        if (error instanceof Error && error.name !== 'AbortError') {
+        if (error instanceof Error && error.name !== "AbortError") {
           console.error("Error fetching data:", error);
         }
       } finally {
@@ -175,20 +187,17 @@ export default function Home() {
 
   // ✅ اطمینان از اینکه loading به false تنظیم می‌شود وقتی data ها دریافت شدند
   useEffect(() => {
-    if (bestSellingProducts.length > 0 || giftProducts.length > 0 || newArrivals.length > 0) {
+    if (
+      bestSellingProducts.length > 0 ||
+      giftProducts.length > 0 ||
+      newArrivals.length > 0
+    ) {
       setLoading(false);
     }
   }, [bestSellingProducts.length, giftProducts.length, newArrivals.length]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">در حال بارگذاری...</p>
-        </div>
-      </div>
-    );
+    return <Loading fullScreen size="lg" />;
   }
   return (
     <div className="bg-white w-full overflow-x-hidden">

@@ -6,6 +6,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Home } from "lucide-react";
 import { getBlogs } from "@/lib/api/blog";
+import { useTranslations } from "next-intl";
+import { Loading } from "@/components/ui/Loading";
 
 interface BlogPost {
   _id: string;
@@ -24,6 +26,7 @@ interface BlogPost {
 const BlogPage = () => {
   const t = useTranslations("common");
   const tBlog = useTranslations("blog");
+  const tNavbar = useTranslations("navbar");
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 6; // 3 rows × 2 posts
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -78,8 +81,7 @@ const BlogPage = () => {
       <div className="min-h-screen pt-[100px] pb-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">{tBlog("loading")}</p>
+            <Loading size="lg" text={tBlog("loading")} />
           </div>
         </div>
       </div>
@@ -118,10 +120,10 @@ const BlogPage = () => {
               className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
             >
               <Home className="w-4 h-4" />
-              <span>{t("navbar.menu.home")}</span>
+              <span>{tNavbar("menu.home")}</span>
             </Link>
             <ChevronLeft className="w-4 h-4 text-primary" />
-            <span className="text-primary font-medium">{t("navbar.menu.blog")}</span>
+            <span className="text-primary font-medium">{tNavbar("menu.blog")}</span>
           </nav>
         </div>
       </div>
