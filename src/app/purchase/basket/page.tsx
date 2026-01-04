@@ -98,6 +98,10 @@ function CheckoutPage() {
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null); // ✅ برای edit mode
   const [selectedGateway, setSelectedGateway] = useState("saman");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  // ✅ State برای نگه‌داری expiredFirstTime تا دفعه بعدی که صفحه باز می‌شود
+  const [expiredFirstTimeState, setExpiredFirstTimeState] = useState(false);
+  // ✅ Ref برای نگه‌داری flag که نشان می‌دهد timer به 0 رسیده و state باید نگه داشته شود
+  const timerExpiredRef = useRef(false);
 
   // Address state
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -524,16 +528,27 @@ function CheckoutPage() {
   );
 
   // ✅ بررسی isEmpty و isExpired برای UI logic (طبق مستندات جدید backend)
-  // ✅ اولویت: isEmpty > isExpired
-  const isEmpty = cartItemsFiltered.length === 0;
   const isExpired = cart?.expired === true;
+  // ✅ استفاده از state برای نگه‌داری تا دفعه بعدی
+  // ⚠️ مهم: expiredFirstTimeState از timer یا backend می‌آید
+  const expiredFirstTime =
+    expiredFirstTimeState || cart?.expiredFirstTime === true;
+  // ✅ منطق جدید: اولویت با isExpired و expiredFirstTime
+  // اگر isExpired و expiredFirstTime باشد، حتی اگر items موجود باشد، پیام expired نمایش داده می‌شود
+  // اگر isExpired و !expiredFirstTime باشد، یعنی دفعات بعدی است و items پاک شده، پس isEmpty = true
+  // ⚠️ مهم: اگر expiredFirstTime true است، isEmpty را false کن (حتی اگر items خالی باشد)
+  const isEmpty =
+    !loading &&
+    cartItemsFiltered.length === 0 &&
+    (!isExpired || !expiredFirstTime) &&
+    !expiredFirstTime; // ✅ اگر expiredFirstTime true است، isEmpty را false کن
 
-  // ✅ Redirect به صفحه اصلی اگر سبد خرید خالی است
+  // ✅ Redirect به صفحه اصلی اگر سبد خرید خالی است (اما نه اگر expiredFirstTime باشد)
   useEffect(() => {
-    if (!loading && isEmpty) {
+    if (!loading && isEmpty && !expiredFirstTime) {
       router.push("/");
     }
-  }, [isEmpty, loading, router]);
+  }, [isEmpty, loading, router, expiredFirstTime]);
 
   useEffect(() => {
     // ✅ اگر cart expired است، timeLeft را به‌روز نکن (0 نگه دار)
@@ -574,6 +589,41 @@ function CheckoutPage() {
     return () => clearInterval(syncInterval);
   }, [pathname, cart, remainingSeconds]); // ✅ اضافه کردن cart و remainingSeconds به dependency
 
+  // ✅ Reset state وقتی کاربر از صفحه خارج می‌شود
+  useEffect(() => {
+    return () => {
+      // ✅ وقتی component unmount می‌شود (یعنی کاربر از صفحه خارج می‌شود)، state را reset کن
+      timerExpiredRef.current = false;
+      setExpiredFirstTimeState(false);
+    };
+  }, []);
+
+  // ✅ نگه‌داری expiredFirstTime در state وقتی از backend می‌آید
+  useEffect(() => {
+    // ✅ اگر expiredFirstTime از backend true است، state را true کن و flag را reset کن
+    if (cart?.expiredFirstTime === true) {
+      timerExpiredRef.current = false; // ✅ Reset flag چون backend خودش expiredFirstTime را true کرده
+      setTimeout(() => setExpiredFirstTimeState(true), 0);
+      return; // ✅ اگر expiredFirstTime true است، دیگر چک نکن
+    }
+    // ✅ اگر cart expired نیست (یعنی فعال است و محصول جدید اضافه شده)، state را reset کن
+    // این یعنی کاربر محصول جدید اضافه کرده و cart دوباره فعال شده
+    if (cart?.expired === false) {
+      timerExpiredRef.current = false; // ✅ Reset flag چون cart فعال شده
+      setTimeout(() => setExpiredFirstTimeState(false), 0);
+      return; // ✅ اگر cart فعال است، state را reset کن و دیگر چک نکن
+    }
+    // ✅ اگر cart expired است و timerExpiredRef.current === true است، state را نگه دار (تغییر نده)
+    // این یعنی timer به 0 رسیده و state قبلاً set شده است
+    // ما state را فقط وقتی reset می‌کنیم که cart فعال شود (expired === false)
+    // ⚠️ مهم: اگر timerExpiredRef.current === true است، state را تغییر نده (حتی اگر cart تغییر کند)
+    if (timerExpiredRef.current === true) {
+      // ✅ State را نگه دار (تغییر نده) - این مهم است که این چک قبل از سایر چک‌ها باشد
+      return;
+    }
+    // ✅ در سایر حالات، state را تغییر نده
+  }, [cart]);
+
   // ✅ تایمر client-side - فقط یک بار اجرا می‌شود
   useEffect(() => {
     // ✅ اگر cart خالی است، timer را اجرا نکن
@@ -589,17 +639,16 @@ function CheckoutPage() {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          // ✅ چک کردن که cart هنوز خالی نشده باشد و expired نشده باشد
-          const currentCartItems = (cart?.items || []).filter(
-            (item) => item.product.productType !== "melted_gold"
-          );
-          const currentIsExpired =
-            cart?.expired === true || remainingSeconds <= 0;
-          if (currentCartItems.length > 0 && !currentIsExpired) {
-            setTimeout(() => {
-              reloadCartRef.current();
-            }, 0);
-          }
+          // ✅ وقتی counter به 0 می‌رسد، flag را set کن و expiredFirstTimeState را true کن (قبل از reload)
+          // این باعث می‌شود که حتی بعد از reload که backend expiredFirstTime را false می‌کند، state نگه داشته شود
+          // ⚠️ مهم: اول flag را set کن، سپس state را set کن، و در آخر reload را اجرا کن
+          timerExpiredRef.current = true;
+          setExpiredFirstTimeState(true);
+          // ✅ سپس cart را refresh کن (با کمی delay تا state به‌روز شود)
+          // Backend خودش items را پاک می‌کند و expiredFirstTime را false می‌کند
+          setTimeout(() => {
+            reloadCartRef.current();
+          }, 100); // ✅ کمی delay برای اطمینان از اینکه state به‌روز شده است
           return 0;
         }
         return prev - 1;
@@ -701,10 +750,15 @@ function CheckoutPage() {
         {/* Tabs */}
         <div className="flex justify-center gap-2 sm:gap-4 mb-8 border-b border-gray-200 overflow-x-auto">
           <button
-            onClick={() => !isEmpty && !isExpired && setActiveTab("cart")}
-            disabled={isEmpty || isExpired}
+            onClick={() =>
+              !isEmpty &&
+              !isExpired &&
+              !expiredFirstTime &&
+              setActiveTab("cart")
+            }
+            disabled={isEmpty || isExpired || expiredFirstTime}
             className={`pb-3 sm:pb-4 px-2 sm:px-4 text-xs sm:text-base font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-              isEmpty || isExpired
+              isEmpty || isExpired || expiredFirstTime
                 ? "text-gray-400 cursor-not-allowed opacity-60"
                 : activeTab === "cart"
                 ? "text-primary"
@@ -712,15 +766,23 @@ function CheckoutPage() {
             }`}
           >
             {t("tabs.cart")}
-            {activeTab === "cart" && !isEmpty && !isExpired && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
+            {activeTab === "cart" &&
+              !isEmpty &&
+              !isExpired &&
+              !expiredFirstTime && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              )}
           </button>
           <button
-            onClick={() => !isEmpty && !isExpired && setActiveTab("shipping")}
-            disabled={isEmpty || isExpired}
+            onClick={() =>
+              !isEmpty &&
+              !isExpired &&
+              !expiredFirstTime &&
+              setActiveTab("shipping")
+            }
+            disabled={isEmpty || isExpired || expiredFirstTime}
             className={`pb-3 sm:pb-4 px-2 sm:px-4 text-xs sm:text-base font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-              isEmpty || isExpired
+              isEmpty || isExpired || expiredFirstTime
                 ? "text-gray-400 cursor-not-allowed opacity-60"
                 : activeTab === "shipping"
                 ? "text-primary"
@@ -728,15 +790,23 @@ function CheckoutPage() {
             }`}
           >
             {t("tabs.shipping")}
-            {activeTab === "shipping" && !isEmpty && !isExpired && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
+            {activeTab === "shipping" &&
+              !isEmpty &&
+              !isExpired &&
+              !expiredFirstTime && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              )}
           </button>
           <button
-            onClick={() => !isEmpty && !isExpired && setActiveTab("payment")}
-            disabled={isEmpty || isExpired}
+            onClick={() =>
+              !isEmpty &&
+              !isExpired &&
+              !expiredFirstTime &&
+              setActiveTab("payment")
+            }
+            disabled={isEmpty || isExpired || expiredFirstTime}
             className={`pb-3 sm:pb-4 px-2 sm:px-4 text-xs sm:text-base font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-              isEmpty || isExpired
+              isEmpty || isExpired || expiredFirstTime
                 ? "text-gray-400 cursor-not-allowed opacity-60"
                 : activeTab === "payment"
                 ? "text-primary"
@@ -744,248 +814,297 @@ function CheckoutPage() {
             }`}
           >
             {t("tabs.payment")}
-            {activeTab === "payment" && !isEmpty && !isExpired && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
+            {activeTab === "payment" &&
+              !isEmpty &&
+              !isExpired &&
+              !expiredFirstTime && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              )}
           </button>
         </div>
 
         {/* Content */}
         {activeTab === "cart" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Empty Cart Message - اولویت اول */}
-            {isEmpty ? (
-              <div className="lg:col-span-3 mb-4 flex justify-center">
-                <div className="inline-block px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                  <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2">
-                    <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                    {t("cart.empty")}
-                  </p>
+          <>
+            {/* Expired Message - اولویت اول: وقتی counter به 0 می‌رسد */}
+            {isExpired && expiredFirstTime ? (
+              <div className="flex flex-col items-center justify-center min-h-[400px] py-12 px-4">
+                <div className="bg-red-100 rounded-full p-6 mb-6">
+                  <AlarmClockMinus className="w-16 h-16 text-red-600" />
                 </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-2">
+                  <AlarmClockMinus className="w-6 h-6 text-red-600 flex-shrink-0" />
+                  {t("cart.expired.title")}
+                </h2>
+                <p className="text-base text-gray-600 mb-8 flex items-center gap-2 justify-center text-center max-w-md">
+                  <Info className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                  {t("cart.expired.message")}
+                </p>
+                <Link
+                  href="/products/women"
+                  className="px-8 py-3 bg-primary text-white hover:bg-primary/90 transition-colors text-base font-medium rounded-lg"
+                >
+                  {t("cart.expired.backToProducts")}
+                </Link>
               </div>
-            ) : isExpired ? (
-              /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
-              <div className="lg:col-span-3 mb-4 flex justify-center">
-                <div className="inline-block px-6 py-4 bg-red-100 border border-red-300 rounded-lg text-center">
-                  <p className="text-base font-bold text-red-800 mb-2 flex items-center justify-center gap-2">
-                    <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    {t("cart.expired.title")}
-                  </p>
-                  <p className="text-sm text-red-700 flex items-center justify-center gap-2">
-                    <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
-                    {t("cart.expired.message")}
-                  </p>
-                </div>
-              </div>
-            ) : null}
-
-            {/* Cart Items - Left Side */}
-            <div className="lg:col-span-2">
-              {cartItems.map((item, index) => (
-                <div key={item._id}>
-                  <div className="p-4 flex gap-4">
-                    {/* Product Image */}
-                    <Link
-                      href={`/${item.category}/${item.slug}`}
-                      className="relative w-24 h-24 flex-shrink-0 overflow-hidden border border-gray-300 rounded"
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Empty Cart Message - اولویت اول */}
+                {isEmpty ? (
+                  <div className="lg:col-span-3 mb-4 flex justify-center">
+                    <div
+                      className={`inline-block px-6 py-4 border rounded-lg text-center ${
+                        isExpired && expiredFirstTime
+                          ? "bg-red-100 border-red-300"
+                          : "bg-gray-50 border-gray-200"
+                      }`}
                     >
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                      />
-                      {/* Discount Badge - از backend */}
-                      {item.discount && item.discount > 0 && (
-                        <div className="absolute top-1 right-1 z-10 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                          {item.discount.toLocaleString("fa-IR")}٪
-                        </div>
+                      <p
+                        className={`text-base font-bold flex items-center justify-center gap-2 ${
+                          isExpired && expiredFirstTime
+                            ? "text-red-800"
+                            : "text-gray-800"
+                        }`}
+                      >
+                        {isExpired && expiredFirstTime ? (
+                          <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
+                        ) : (
+                          <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                        )}
+                        {isExpired && expiredFirstTime
+                          ? t("cart.expired.title")
+                          : t("cart.empty")}
+                      </p>
+                      {isExpired && expiredFirstTime ? (
+                        <p className="text-sm text-red-700 mt-2 flex items-center justify-center gap-2">
+                          <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
+                          {t("cart.expired.message")}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-gray-600 mt-2 flex items-center justify-center gap-2">
+                          <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                          {t("cart.drawer.empty.message")}
+                        </p>
                       )}
-                    </Link>
+                    </div>
+                  </div>
+                ) : null}
 
-                    {/* Product Details */}
-                    <div className="flex-1 flex flex-col">
-                      {/* Title and Delete Button */}
-                      <div className="flex items-start justify-between mb-1">
+                {/* Cart Items - Left Side */}
+                <div className="lg:col-span-2">
+                  {cartItems.map((item, index) => (
+                    <div key={item._id}>
+                      <div className="p-4 flex gap-4">
+                        {/* Product Image */}
                         <Link
                           href={`/${item.category}/${item.slug}`}
-                          className="font-bold text-gray-900 hover:text-primary transition-colors line-clamp-1 flex-1"
+                          className="relative w-24 h-24 flex-shrink-0 overflow-hidden border border-gray-300 rounded"
                         >
-                          {item.name}
-                        </Link>
-                        <button
-                          onClick={() => handleRemoveItem(item._id)}
-                          className="p-1 text-red-500 hover:bg-red-50 transition-colors flex-shrink-0 mr-2"
-                          aria-label={t("address.delete")}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* Product Code */}
-                      <p className="text-xs text-gray-500 mb-2">{item.code}</p>
-
-                      {/* Weight */}
-                      <p className="text-xs text-gray-600 mb-0.5">
-                        وزن:{" "}
-                        {item.weight
-                          ? englishToPersian(item.weight)
-                          : item.goldInfo?.weight
-                          ? `${englishToPersian(
-                              String(item.goldInfo.weight)
-                            )} گرم`
-                          : t("cart.product.unknown")}
-                      </p>
-
-                      {/* Size/MintYear and Price */}
-                      <div className="flex items-center justify-between mt-0.5">
-                        {/* برای سکه: سال ضرب، برای بقیه: سایز */}
-                        {item.productType === "coin" &&
-                        item.goldInfo?.mintYear ? (
-                          <p className="text-xs text-gray-600">
-                            سال ضرب: {item.goldInfo.mintYear}
-                          </p>
-                        ) : item.size ? (
-                          <p className="text-xs text-gray-600">
-                            سایز: {englishToPersian(item.size)}
-                          </p>
-                        ) : null}
-                        {/* Price - از backend */}
-                        <div className="flex flex-col items-end gap-0.5">
-                          {item.originalPrice > item.price ? (
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-base font-bold text-red-600">
-                                {item.price.toLocaleString("fa-IR")}
-                              </span>
-                              <span className="text-xs text-gray-400 line-through">
-                                {item.originalPrice.toLocaleString("fa-IR")}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                تومان
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-base font-bold text-gray-900">
-                                {item.price.toLocaleString("fa-IR")}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                تومان
-                              </span>
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                          />
+                          {/* Discount Badge - از backend */}
+                          {item.discount && item.discount > 0 && (
+                            <div className="absolute top-1 right-1 z-10 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              {item.discount.toLocaleString("fa-IR")}٪
                             </div>
                           )}
+                        </Link>
+
+                        {/* Product Details */}
+                        <div className="flex-1 flex flex-col">
+                          {/* Title and Delete Button */}
+                          <div className="flex items-start justify-between mb-1">
+                            <Link
+                              href={`/${item.category}/${item.slug}`}
+                              className="font-bold text-gray-900 hover:text-primary transition-colors line-clamp-1 flex-1"
+                            >
+                              {item.name}
+                            </Link>
+                            <button
+                              onClick={() => handleRemoveItem(item._id)}
+                              className="p-1 text-red-500 hover:bg-red-50 transition-colors flex-shrink-0 mr-2"
+                              aria-label={t("address.delete")}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          {/* Product Code */}
+                          <p className="text-xs text-gray-500 mb-2">
+                            {item.code}
+                          </p>
+
+                          {/* Weight */}
+                          <p className="text-xs text-gray-600 mb-0.5">
+                            وزن:{" "}
+                            {item.weight
+                              ? englishToPersian(item.weight)
+                              : item.goldInfo?.weight
+                              ? `${englishToPersian(
+                                  String(item.goldInfo.weight)
+                                )} گرم`
+                              : t("cart.product.unknown")}
+                          </p>
+
+                          {/* Size/MintYear and Price */}
+                          <div className="flex items-center justify-between mt-0.5">
+                            {/* برای سکه: سال ضرب، برای بقیه: سایز */}
+                            {item.productType === "coin" &&
+                            item.goldInfo?.mintYear ? (
+                              <p className="text-xs text-gray-600">
+                                سال ضرب: {item.goldInfo.mintYear}
+                              </p>
+                            ) : item.size ? (
+                              <p className="text-xs text-gray-600">
+                                سایز: {englishToPersian(item.size)}
+                              </p>
+                            ) : null}
+                            {/* Price - از backend */}
+                            <div className="flex flex-col items-end gap-0.5">
+                              {item.originalPrice > item.price ? (
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="text-base font-bold text-red-600">
+                                    {item.price.toLocaleString("fa-IR")}
+                                  </span>
+                                  <span className="text-xs text-gray-400 line-through">
+                                    {item.originalPrice.toLocaleString("fa-IR")}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    تومان
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-base font-bold text-gray-900">
+                                    {item.price.toLocaleString("fa-IR")}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    تومان
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Divider */}
-                  {index < cartItems.length - 1 && (
-                    <div className="px-4 py-4">
-                      <div className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+                      {/* Divider */}
+                      {index < cartItems.length - 1 && (
+                        <div className="px-4 py-4">
+                          <div className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Order Summary - Right Side */}
-            <div className="lg:col-span-1">
-              <div className="bg-primary p-5 border border-gray-300 rounded sticky top-[180px]">
-                {/* Timer Warning */}
-                <div className="mb-5 py-1.5 px-3 border border-white/30 rounded text-center">
-                  <div className="flex items-center justify-center gap-1.5 text-white">
-                    <AlarmClockMinus className="w-3.5 h-3.5" />
-                    <p className="text-[11px]">
-                      برای تکمیل خرید خود{" "}
-                      <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded inline-block text-center tabular-nums min-w-[3rem]">
-                        {formatTime(timeLeft)}
-                      </span>{" "}
-                      {t("cart.timeLeft")}
-                    </p>
-                  </div>
+                  ))}
                 </div>
 
-                {/* Price Details */}
-                <div className="space-y-3">
-                  {/* Subtotal */}
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-white">{t("cart.subtotal")}</span>
-                      <span className="text-xs text-white/80">
-                        ({totalItems.toLocaleString("fa-IR")} کالا)
-                      </span>
+                {/* Order Summary - Right Side */}
+                <div className="lg:col-span-1">
+                  <div className="bg-primary p-5 border border-gray-300 rounded sticky top-[180px]">
+                    {/* Timer Warning */}
+                    <div className="mb-5 py-1.5 px-3 border border-white/30 rounded text-center">
+                      <div className="flex items-center justify-center gap-1.5 text-white">
+                        <AlarmClockMinus className="w-3.5 h-3.5" />
+                        <p className="text-[11px]">
+                          برای تکمیل خرید خود{" "}
+                          <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded inline-block text-center tabular-nums min-w-[3rem]">
+                            {formatTime(timeLeft)}
+                          </span>{" "}
+                          {t("cart.timeLeft")}
+                        </p>
+                      </div>
                     </div>
-                    <span className="font-medium text-white">
-                      {subtotal.toLocaleString("fa-IR")} تومان
-                    </span>
-                  </div>
 
-                  {/* Discount */}
-                  {totalDiscount > 0 && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-white">{t("cart.discount")}</span>
-                      <span className="font-medium text-red-400">
-                        {totalDiscount.toLocaleString("fa-IR")} تومان
-                      </span>
+                    {/* Price Details */}
+                    <div className="space-y-3">
+                      {/* Subtotal */}
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-white">
+                            {t("cart.subtotal")}
+                          </span>
+                          <span className="text-xs text-white/80">
+                            ({totalItems.toLocaleString("fa-IR")} کالا)
+                          </span>
+                        </div>
+                        <span className="font-medium text-white">
+                          {subtotal.toLocaleString("fa-IR")} تومان
+                        </span>
+                      </div>
+
+                      {/* Discount */}
+                      {totalDiscount > 0 && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-white">
+                            {t("cart.discount")}
+                          </span>
+                          <span className="font-medium text-red-400">
+                            {totalDiscount.toLocaleString("fa-IR")} تومان
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Wallet */}
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-white">{t("cart.wallet")}</span>
+                        <span className="font-medium text-white">
+                          {walletAmount.toLocaleString("fa-IR")} تومان
+                        </span>
+                      </div>
+
+                      {/* Shipping */}
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-white">{t("cart.shipping")}</span>
+                        {shippingCost === 0 ? (
+                          <span className="font-medium text-white">
+                            {t("cart.free")}
+                          </span>
+                        ) : (
+                          <span className="font-medium text-white">
+                            {shippingCost.toLocaleString("fa-IR")} تومان
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Divider */}
+                      <div className="py-2">
+                        <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                      </div>
+
+                      {/* Final Total */}
+                      <div className="flex items-center justify-between pt-2">
+                        <span className="text-base font-bold text-white">
+                          مبلغ نهایی:
+                        </span>
+                        <span className="text-xl font-bold text-white">
+                          {finalTotal.toLocaleString("fa-IR")} تومان
+                        </span>
+                      </div>
+
+                      {/* Continue Button */}
+                      <button
+                        onClick={() => setActiveTab("shipping")}
+                        disabled={isEmpty || isExpired || expiredFirstTime}
+                        className={`w-full py-2 text-sm font-medium transition-colors mt-3 rounded ${
+                          isEmpty || isExpired || expiredFirstTime
+                            ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                            : "bg-white hover:bg-white/90 text-primary"
+                        }`}
+                      >
+                        {isEmpty || isExpired || expiredFirstTime
+                          ? t("cart.expiredButton")
+                          : t("cart.continue")}
+                      </button>
                     </div>
-                  )}
-
-                  {/* Wallet */}
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-white">{t("cart.wallet")}</span>
-                    <span className="font-medium text-white">
-                      {walletAmount.toLocaleString("fa-IR")} تومان
-                    </span>
                   </div>
-
-                  {/* Shipping */}
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-white">{t("cart.shipping")}</span>
-                    {shippingCost === 0 ? (
-                      <span className="font-medium text-white">
-                        {t("cart.free")}
-                      </span>
-                    ) : (
-                      <span className="font-medium text-white">
-                        {shippingCost.toLocaleString("fa-IR")} تومان
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Divider */}
-                  <div className="py-2">
-                    <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                  </div>
-
-                  {/* Final Total */}
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-base font-bold text-white">
-                      مبلغ نهایی:
-                    </span>
-                    <span className="text-xl font-bold text-white">
-                      {finalTotal.toLocaleString("fa-IR")} تومان
-                    </span>
-                  </div>
-
-                  {/* Continue Button */}
-                  <button
-                    onClick={() => setActiveTab("shipping")}
-                    disabled={isEmpty || isExpired}
-                    className={`w-full py-2 text-sm font-medium transition-colors mt-3 rounded ${
-                      isEmpty || isExpired
-                        ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                        : "bg-white hover:bg-white/90 text-primary"
-                    }`}
-                  >
-                    {isEmpty || isExpired
-                      ? t("cart.expiredButton")
-                      : t("cart.continue")}
-                  </button>
                 </div>
               </div>
-            </div>
-          </div>
+            )}
+          </>
         )}
 
         {/* Shipping Tab */}
@@ -1275,14 +1394,14 @@ function CheckoutPage() {
                   {/* Continue Button */}
                   <button
                     onClick={() => setActiveTab("payment")}
-                    disabled={isEmpty || isExpired}
+                    disabled={isEmpty || isExpired || expiredFirstTime}
                     className={`w-full py-2 text-sm font-medium transition-colors mt-3 rounded ${
-                      isEmpty || isExpired
+                      isEmpty || isExpired || expiredFirstTime
                         ? "bg-gray-400 text-gray-600 cursor-not-allowed"
                         : "bg-white hover:bg-white/90 text-primary"
                     }`}
                   >
-                    {isEmpty || isExpired
+                    {isEmpty || isExpired || expiredFirstTime
                       ? t("cart.expiredButton")
                       : t("cart.continue")}
                   </button>
@@ -1588,17 +1707,21 @@ function CheckoutPage() {
                   disabled={
                     isEmpty ||
                     isExpired ||
+                    expiredFirstTime ||
                     isProcessingPayment ||
                     !selectedAddressId
                   }
                   onClick={handlePayment}
                   className={`w-full py-2 text-sm font-medium transition-colors rounded ${
-                    isEmpty || isExpired || !selectedAddressId
+                    isEmpty ||
+                    isExpired ||
+                    expiredFirstTime ||
+                    !selectedAddressId
                       ? "bg-gray-400 text-gray-600 cursor-not-allowed"
                       : "bg-white text-primary hover:bg-gray-100"
                   }`}
                 >
-                  {isEmpty || isExpired
+                  {isEmpty || isExpired || expiredFirstTime
                     ? t("cart.expiredButton")
                     : isProcessingPayment
                     ? tCommon("loading")

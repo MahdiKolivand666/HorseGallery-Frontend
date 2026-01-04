@@ -50,7 +50,7 @@ export type ErrorHandlerResult =
   | {
       type: "validation_error";
       errors?: { [field: string]: string[] };
-      message: string | string[];
+      message: string[]; // ✅ Backend همیشه string[] می‌فرستد
       action: "show_field_errors";
       requestId?: string;
     }
@@ -248,9 +248,7 @@ export class ErrorHandler {
     requestId?: string
   ): ErrorHandlerResult {
     // ✅ Backend همیشه string[] می‌فرستد
-    const message = Array.isArray(error.message)
-      ? error.message[0] || "کد تأیید منقضی شده است"
-      : error.message || "کد تأیید منقضی شده است";
+    const message = error.message[0] || "کد تأیید منقضی شده است";
     this.logError(error, "OTP_EXPIRED", requestId || error.requestId);
     return {
       type: "otp_expired",
@@ -265,9 +263,7 @@ export class ErrorHandler {
     requestId?: string
   ): ErrorHandlerResult {
     // ✅ Backend همیشه string[] می‌فرستد
-    const message = Array.isArray(error.message)
-      ? error.message[0] || "کد تأیید نامعتبر است"
-      : error.message || "کد تأیید نامعتبر است";
+    const message = error.message[0] || "کد تأیید نامعتبر است";
     this.logError(error, "OTP_INVALID", requestId || error.requestId);
     return {
       type: "otp_invalid",
@@ -298,9 +294,7 @@ export class ErrorHandler {
     requestId?: string
   ): ErrorHandlerResult {
     // ✅ Backend همیشه string[] می‌فرستد
-    const message = Array.isArray(error.message)
-      ? error.message[0] || "تعداد درخواست‌ها بیش از حد مجاز است. لطفاً چند دقیقه صبر کنید"
-      : error.message || "تعداد درخواست‌ها بیش از حد مجاز است. لطفاً چند دقیقه صبر کنید";
+    const message = error.message[0] || "تعداد درخواست‌ها بیش از حد مجاز است. لطفاً چند دقیقه صبر کنید";
     this.logError(error, "RATE_LIMIT", requestId || error.requestId);
     return {
       type: "rate_limit",
@@ -328,9 +322,7 @@ export class ErrorHandler {
     requestId?: string
   ): ErrorHandlerResult {
     // ✅ Backend همیشه string[] می‌فرستد
-    const message = Array.isArray(error.message)
-      ? error.message[0] || "منبع مورد نظر یافت نشد"
-      : error.message || "منبع مورد نظر یافت نشد";
+    const message = error.message[0] || "منبع مورد نظر یافت نشد";
     this.logError(error, "NOT_FOUND", requestId || error.requestId);
     return {
       type: "not_found",
@@ -345,9 +337,7 @@ export class ErrorHandler {
     requestId?: string
   ): ErrorHandlerResult {
     // ✅ Backend همیشه string[] می‌فرستد
-    const message = Array.isArray(error.message)
-      ? error.message[0] || "این آیتم قبلاً ثبت شده است"
-      : error.message || "این آیتم قبلاً ثبت شده است";
+    const message = error.message[0] || "این آیتم قبلاً ثبت شده است";
     this.logError(error, "DUPLICATE_ENTRY", requestId || error.requestId);
     return {
       type: "duplicate_entry",
@@ -369,11 +359,8 @@ export class ErrorHandler {
       message = error.message;
     } else if (error.data) {
       errorData = error.data;
-      if (Array.isArray(error.data.message)) {
-        message = error.data.message[0] || "خطای ناشناخته";
-      } else {
-        message = error.data.message || "خطای ناشناخته";
-      }
+      // ✅ Backend همیشه string[] می‌فرستد
+      message = error.data.message[0] || "خطای ناشناخته";
     }
 
     if (errorData) {
@@ -384,7 +371,7 @@ export class ErrorHandler {
 
     return {
       type: "generic_error",
-      message: typeof message === "string" ? message : "خطای ناشناخته",
+      message: message,
       action: "show_error",
       requestId: requestId || errorData?.requestId,
     };

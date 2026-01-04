@@ -56,8 +56,10 @@ export interface CartResponse {
   totalItems: number;
   totalPrice: number;
   expiresAt: string | null;
-  remainingSeconds: number;
+  remainingSeconds: number; // ✅ زمان باقی‌مانده (محاسباتی)
+  expirationSeconds: number; // ✅ زمان کل انقضا (60 ثانیه = 1 دقیقه) - از Backend جدید
   expired?: boolean; // ✅ نشان می‌دهد که cart منقضی شده
+  expiredFirstTime?: boolean; // ✅ flag جدید: اولین بار که cart expired است (از Backend جدید)
   sessionId?: string; // ✨ اگر Backend sessionId ایجاد کرده باشد
   prices: {
     totalWithoutDiscount: number;
@@ -86,6 +88,7 @@ function getEmptyCartResponse(): CartResponse {
     totalPrice: 0,
     expiresAt: null,
     remainingSeconds: 0,
+    expirationSeconds: 60, // ✅ مقدار پیش‌فرض: 1 دقیقه (مطابق با Backend)
     prices: {
       totalWithoutDiscount: 0,
       totalWithDiscount: 0,

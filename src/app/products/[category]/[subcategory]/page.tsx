@@ -18,6 +18,7 @@ import { getCategoryData, getSubcategoryData } from "@/constants/categories";
 import { notFound } from "next/navigation";
 import { getProducts } from "@/lib/api/products";
 import { Loading } from "@/components/ui/Loading";
+import { useTranslations } from "next-intl";
 
 interface Product {
   _id: string;
@@ -45,6 +46,7 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
   const { category, subcategory } = use(params);
   const categoryData = getCategoryData(category);
   const subcategoryData = getSubcategoryData(category, subcategory);
+  const tCommon = useTranslations("common");
 
   // اگر category یا subcategory پیدا نشد، صفحه 404 نمایش بده
   if (!categoryData || !subcategoryData) {
@@ -407,7 +409,7 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
-                aria-label={t("ariaLabels.previousPage")}
+                aria-label={tCommon("ariaLabels.previousPage")}
               >
                 <ChevronRight className="w-5 h-5 text-gray-600" />
               </button>
@@ -442,7 +444,7 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 className="p-2 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded"
-                aria-label={t("ariaLabels.nextPage")}
+                aria-label={tCommon("ariaLabels.nextPage")}
               >
                 <ChevronLeft className="w-5 h-5 text-gray-600" />
               </button>

@@ -34,7 +34,7 @@ export enum ErrorCode {
 
 export interface IncompleteRegistrationError {
   statusCode: 403;
-  message: string | string[]; // ✅ Backend همیشه string[] می‌فرستد
+  message: string[]; // ✅ Backend همیشه string[] می‌فرستد
   code: ErrorCode.INCOMPLETE_REGISTRATION;
   requiresRegistration: true;
   isAuthenticated: true;
@@ -47,7 +47,7 @@ export interface IncompleteRegistrationError {
 
 export interface OtpRequiredError {
   statusCode: 403;
-  message: string | string[]; // ✅ Backend همیشه string[] می‌فرستد
+  message: string[]; // ✅ Backend همیشه string[] می‌فرستد
   code: ErrorCode.OTP_REQUIRED;
   requiresRegistration: true;
   isAuthenticated: true;
@@ -61,7 +61,7 @@ export interface OtpRequiredError {
 
 export interface OtpVerificationExpiredError {
   statusCode: 403;
-  message: string | string[]; // ✅ Backend همیشه string[] می‌فرستد
+  message: string[]; // ✅ Backend همیشه string[] می‌فرستد
   code: ErrorCode.OTP_VERIFICATION_EXPIRED;
   requiresRegistration: true;
   isAuthenticated: false;
@@ -75,7 +75,7 @@ export interface OtpVerificationExpiredError {
 // ✅ خطای انقضای OTP
 export interface OtpExpiredError {
   statusCode: 400;
-  message: string | string[]; // ✅ Backend همیشه string[] می‌فرستد
+  message: string[]; // ✅ Backend همیشه string[] می‌فرستد
   code: ErrorCode.OTP_EXPIRED;
   timestamp?: string;
   path?: string;
@@ -86,7 +86,7 @@ export interface OtpExpiredError {
 // ✅ خطای نامعتبر بودن OTP
 export interface OtpInvalidError {
   statusCode: 400;
-  message: string | string[]; // ✅ Backend همیشه string[] می‌فرستد
+  message: string[]; // ✅ Backend همیشه string[] می‌فرستد
   code: ErrorCode.OTP_INVALID;
   remainingAttempts?: number | null;
   timestamp?: string;
@@ -99,7 +99,7 @@ export interface OtpInvalidError {
 // مطابق با StandardErrorResponse در Backend
 export interface ErrorResponse {
   statusCode: number;
-  message: string | string[]; // ✅ Backend همیشه string[] می‌فرستد
+  message: string[]; // ✅ Backend همیشه string[] می‌فرستد (تغییر از string | string[])
   code?: ErrorCode; // ✅ همیشه وجود دارد (از Backend جدید)
   timestamp?: string;
   path?: string;

@@ -30,6 +30,10 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   const t = useTranslations("cart.drawer");
   const [mounted, setMounted] = useState(false);
   const hasReloadedRef = useRef(false);
+  // ✅ State برای نگه‌داری expiredFirstTime تا دفعه بعدی که drawer باز می‌شود
+  const [expiredFirstTimeState, setExpiredFirstTimeState] = useState(false);
+  // ✅ Ref برای نگه‌داری flag که نشان می‌دهد timer به 0 رسیده و state باید نگه داشته شود
+  const timerExpiredRef = useRef(false);
   const {
     cart,
     loading,
@@ -64,12 +68,45 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       document.body.style.overflow = "unset";
       // Reset flag وقتی drawer بسته می‌شود
       hasReloadedRef.current = false;
+      // ✅ وقتی drawer بسته می‌شود، expiredFirstTimeState و timerExpiredRef را reset کن
+      // تا دفعه بعدی که باز می‌شود، پیام expired نمایش داده نشود
+      timerExpiredRef.current = false;
+      setTimeout(() => setExpiredFirstTimeState(false), 0);
     }
 
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
+
+  // ✅ نگه‌داری expiredFirstTime در state وقتی از backend می‌آید
+  useEffect(() => {
+    // ✅ اگر expiredFirstTime از backend true است، state را true کن و flag را reset کن
+    if (cart?.expiredFirstTime === true) {
+      timerExpiredRef.current = false; // ✅ Reset flag چون backend خودش expiredFirstTime را true کرده
+      setTimeout(() => setExpiredFirstTimeState(true), 0);
+      return; // ✅ اگر expiredFirstTime true است، دیگر چک نکن
+    }
+    // ✅ اگر cart expired نیست (یعنی فعال است و محصول جدید اضافه شده)، state را reset کن
+    // این یعنی کاربر محصول جدید اضافه کرده و cart دوباره فعال شده
+    if (cart?.expired === false) {
+      timerExpiredRef.current = false; // ✅ Reset flag چون cart فعال شده
+      setTimeout(() => setExpiredFirstTimeState(false), 0);
+      return; // ✅ اگر cart فعال است، state را reset کن و دیگر چک نکن
+    }
+    // ✅ اگر cart expired است و timerExpiredRef.current === true است، state را true کن
+    // این یعنی timer به 0 رسیده و باید state را true کنم
+    // ما state را فقط وقتی reset می‌کنیم که cart فعال شود (expired === false)
+    // ⚠️ مهم: اگر timerExpiredRef.current === true است، state را true کن (حتی اگر cart تغییر کند)
+    if (timerExpiredRef.current === true) {
+      // ✅ State را true کن - این مهم است که این چک قبل از سایر چک‌ها باشد
+      if (!expiredFirstTimeState) {
+        setTimeout(() => setExpiredFirstTimeState(true), 0);
+      }
+      return;
+    }
+    // ✅ در سایر حالات، state را تغییر نده
+  }, [cart, expiredFirstTimeState]);
 
   // Timer countdown - استفاده از remainingSeconds از backend
   const [timeLeft, setTimeLeft] = useState(remainingSeconds);
@@ -103,17 +140,16 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          // ✅ چک کردن که cart هنوز خالی نشده باشد و expired نشده باشد
-          const currentCartItems = (cart?.items || []).filter(
-            (item) => item.product.productType !== "melted_gold"
-          );
-          const currentIsExpired =
-            cart?.expired === true || remainingSeconds <= 0;
-          if (currentCartItems.length > 0 && !currentIsExpired) {
-            setTimeout(() => {
-              reloadCartRef.current();
-            }, 0);
-          }
+          // ✅ وقتی counter به 0 می‌رسد، flag را set کن و expiredFirstTimeState را true کن (قبل از reload)
+          // این باعث می‌شود که حتی بعد از reload که backend expiredFirstTime را false می‌کند، state نگه داشته شود
+          // ⚠️ مهم: اول flag را set کن، سپس state را set کن، و در آخر reload را اجرا کن
+          timerExpiredRef.current = true;
+          setExpiredFirstTimeState(true);
+          // ✅ سپس cart را refresh کن (با کمی delay تا state به‌روز شود)
+          // Backend خودش items را پاک می‌کند و expiredFirstTime را false می‌کند
+          setTimeout(() => {
+            reloadCartRef.current();
+          }, 100); // ✅ کمی delay برای اطمینان از اینکه state به‌روز شده است
           return 0;
         }
         return prev - 1;
@@ -155,8 +191,20 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   const cartItems = (cart?.items || []).filter(
     (item) => item.product.productType !== "melted_gold"
   );
-  const isEmpty = !loading && cartItems.length === 0;
   const isExpired = cart?.expired === true; // ✅ بررسی expired flag
+  // ✅ استفاده از state برای نگه‌داری تا دفعه بعدی
+  // ⚠️ مهم: expiredFirstTimeState از timer یا backend می‌آید
+  const expiredFirstTime =
+    expiredFirstTimeState || cart?.expiredFirstTime === true;
+  // ✅ منطق جدید: اولویت با isExpired و expiredFirstTime
+  // اگر isExpired و expiredFirstTime باشد، حتی اگر items موجود باشد، پیام expired نمایش داده می‌شود
+  // اگر isExpired و !expiredFirstTime باشد، یعنی دفعات بعدی است و items پاک شده، پس isEmpty = true
+  // ⚠️ مهم: اگر expiredFirstTime true است، isEmpty را false کن (حتی اگر items خالی باشد)
+  const isEmpty =
+    !loading &&
+    cartItems.length === 0 &&
+    (!isExpired || !expiredFirstTime) &&
+    !expiredFirstTime; // ✅ اگر expiredFirstTime true است، isEmpty را false کن
 
   return createPortal(
     <>
@@ -176,7 +224,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       >
         {/* Warning Bar */}
         <div className="bg-white px-4 py-2 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
           <p className="text-xs text-amber-800">{t("warning")}</p>
         </div>
 
@@ -195,7 +243,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
           </div>
           <div className="flex items-center gap-3">
             {/* Timer - از backend */}
-            {!isEmpty && !isExpired && timeLeft > 0 && (
+            {!isEmpty && !isExpired && !expiredFirstTime && timeLeft > 0 && (
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-gray-700">
                   {t("purchaseDeadline")}
@@ -234,25 +282,8 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <Loading size="md" text={t("loading")} />
             </div>
-          ) : isEmpty ? (
-            <div className="flex flex-col items-center justify-center h-full text-center py-12">
-              <div className="bg-gray-100 rounded-full p-6 mb-4">
-                <ShoppingCart className="w-16 h-16 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center justify-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                {t("empty.title")}
-              </h3>
-              <Link
-                href="/products/women"
-                onClick={onClose}
-                className="px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-medium rounded"
-              >
-                {t("empty.viewProducts")}
-              </Link>
-            </div>
-          ) : isExpired ? (
-            // ✅ نمایش پیام expired
+          ) : isExpired && expiredFirstTime ? (
+            // ✅ اولین بار که expired است: نمایش پیام "زمان خرید شما به پایان رسیده است"
             <div className="flex flex-col items-center justify-center h-full text-center py-12 px-4">
               <div className="bg-red-100 rounded-full p-6 mb-4">
                 <AlarmClockMinus className="w-16 h-16 text-red-600" />
@@ -268,6 +299,8 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               <button
                 onClick={() => {
                   clearCart();
+                  timerExpiredRef.current = false; // ✅ Reset flag
+                  setExpiredFirstTimeState(false); // ✅ Reset state وقتی کاربر دکمه را می‌زند
                   onClose();
                   router.push("/");
                 }}
@@ -275,6 +308,24 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               >
                 {t("expired.backToProducts")}
               </button>
+            </div>
+          ) : isEmpty ? (
+            // ✅ دفعات بعدی که expired است یا سبد خرید واقعاً خالی است: نمایش پیام "سبد خرید شما خالی است"
+            <div className="flex flex-col items-center justify-center h-full text-center py-12">
+              <div className="bg-gray-100 rounded-full p-6 mb-4">
+                <ShoppingCart className="w-16 h-16 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center justify-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                {t("empty.title")}
+              </h3>
+              <Link
+                href="/products/women"
+                onClick={onClose}
+                className="px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-medium rounded"
+              >
+                {t("empty.viewProducts")}
+              </Link>
             </div>
           ) : (
             <>
