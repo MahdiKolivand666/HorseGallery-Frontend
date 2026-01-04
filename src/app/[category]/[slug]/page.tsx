@@ -677,7 +677,6 @@ const ProductDetailPage = () => {
                           <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
                             {productData.discount.toLocaleString("fa-IR")}
                             {t("detail.discountPercent")}
-                            {t("detail.discount")}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
