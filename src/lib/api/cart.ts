@@ -6,6 +6,7 @@ import API_CONFIG from "@/config/api";
 import { GoldInfo } from "./products";
 import { setSessionId, removeSessionId } from "@/lib/session";
 import { ErrorCode } from "@/types/errors";
+import { createApiHeaders } from "@/lib/utils/apiHeaders";
 
 // Types
 export interface Cart {
@@ -200,15 +201,11 @@ export async function addToCart(
   size?: string
 ): Promise<CartResponse> {
   try {
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-    };
-
-    const token = getToken();
-    // اگر لاگین باشد، JWT Token را اضافه کن
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+    // ✅ ساخت headers با Authorization و CSRF Token
+    const headers = createApiHeaders({
+      method: "POST",
+      includeCsrf: true,
+    });
 
     const res = await fetch(`${API_CONFIG.BASE_URL}/site/cart`, {
       method: "POST",

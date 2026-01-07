@@ -4,6 +4,7 @@
 
 import API_CONFIG from "@/config/api";
 import { tokenStorage } from "@/lib/utils/tokenStorage";
+import { createApiHeaders } from "@/lib/utils/apiHeaders";
 
 // Types
 export interface CreateOrderDto {
@@ -14,13 +15,11 @@ export interface CreateOrderDto {
 
 export interface OrderResponse {
   success: boolean;
-  data: {
-    _id: string;
-    orderNumber: string;
-    paymentUrl?: string;
-    // ... سایر فیلدهای order
-  };
-  message?: string;
+  refId: string; // ✅ Authority code از زرین‌پال
+  orderId: string; // ✅ ID سفارش
+  message: string; // ✅ پیام موفقیت
+  paymentUrl: string | null; // ✅ URL پرداخت (می‌تواند null باشد در Mock Payment)
+  finalPrice: number; // ✅ قیمت نهایی
 }
 
 // Helper function to get auth token
@@ -41,10 +40,11 @@ export async function createOrder(
       throw new Error("برای ایجاد سفارش باید وارد شوید");
     }
 
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
+    // ✅ ساخت headers با Authorization و CSRF Token
+    const headers = createApiHeaders({
+      method: "POST",
+      includeCsrf: true,
+    });
 
     const res = await fetch(`${API_CONFIG.BASE_URL}/site/order`, {
       method: "POST",
@@ -99,4 +99,3 @@ export async function createOrder(
     throw error;
   }
 }
-

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -30,6 +30,7 @@ import {
   type CreateAddressDto,
 } from "@/lib/api/address";
 import { createOrder } from "@/lib/api/order";
+import { getShippingMethods, type ShippingMethod } from "@/lib/api/shipping";
 import { useRouter } from "next/navigation";
 import {
   addressFormSchema,
@@ -111,6 +112,15 @@ function CheckoutPage() {
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
 
+  // ✅ Shipping method state
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
+  const [selectedShippingId, setSelectedShippingId] = useState<string | null>(
+    null
+  );
+  const [isLoadingShippingMethods, setIsLoadingShippingMethods] =
+    useState(false);
+  const [shippingCost, setShippingCost] = useState<number>(0);
+
   // ✅ State برای confirmation modal حذف آدرس
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
@@ -158,6 +168,77 @@ function CheckoutPage() {
       loadAddresses();
     }
   }, [activeTab]);
+
+  // استفاده از مقادیر محاسبه شده از Backend
+  const cartSubtotal = cart?.prices?.totalWithoutDiscount || 0;
+  const cartTotalDiscount = cart?.prices?.totalSavings || 0;
+  const cartTotal = cart?.prices?.totalWithDiscount || 0;
+
+  // ✅ Helper function برای محاسبه هزینه ارسال (با در نظر گیری ارسال رایگان)
+  const calculateShippingPrice = useCallback(
+    (method: ShippingMethod, total: number): number => {
+      // ✅ اگر freeShippingThreshold وجود دارد و مبلغ سبد بیشتر است
+      if (
+        method.freeShippingThreshold !== null &&
+        total >= method.freeShippingThreshold
+      ) {
+        return 0; // ارسال رایگان
+      }
+      // در غیر این صورت هزینه عادی
+      return method.price;
+    },
+    []
+  );
+
+  // ✅ دریافت Shipping Methods از API
+  useEffect(() => {
+    const loadShippingMethods = async () => {
+      setIsLoadingShippingMethods(true);
+      try {
+        const methods = await getShippingMethods();
+        setShippingMethods(methods);
+
+        // ✅ انتخاب shipping method پیش‌فرض
+        if (methods.length > 0 && !selectedShippingId) {
+          const defaultMethod = methods.find((m) => m.isDefault) || methods[0];
+          if (defaultMethod) {
+            setSelectedShippingId(defaultMethod._id);
+            // ✅ محاسبه هزینه ارسال
+            const price = calculateShippingPrice(defaultMethod, cartTotal);
+            setShippingCost(price);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading shipping methods:", error);
+        // ✅ در صورت خطا، یک fallback نشان می‌دهیم
+        toast.error(
+          t("error.loadShippingMethods") ||
+            "خطا در دریافت روش‌های ارسال. لطفاً صفحه را refresh کنید."
+        );
+      } finally {
+        setIsLoadingShippingMethods(false);
+      }
+    };
+
+    // ✅ فقط یک بار در mount لود شود
+    if (shippingMethods.length === 0) {
+      loadShippingMethods();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calculateShippingPrice, cartTotal]); // ✅ فقط یک بار اجرا شود
+
+  // ✅ به‌روزرسانی هزینه ارسال هنگام تغییر مبلغ سبد یا روش ارسال
+  useEffect(() => {
+    if (selectedShippingId && shippingMethods.length > 0) {
+      const selectedMethod = shippingMethods.find(
+        (m) => m._id === selectedShippingId
+      );
+      if (selectedMethod) {
+        const price = calculateShippingPrice(selectedMethod, cartTotal);
+        setShippingCost(price);
+      }
+    }
+  }, [selectedShippingId, cartTotal, shippingMethods, calculateShippingPrice]);
 
   // ✅ دریافت لیست استان‌ها هنگام باز شدن modal
   useEffect(() => {
@@ -468,23 +549,39 @@ function CheckoutPage() {
       return;
     }
 
+    // ✅ بررسی اینکه shipping method انتخاب شده باشد
+    if (!selectedShippingId) {
+      toast.error(
+        t("error.selectShipping") || "لطفاً روش ارسال را انتخاب کنید"
+      );
+      setActiveTab("shipping"); // Redirect به تب shipping
+      return;
+    }
+
+    // ✅ Validation: بررسی اینکه shippingId معتبر است
+    if (!/^[0-9a-fA-F]{24}$/.test(selectedShippingId)) {
+      toast.error("روش ارسال انتخاب شده معتبر نیست");
+      setActiveTab("shipping");
+      return;
+    }
+
     setIsProcessingPayment(true);
     try {
-      // TODO: shippingId باید از state گرفته شود (فعلاً placeholder)
-      const shippingId = "default"; // باید از state گرفته شود
-
       const order = await createOrder({
         cartId: cart.cart._id,
         addressId: selectedAddressId,
-        shippingId: shippingId,
+        shippingId: selectedShippingId,
       });
 
-      // Success - redirect to payment
-      if (order.data.paymentUrl) {
-        window.location.href = order.data.paymentUrl;
+      // ✅ Success - redirect to payment
+      if (order.paymentUrl) {
+        // ✅ Redirect به درگاه پرداخت زرین‌پال
+        window.location.href = order.paymentUrl;
       } else {
-        alert(t("success.orderCreated"));
-        // TODO: redirect to order details page
+        // ✅ Mock Payment - در development
+        toast.success(t("success.orderCreated") || "سفارش با موفقیت ثبت شد");
+        // Redirect به صفحه success
+        router.push(`/order/success?id=${order.orderId}`);
       }
     } catch (error: unknown) {
       // ✅ بررسی cart expired error
@@ -528,7 +625,8 @@ function CheckoutPage() {
   );
 
   // ✅ بررسی isEmpty و isExpired برای UI logic (طبق مستندات جدید backend)
-  const isExpired = cart?.expired === true;
+  // ✅ اگر timer به 0 رسیده یا backend expired کرده، expired است
+  const isExpired = cart?.expired === true || remainingSeconds <= 0;
   // ✅ استفاده از state برای نگه‌داری تا دفعه بعدی
   // ⚠️ مهم: expiredFirstTimeState از timer یا backend می‌آید
   const expiredFirstTime =
@@ -718,15 +816,10 @@ function CheckoutPage() {
       .replace(/9/g, "۹");
   };
 
-  // استفاده از مقادیر محاسبه شده از Backend
-  const cartSubtotal = cart?.prices?.totalWithoutDiscount || 0;
-  const cartTotalDiscount = cart?.prices?.totalSavings || 0;
-  const cartTotal = cart?.prices?.totalWithDiscount || 0;
-
   const subtotal = cartSubtotal;
   const totalDiscount = cartTotalDiscount;
   const walletAmount: number = 0; // User's wallet balance
-  const shippingCost: number = 0; // Free shipping
+  // ✅ shippingCost از state گرفته می‌شود (از shipping method انتخاب شده)
   const finalTotal = cartTotal - walletAmount + shippingCost;
   // تعداد کالاها
   const totalItems = cartItems.length;
@@ -828,62 +921,74 @@ function CheckoutPage() {
           <>
             {/* Expired Message - اولویت اول: وقتی counter به 0 می‌رسد */}
             {isExpired && expiredFirstTime ? (
-              <div className="flex flex-col items-center justify-center min-h-[400px] py-12 px-4">
-                <div className="bg-red-100 rounded-full p-6 mb-6">
-                  <AlarmClockMinus className="w-16 h-16 text-red-600" />
+              <div className="flex flex-col items-center justify-center min-h-[400px] py-8 sm:py-12 px-4">
+                <div className="bg-red-100 rounded-full p-4 sm:p-6 mb-4 sm:mb-6">
+                  <AlarmClockMinus className="w-12 h-12 sm:w-16 sm:h-16 text-red-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-2">
-                  <AlarmClockMinus className="w-6 h-6 text-red-600 flex-shrink-0" />
-                  {t("cart.expired.title")}
+                <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center justify-center gap-2 whitespace-nowrap">
+                  <AlarmClockMinus className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 flex-shrink-0" />
+                  <span className="whitespace-nowrap">
+                    {t("cart.expired.title")}
+                  </span>
                 </h2>
-                <p className="text-base text-gray-600 mb-8 flex items-center gap-2 justify-center text-center max-w-md">
-                  <Info className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                  {t("cart.expired.message")}
+                <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 flex items-center gap-2 justify-center text-center max-w-md">
+                  <Info className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
+                  <span className="whitespace-nowrap">
+                    {t("cart.expired.message")}
+                  </span>
                 </p>
                 <Link
-                  href="/products/women"
-                  className="px-8 py-3 bg-primary text-white hover:bg-primary/90 transition-colors text-base font-medium rounded-lg"
+                  href="/"
+                  className="px-6 sm:px-8 py-2.5 sm:py-3 bg-primary text-white hover:bg-primary/90 transition-colors text-sm sm:text-base font-medium rounded-lg whitespace-nowrap"
                 >
-                  {t("cart.expired.backToProducts")}
+                  بازگشت به محصولات
                 </Link>
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Empty Cart Message - اولویت اول */}
                 {isEmpty ? (
-                  <div className="lg:col-span-3 mb-4 flex justify-center">
+                  <div className="lg:col-span-3 mb-4 flex justify-center px-4">
                     <div
-                      className={`inline-block px-6 py-4 border rounded-lg text-center ${
+                      className={`inline-block px-4 sm:px-6 py-3 sm:py-4 border rounded-lg text-center w-full sm:w-auto ${
                         isExpired && expiredFirstTime
                           ? "bg-red-100 border-red-300"
                           : "bg-gray-50 border-gray-200"
                       }`}
                     >
                       <p
-                        className={`text-base font-bold flex items-center justify-center gap-2 ${
+                        className={`text-sm sm:text-base font-bold flex flex-col sm:flex-row items-center justify-center gap-2 ${
                           isExpired && expiredFirstTime
                             ? "text-red-800"
                             : "text-gray-800"
                         }`}
                       >
-                        {isExpired && expiredFirstTime ? (
-                          <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
-                        ) : (
-                          <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                        )}
-                        {isExpired && expiredFirstTime
-                          ? t("cart.expired.title")
-                          : t("cart.empty")}
+                        <span className="flex items-center gap-2 whitespace-nowrap">
+                          {isExpired && expiredFirstTime ? (
+                            <AlarmClockMinus className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
+                          ) : (
+                            <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
+                          )}
+                          <span className="whitespace-nowrap">
+                            {isExpired && expiredFirstTime
+                              ? t("cart.expired.title")
+                              : t("cart.empty")}
+                          </span>
+                        </span>
                       </p>
                       {isExpired && expiredFirstTime ? (
-                        <p className="text-sm text-red-700 mt-2 flex items-center justify-center gap-2">
-                          <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
-                          {t("cart.expired.message")}
+                        <p className="text-xs sm:text-sm text-red-700 mt-2 flex items-center justify-center gap-2">
+                          <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600 flex-shrink-0" />
+                          <span className="whitespace-nowrap">
+                            {t("cart.expired.message")}
+                          </span>
                         </p>
                       ) : (
-                        <p className="text-sm text-gray-600 mt-2 flex items-center justify-center gap-2">
-                          <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                          {t("cart.drawer.empty.message")}
+                        <p className="text-xs sm:text-sm text-gray-600 mt-2 flex items-center justify-center gap-2">
+                          <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
+                          <span className="whitespace-nowrap">
+                            {t("cart.drawer.empty.message")}
+                          </span>
                         </p>
                       )}
                     </div>
@@ -1122,17 +1227,29 @@ function CheckoutPage() {
               </div>
             ) : isExpired ? (
               /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
-              <div className="lg:col-span-3 mb-4 flex justify-center">
-                <div className="inline-block px-6 py-4 bg-red-100 border border-red-300 rounded-lg text-center">
-                  <p className="text-base font-bold text-red-800 mb-2 flex items-center justify-center gap-2">
-                    <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    {t("cart.expired.title")}
+              <div className="lg:col-span-3 mb-4 flex flex-col items-center gap-3 sm:gap-4 px-4">
+                <div className="inline-block px-4 sm:px-6 py-3 sm:py-4 bg-red-100 border border-red-300 rounded-lg text-center w-full sm:w-auto">
+                  <p className="text-sm sm:text-base font-bold text-red-800 mb-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+                    <span className="flex items-center gap-2 whitespace-nowrap">
+                      <AlarmClockMinus className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
+                      <span className="whitespace-nowrap">
+                        {t("cart.expired.title")}
+                      </span>
+                    </span>
                   </p>
-                  <p className="text-sm text-red-700 flex items-center justify-center gap-2">
-                    <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
-                    {t("cart.expired.message")}
+                  <p className="text-xs sm:text-sm text-red-700 flex items-center justify-center gap-2">
+                    <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600 flex-shrink-0" />
+                    <span className="whitespace-nowrap">
+                      {t("cart.expired.message")}
+                    </span>
                   </p>
                 </div>
+                <Link
+                  href="/"
+                  className="px-5 sm:px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap w-full sm:w-auto text-center"
+                >
+                  بازگشت به محصولات
+                </Link>
               </div>
             ) : null}
             {/* Shipping Form - Left Side */}
@@ -1148,7 +1265,12 @@ function CheckoutPage() {
                   </div>
                   <button
                     onClick={handleAddNewAddress}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors rounded bg-primary hover:bg-primary/90 text-white"
+                    disabled={isExpired && expiredFirstTime}
+                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors rounded ${
+                      isExpired && expiredFirstTime
+                        ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                        : "bg-primary hover:bg-primary/90 text-white"
+                    }`}
                   >
                     <span>+</span>
                     <span>{t("address.addNew")}</span>
@@ -1263,9 +1385,100 @@ function CheckoutPage() {
                     {t("address.shippingMethod")}
                   </h3>
                 </div>
-                <p className="text-gray-500 text-center py-8 text-sm">
-                  {t("address.selectShipping")}
-                </p>
+
+                {/* ✅ Shipping Method Selection */}
+                {isLoadingShippingMethods ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loading size="md" text="در حال دریافت روش‌های ارسال..." />
+                  </div>
+                ) : shippingMethods.length === 0 ? (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      در حال حاضر روش ارسالی در دسترس نیست. لطفاً با پشتیبانی
+                      تماس بگیرید.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {shippingMethods.map((method) => (
+                      <div
+                        key={method._id}
+                        className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                          selectedShippingId === method._id
+                            ? "border-primary bg-primary/5"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                        onClick={() => {
+                          setSelectedShippingId(method._id);
+                          // ✅ محاسبه هزینه ارسال
+                          const price = calculateShippingPrice(
+                            method,
+                            cartTotal
+                          );
+                          setShippingCost(price);
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="shipping-method"
+                            id={`shipping-${method._id}`}
+                            checked={selectedShippingId === method._id}
+                            onChange={() => {
+                              setSelectedShippingId(method._id);
+                              // ✅ محاسبه هزینه ارسال
+                              const price = calculateShippingPrice(
+                                method,
+                                cartTotal
+                              );
+                              setShippingCost(price);
+                            }}
+                            className="w-4 h-4 text-primary focus:ring-primary border-gray-300 bg-white checked:bg-primary checked:border-primary cursor-pointer"
+                          />
+                          <label
+                            htmlFor={`shipping-${method._id}`}
+                            className="flex-1 cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {method.name}
+                                </p>
+                                {method.description && (
+                                  <p className="text-sm text-gray-500">
+                                    {method.description}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="text-left">
+                                <p className="font-bold text-primary">
+                                  {calculateShippingPrice(method, cartTotal) ===
+                                  0 ? (
+                                    <span className="text-green-600">
+                                      رایگان
+                                    </span>
+                                  ) : (
+                                    `${calculateShippingPrice(
+                                      method,
+                                      cartTotal
+                                    ).toLocaleString("fa-IR")} تومان`
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* ✅ Warning if no shipping method selected */}
+                {!selectedShippingId && (
+                  <p className="text-red-500 text-sm mt-3 text-center">
+                    لطفاً روش ارسال را انتخاب کنید
+                  </p>
+                )}
               </div>
             </div>
 
@@ -1426,17 +1639,29 @@ function CheckoutPage() {
               </div>
             ) : isExpired ? (
               /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
-              <div className="lg:col-span-3 mb-4 flex justify-center">
-                <div className="inline-block px-6 py-4 bg-red-100 border border-red-300 rounded-lg text-center">
-                  <p className="text-base font-bold text-red-800 mb-2 flex items-center justify-center gap-2">
-                    <AlarmClockMinus className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    {t("cart.expired.title")}
+              <div className="lg:col-span-3 mb-4 flex flex-col items-center gap-3 sm:gap-4 px-4">
+                <div className="inline-block px-4 sm:px-6 py-3 sm:py-4 bg-red-100 border border-red-300 rounded-lg text-center w-full sm:w-auto">
+                  <p className="text-sm sm:text-base font-bold text-red-800 mb-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+                    <span className="flex items-center gap-2 whitespace-nowrap">
+                      <AlarmClockMinus className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
+                      <span className="whitespace-nowrap">
+                        {t("cart.expired.title")}
+                      </span>
+                    </span>
                   </p>
-                  <p className="text-sm text-red-700 flex items-center justify-center gap-2">
-                    <Info className="w-4 h-4 text-red-600 flex-shrink-0" />
-                    {t("cart.expired.message")}
+                  <p className="text-xs sm:text-sm text-red-700 flex items-center justify-center gap-2">
+                    <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600 flex-shrink-0" />
+                    <span className="whitespace-nowrap">
+                      {t("cart.expired.message")}
+                    </span>
                   </p>
                 </div>
+                <Link
+                  href="/"
+                  className="px-5 sm:px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap w-full sm:w-auto text-center"
+                >
+                  بازگشت به محصولات
+                </Link>
               </div>
             ) : null}
             {/* Payment Form - Left Side */}

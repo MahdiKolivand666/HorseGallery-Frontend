@@ -27,6 +27,9 @@ export const API_CONFIG = {
 
     // Cart
     CART: "/site/cart",
+
+    // Shipping Methods
+    SHIPPING_METHODS: "/site/shipping/methods",
   },
 };
 

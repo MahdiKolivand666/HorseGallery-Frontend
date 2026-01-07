@@ -191,7 +191,8 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   const cartItems = (cart?.items || []).filter(
     (item) => item.product.productType !== "melted_gold"
   );
-  const isExpired = cart?.expired === true; // ✅ بررسی expired flag
+  // ✅ اگر timer به 0 رسیده یا backend expired کرده، expired است
+  const isExpired = cart?.expired === true || remainingSeconds <= 0;
   // ✅ استفاده از state برای نگه‌داری تا دفعه بعدی
   // ⚠️ مهم: expiredFirstTimeState از timer یا backend می‌آید
   const expiredFirstTime =

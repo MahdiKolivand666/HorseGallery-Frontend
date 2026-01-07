@@ -90,4 +90,18 @@ export const tokenStorage = {
   isLoggedIn(): boolean {
     return this.getAccessToken() !== null;
   },
+
+  // ✅ Validate JWT Token Format
+  isValidTokenFormat(token: string | null): boolean {
+    if (!token) return false;
+    // ✅ JWT باید 3 قسمت با نقطه (.) جدا شده داشته باشد
+    const parts = token.split(".");
+    return parts.length === 3;
+  },
+
+  // ✅ Validate current token
+  validateCurrentToken(): boolean {
+    const token = this.getAccessToken();
+    return this.isValidTokenFormat(token);
+  },
 };

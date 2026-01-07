@@ -7,6 +7,7 @@
 
 import API_CONFIG from "@/config/api";
 import { tokenStorage } from "@/lib/utils/tokenStorage";
+import { createApiHeaders } from "@/lib/utils/apiHeaders";
 
 // ✅ Request queue برای retry بعد از refresh
 let isRefreshing = false;
@@ -85,17 +86,13 @@ export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = tokenStorage.getAccessToken();
-
-  // ✅ اضافه کردن Access Token به header
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...options.headers,
-  };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
+  // ✅ ساخت headers با Authorization و CSRF Token
+  const method = options.method?.toUpperCase() || "GET";
+  const headers = createApiHeaders({
+    method,
+    includeCsrf: ["POST", "PUT", "PATCH", "DELETE"].includes(method),
+    customHeaders: options.headers,
+  });
 
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
@@ -204,6 +201,44 @@ export async function apiRequest<T>(
       const errorData = await response.json().catch(() => ({
         message: ["خطا در درخواست"], // ✅ Backend همیشه string[] می‌فرستد
       }));
+
+      // ✅ Handle 401 - Unauthorized (Invalid token format یا expired token)
+      if (response.status === 401) {
+        const errorMessage = Array.isArray(errorData.message)
+          ? errorData.message.join(", ")
+          : errorData.message || "خطا در احراز هویت";
+
+        // ✅ بررسی اینکه آیا خطا مربوط به Invalid token format است
+        if (
+          errorMessage.includes("Invalid token format") ||
+          errorMessage.includes("invalid token format") ||
+          errorMessage.includes("Token format") ||
+          errorData.code === "INVALID_TOKEN_FORMAT"
+        ) {
+          // ✅ Token format نامعتبر - پاک کردن token
+          tokenStorage.clearAll();
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("userInfo");
+            window.location.href = "/";
+          }
+        }
+
+        const error = new Error(errorMessage) as Error & {
+          statusCode?: number;
+          data?: any;
+          code?: string;
+          requestId?: string;
+          isInvalidToken?: boolean;
+        };
+
+        error.statusCode = 401;
+        error.data = errorData;
+        error.code = errorData.code || "UNAUTHORIZED";
+        error.isInvalidToken =
+          errorMessage.includes("Invalid token format") ||
+          errorData.code === "INVALID_TOKEN_FORMAT";
+        throw error;
+      }
 
       // ✅ گرفتن requestId از header
       const requestId = response.headers.get("X-Request-ID") || errorData.requestId;
