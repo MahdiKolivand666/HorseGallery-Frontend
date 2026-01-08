@@ -1015,16 +1015,22 @@ function CheckoutPage() {
             ) : isEmpty ? (
               /* Empty Cart Message - وقتی سبد خالی است (بعد از refresh) */
               <div className="flex flex-col items-center justify-center min-h-[400px] py-12 px-4">
-                <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-4 text-center">
-                  <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2 mb-2">
-                    <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                <div className="bg-gray-50 border-2 border-gray-300 rounded-xl px-6 sm:px-8 py-6 sm:py-8 text-center max-w-sm w-full">
+                  <p className="text-lg sm:text-xl font-bold text-gray-800 flex items-center justify-center gap-2 mb-3 whitespace-nowrap">
+                    <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7 text-gray-600 flex-shrink-0" />
                     <span>{t("cart.empty")}</span>
                   </p>
-                  <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
-                    <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                  <p className="text-sm sm:text-base text-gray-600 flex items-center justify-center gap-2 whitespace-nowrap">
+                    <Info className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
                     <span>{t("cart.drawer.empty.message")}</span>
                   </p>
                 </div>
+                <Link
+                  href="/"
+                  className="mt-6 inline-block px-6 sm:px-8 py-2.5 sm:py-3 bg-primary text-white hover:bg-primary/90 transition-colors text-sm sm:text-base font-medium rounded-lg whitespace-nowrap"
+                >
+                  بازگشت به محصولات
+                </Link>
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1250,16 +1256,22 @@ function CheckoutPage() {
           (isEmpty ? (
             /* Empty Cart Message - وقتی سبد خالی است (بعد از refresh) */
             <div className="flex flex-col items-center justify-center min-h-[400px] py-12 px-4">
-              <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-4 text-center">
-                <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2 mb-2">
-                  <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
+              <div className="bg-gray-50 border-2 border-gray-300 rounded-xl px-6 sm:px-8 py-6 sm:py-8 text-center max-w-sm w-full">
+                <p className="text-lg sm:text-xl font-bold text-gray-800 flex items-center justify-center gap-2 mb-3 whitespace-nowrap">
+                  <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7 text-gray-600 flex-shrink-0" />
                   <span>{t("cart.empty")}</span>
                 </p>
-                <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
-                  <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                <p className="text-sm sm:text-base text-gray-600 flex items-center justify-center gap-2 whitespace-nowrap">
+                  <Info className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
                   <span>{t("cart.drawer.empty.message")}</span>
                 </p>
               </div>
+              <Link
+                href="/"
+                className="mt-6 inline-block px-6 sm:px-8 py-2.5 sm:py-3 bg-primary text-white hover:bg-primary/90 transition-colors text-sm sm:text-base font-medium rounded-lg whitespace-nowrap"
+              >
+                بازگشت به محصولات
+              </Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1672,16 +1684,22 @@ function CheckoutPage() {
           (isEmpty ? (
             /* Empty Cart Message - وقتی سبد خالی است (بعد از refresh) */
             <div className="flex flex-col items-center justify-center min-h-[400px] py-12 px-4">
-              <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-4 text-center">
-                <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2 mb-2">
-                  <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
+              <div className="bg-gray-50 border-2 border-gray-300 rounded-xl px-6 sm:px-8 py-6 sm:py-8 text-center max-w-sm w-full">
+                <p className="text-lg sm:text-xl font-bold text-gray-800 flex items-center justify-center gap-2 mb-3 whitespace-nowrap">
+                  <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7 text-gray-600 flex-shrink-0" />
                   <span>{t("cart.empty")}</span>
                 </p>
-                <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
-                  <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                <p className="text-sm sm:text-base text-gray-600 flex items-center justify-center gap-2 whitespace-nowrap">
+                  <Info className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
                   <span>{t("cart.drawer.empty.message")}</span>
                 </p>
               </div>
+              <Link
+                href="/"
+                className="mt-6 inline-block px-6 sm:px-8 py-2.5 sm:py-3 bg-primary text-white hover:bg-primary/90 transition-colors text-sm sm:text-base font-medium rounded-lg whitespace-nowrap"
+              >
+                بازگشت به محصولات
+              </Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
