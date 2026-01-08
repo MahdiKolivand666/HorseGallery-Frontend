@@ -60,16 +60,20 @@ export async function createOrder(
         code: "ORDER_ERROR",
       }));
 
+      // ✅ استخراج پیام خطا
+      let errorMessage = "خطا در ایجاد سفارش";
+      if (Array.isArray(error.message)) {
+        errorMessage = error.message[0] || errorMessage;
+      } else if (typeof error.message === "string") {
+        errorMessage = error.message;
+      }
+
       // ✅ بررسی اینکه آیا cart expired است
       if (
         res.status === 400 &&
         (error.code === "CART_EXPIRED" ||
-          (Array.isArray(error.message) &&
-            error.message.some((msg: string) =>
-              msg.includes("زمان شما تمام شده است")
-            )) ||
-          (typeof error.message === "string" &&
-            error.message.includes("زمان شما تمام شده است")))
+          errorMessage.includes("زمان شما تمام شده است") ||
+          errorMessage.includes("دسترسی به این سبد خرید ندارید"))
       ) {
         // ✅ ایجاد یک خطای خاص برای cart expired
         const expiredError = new Error(
@@ -85,10 +89,29 @@ export async function createOrder(
         throw expiredError;
       }
 
+      // ✅ بررسی خطای حداقل مبلغ
+      if (
+        res.status === 400 &&
+        (errorMessage.includes("حداقل") ||
+          errorMessage.includes("1000") ||
+          errorMessage.includes("1,000"))
+      ) {
+        throw new Error(errorMessage);
+      }
+
+      // ✅ بررسی خطاهای درگاه بانکی (422)
+      if (
+        res.status === 400 &&
+        (errorMessage.includes("درگاه بانکی") ||
+          errorMessage.includes("422") ||
+          errorMessage.includes("مبلغ سفارش نامعتبر") ||
+          errorMessage.includes("آدرس بازگشت نامعتبر") ||
+          errorMessage.includes("شناسه پذیرنده نامعتبر"))
+      ) {
+        throw new Error(errorMessage);
+      }
+
       // Handle سایر errors
-      const errorMessage = Array.isArray(error.message)
-        ? error.message.join(", ")
-        : error.message || "خطا در ایجاد سفارش";
       throw new Error(errorMessage);
     }
 

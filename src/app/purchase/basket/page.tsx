@@ -79,6 +79,10 @@ interface CartItem {
 
 // ✅ این صفحه فقط زمانی mount می‌شود که کاربر به /purchase/basket برود
 // ⚠️ مهم: استفاده از dynamic import برای جلوگیری از pre-fetch
+
+// ✅ حداقل مبلغ سفارش (1000 تومان)
+const MIN_ORDER_AMOUNT = 1000;
+
 function CheckoutPage() {
   const t = useTranslations("checkout");
   const tCommon = useTranslations("common");
@@ -565,6 +569,16 @@ function CheckoutPage() {
       return;
     }
 
+    // ✅ بررسی حداقل مبلغ سفارش (1000 تومان)
+    if (finalTotal < MIN_ORDER_AMOUNT) {
+      toast.error(
+        `مبلغ سفارش باید حداقل ${MIN_ORDER_AMOUNT.toLocaleString(
+          "fa-IR"
+        )} تومان باشد`
+      );
+      return;
+    }
+
     setIsProcessingPayment(true);
     try {
       const order = await createOrder({
@@ -604,11 +618,54 @@ function CheckoutPage() {
         return;
       }
 
-      // Handle سایر errors
-      alert(
+      // ✅ بررسی خطای حداقل مبلغ
+      const errorMessage =
         errorWithDetails.message ||
-          (error instanceof Error ? error.message : t("error.createOrder"))
-      );
+        (error instanceof Error ? error.message : t("error.createOrder"));
+      if (
+        errorMessage.includes("حداقل") ||
+        errorMessage.includes("1000") ||
+        errorMessage.includes("1,000")
+      ) {
+        toast.error(
+          `مبلغ سفارش باید حداقل ${MIN_ORDER_AMOUNT.toLocaleString(
+            "fa-IR"
+          )} تومان باشد`,
+          { duration: 5000 }
+        );
+        return;
+      }
+
+      // ✅ بررسی خطاهای درگاه بانکی (422)
+      if (
+        errorMessage.includes("درگاه بانکی") ||
+        errorMessage.includes("422") ||
+        errorMessage.includes("مبلغ سفارش نامعتبر") ||
+        errorMessage.includes("آدرس بازگشت نامعتبر") ||
+        errorMessage.includes("شناسه پذیرنده نامعتبر")
+      ) {
+        // ✅ نمایش پیام خطای درگاه بانکی
+        if (errorMessage.includes("مبلغ سفارش نامعتبر")) {
+          toast.error("مبلغ سفارش نامعتبر است. لطفاً دوباره تلاش کنید", {
+            duration: 5000,
+          });
+        } else if (
+          errorMessage.includes("آدرس بازگشت نامعتبر") ||
+          errorMessage.includes("شناسه پذیرنده نامعتبر")
+        ) {
+          toast.error("خطا در تنظیمات سیستم. لطفاً با پشتیبانی تماس بگیرید", {
+            duration: 5000,
+          });
+        } else {
+          toast.error("خطا در ارتباط با درگاه پرداخت. لطفاً دوباره تلاش کنید", {
+            duration: 5000,
+          });
+        }
+        return;
+      }
+
+      // ✅ نمایش خطای عمومی
+      toast.error(errorMessage, { duration: 5000 });
     } finally {
       setIsProcessingPayment(false);
     }
@@ -629,8 +686,11 @@ function CheckoutPage() {
   const isExpired = cart?.expired === true || remainingSeconds <= 0;
   // ✅ استفاده از state برای نگه‌داری تا دفعه بعدی
   // ⚠️ مهم: expiredFirstTimeState از timer یا backend می‌آید
+  // ✅ اگر timerExpiredRef.current true است، expiredFirstTime را true کن (حتی اگر state به‌روز نشده باشد)
   const expiredFirstTime =
-    expiredFirstTimeState || cart?.expiredFirstTime === true;
+    expiredFirstTimeState ||
+    cart?.expiredFirstTime === true ||
+    timerExpiredRef.current;
   // ✅ منطق جدید: اولویت با isExpired و expiredFirstTime
   // اگر isExpired و expiredFirstTime باشد، حتی اگر items موجود باشد، پیام expired نمایش داده می‌شود
   // اگر isExpired و !expiredFirstTime باشد، یعنی دفعات بعدی است و items پاک شده، پس isEmpty = true
@@ -641,12 +701,17 @@ function CheckoutPage() {
     (!isExpired || !expiredFirstTime) &&
     !expiredFirstTime; // ✅ اگر expiredFirstTime true است، isEmpty را false کن
 
-  // ✅ Redirect به صفحه اصلی اگر سبد خرید خالی است (اما نه اگر expiredFirstTime باشد)
+  // ✅ Redirect به صفحه اصلی اگر سبد خرید خالی است (اما نه اگر expiredFirstTime یا isExpired باشد)
   useEffect(() => {
-    if (!loading && isEmpty && !expiredFirstTime) {
+    // ✅ اگر expired است و expiredFirstTime true است، redirect نکن (پیام را نشان بده)
+    if (isExpired && expiredFirstTime) {
+      return;
+    }
+    // ✅ فقط اگر isEmpty است و expired نیست و expiredFirstTime نیست، redirect کن
+    if (!loading && isEmpty && !expiredFirstTime && !isExpired) {
       router.push("/");
     }
-  }, [isEmpty, loading, router, expiredFirstTime]);
+  }, [isEmpty, loading, router, expiredFirstTime, isExpired]);
 
   useEffect(() => {
     // ✅ اگر cart expired است، timeLeft را به‌روز نکن (0 نگه دار)
@@ -698,6 +763,16 @@ function CheckoutPage() {
 
   // ✅ نگه‌داری expiredFirstTime در state وقتی از backend می‌آید
   useEffect(() => {
+    // ⚠️ مهم: اول چک کن که آیا timerExpiredRef.current === true است (یعنی timer به 0 رسیده)
+    // این باید قبل از سایر چک‌ها باشد تا state نگه داشته شود
+    if (timerExpiredRef.current === true) {
+      // ✅ اگر timer به 0 رسیده است، state را نگه دار (تغییر نده)
+      // این مهم است که حتی بعد از reload که backend expiredFirstTime را false می‌کند، state نگه داشته شود
+      if (!expiredFirstTimeState) {
+        setExpiredFirstTimeState(true);
+      }
+      return; // ✅ State را نگه دار و دیگر چک نکن
+    }
     // ✅ اگر expiredFirstTime از backend true است، state را true کن و flag را reset کن
     if (cart?.expiredFirstTime === true) {
       timerExpiredRef.current = false; // ✅ Reset flag چون backend خودش expiredFirstTime را true کرده
@@ -711,16 +786,8 @@ function CheckoutPage() {
       setTimeout(() => setExpiredFirstTimeState(false), 0);
       return; // ✅ اگر cart فعال است، state را reset کن و دیگر چک نکن
     }
-    // ✅ اگر cart expired است و timerExpiredRef.current === true است، state را نگه دار (تغییر نده)
-    // این یعنی timer به 0 رسیده و state قبلاً set شده است
-    // ما state را فقط وقتی reset می‌کنیم که cart فعال شود (expired === false)
-    // ⚠️ مهم: اگر timerExpiredRef.current === true است، state را تغییر نده (حتی اگر cart تغییر کند)
-    if (timerExpiredRef.current === true) {
-      // ✅ State را نگه دار (تغییر نده) - این مهم است که این چک قبل از سایر چک‌ها باشد
-      return;
-    }
     // ✅ در سایر حالات، state را تغییر نده
-  }, [cart]);
+  }, [cart, expiredFirstTimeState]);
 
   // ✅ تایمر client-side - فقط یک بار اجرا می‌شود
   useEffect(() => {
@@ -741,12 +808,13 @@ function CheckoutPage() {
           // این باعث می‌شود که حتی بعد از reload که backend expiredFirstTime را false می‌کند، state نگه داشته شود
           // ⚠️ مهم: اول flag را set کن، سپس state را set کن، و در آخر reload را اجرا کن
           timerExpiredRef.current = true;
+          // ✅ مستقیماً state را set کن (بدون setTimeout) تا مطمئن شویم که به‌روز می‌شود
           setExpiredFirstTimeState(true);
           // ✅ سپس cart را refresh کن (با کمی delay تا state به‌روز شود)
           // Backend خودش items را پاک می‌کند و expiredFirstTime را false می‌کند
           setTimeout(() => {
             reloadCartRef.current();
-          }, 100); // ✅ کمی delay برای اطمینان از اینکه state به‌روز شده است
+          }, 100); // ✅ delay برای اطمینان از اینکه state به‌روز شده است
           return 0;
         }
         return prev - 1;

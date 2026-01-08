@@ -81,6 +81,16 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
 
   // ✅ نگه‌داری expiredFirstTime در state وقتی از backend می‌آید
   useEffect(() => {
+    // ⚠️ مهم: اول چک کن که آیا timerExpiredRef.current === true است (یعنی timer به 0 رسیده)
+    // این باید قبل از سایر چک‌ها باشد تا state نگه داشته شود
+    if (timerExpiredRef.current === true) {
+      // ✅ اگر timer به 0 رسیده است، state را نگه دار (تغییر نده)
+      // این مهم است که حتی بعد از reload که backend expiredFirstTime را false می‌کند، state نگه داشته شود
+      if (!expiredFirstTimeState) {
+        setExpiredFirstTimeState(true);
+      }
+      return; // ✅ State را نگه دار و دیگر چک نکن
+    }
     // ✅ اگر expiredFirstTime از backend true است، state را true کن و flag را reset کن
     if (cart?.expiredFirstTime === true) {
       timerExpiredRef.current = false; // ✅ Reset flag چون backend خودش expiredFirstTime را true کرده
@@ -93,17 +103,6 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       timerExpiredRef.current = false; // ✅ Reset flag چون cart فعال شده
       setTimeout(() => setExpiredFirstTimeState(false), 0);
       return; // ✅ اگر cart فعال است، state را reset کن و دیگر چک نکن
-    }
-    // ✅ اگر cart expired است و timerExpiredRef.current === true است، state را true کن
-    // این یعنی timer به 0 رسیده و باید state را true کنم
-    // ما state را فقط وقتی reset می‌کنیم که cart فعال شود (expired === false)
-    // ⚠️ مهم: اگر timerExpiredRef.current === true است، state را true کن (حتی اگر cart تغییر کند)
-    if (timerExpiredRef.current === true) {
-      // ✅ State را true کن - این مهم است که این چک قبل از سایر چک‌ها باشد
-      if (!expiredFirstTimeState) {
-        setTimeout(() => setExpiredFirstTimeState(true), 0);
-      }
-      return;
     }
     // ✅ در سایر حالات، state را تغییر نده
   }, [cart, expiredFirstTimeState]);
@@ -144,12 +143,13 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
           // این باعث می‌شود که حتی بعد از reload که backend expiredFirstTime را false می‌کند، state نگه داشته شود
           // ⚠️ مهم: اول flag را set کن، سپس state را set کن، و در آخر reload را اجرا کن
           timerExpiredRef.current = true;
+          // ✅ مستقیماً state را set کن (بدون setTimeout) تا مطمئن شویم که به‌روز می‌شود
           setExpiredFirstTimeState(true);
           // ✅ سپس cart را refresh کن (با کمی delay تا state به‌روز شود)
           // Backend خودش items را پاک می‌کند و expiredFirstTime را false می‌کند
           setTimeout(() => {
             reloadCartRef.current();
-          }, 100); // ✅ کمی delay برای اطمینان از اینکه state به‌روز شده است
+          }, 100); // ✅ delay برای اطمینان از اینکه state به‌روز شده است
           return 0;
         }
         return prev - 1;
@@ -195,8 +195,9 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   const isExpired = cart?.expired === true || remainingSeconds <= 0;
   // ✅ استفاده از state برای نگه‌داری تا دفعه بعدی
   // ⚠️ مهم: expiredFirstTimeState از timer یا backend می‌آید
+  // ✅ اگر timerExpiredRef.current true است، expiredFirstTime را true کن (حتی اگر state به‌روز نشده باشد)
   const expiredFirstTime =
-    expiredFirstTimeState || cart?.expiredFirstTime === true;
+    expiredFirstTimeState || cart?.expiredFirstTime === true || timerExpiredRef.current;
   // ✅ منطق جدید: اولویت با isExpired و expiredFirstTime
   // اگر isExpired و expiredFirstTime باشد، حتی اگر items موجود باشد، پیام expired نمایش داده می‌شود
   // اگر isExpired و !expiredFirstTime باشد، یعنی دفعات بعدی است و items پاک شده، پس isEmpty = true
