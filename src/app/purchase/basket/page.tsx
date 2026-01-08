@@ -1012,57 +1012,22 @@ function CheckoutPage() {
                   بازگشت به محصولات
                 </Link>
               </div>
+            ) : isEmpty ? (
+              /* Empty Cart Message - وقتی سبد خالی است (بعد از refresh) */
+              <div className="flex flex-col items-center justify-center min-h-[400px] py-12 px-4">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-4 text-center">
+                  <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2 mb-2">
+                    <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                    <span>{t("cart.empty")}</span>
+                  </p>
+                  <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
+                    <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                    <span>{t("cart.drawer.empty.message")}</span>
+                  </p>
+                </div>
+              </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Empty Cart Message - اولویت اول */}
-                {isEmpty ? (
-                  <div className="lg:col-span-3 mb-4 flex justify-center px-4">
-                    <div
-                      className={`inline-block px-4 sm:px-6 py-3 sm:py-4 border rounded-lg text-center w-full sm:w-auto ${
-                        isExpired && expiredFirstTime
-                          ? "bg-red-100 border-red-300"
-                          : "bg-gray-50 border-gray-200"
-                      }`}
-                    >
-                      <p
-                        className={`text-sm sm:text-base font-bold flex flex-col sm:flex-row items-center justify-center gap-2 ${
-                          isExpired && expiredFirstTime
-                            ? "text-red-800"
-                            : "text-gray-800"
-                        }`}
-                      >
-                        <span className="flex items-center gap-2 whitespace-nowrap">
-                          {isExpired && expiredFirstTime ? (
-                            <AlarmClockMinus className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
-                          ) : (
-                            <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
-                          )}
-                          <span className="whitespace-nowrap">
-                            {isExpired && expiredFirstTime
-                              ? t("cart.expired.title")
-                              : t("cart.empty")}
-                          </span>
-                        </span>
-                      </p>
-                      {isExpired && expiredFirstTime ? (
-                        <p className="text-xs sm:text-sm text-red-700 mt-2 flex items-center justify-center gap-2">
-                          <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600 flex-shrink-0" />
-                          <span className="whitespace-nowrap">
-                            {t("cart.expired.message")}
-                          </span>
-                        </p>
-                      ) : (
-                        <p className="text-xs sm:text-sm text-gray-600 mt-2 flex items-center justify-center gap-2">
-                          <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
-                          <span className="whitespace-nowrap">
-                            {t("cart.drawer.empty.message")}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-
                 {/* Cart Items - Left Side */}
                 <div className="lg:col-span-2">
                   {cartItems.map((item, index) => (
@@ -1281,636 +1246,312 @@ function CheckoutPage() {
         )}
 
         {/* Shipping Tab */}
-        {activeTab === "shipping" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Empty Cart Message - اولویت اول */}
-            {isEmpty ? (
-              <div className="lg:col-span-3 mb-4 flex justify-center">
-                <div className="inline-block px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                  <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2">
-                    <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                    {t("cart.empty")}
-                  </p>
-                </div>
+        {activeTab === "shipping" &&
+          (isEmpty ? (
+            /* Empty Cart Message - وقتی سبد خالی است (بعد از refresh) */
+            <div className="flex flex-col items-center justify-center min-h-[400px] py-12 px-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-4 text-center">
+                <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2 mb-2">
+                  <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                  <span>{t("cart.empty")}</span>
+                </p>
+                <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
+                  <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                  <span>{t("cart.drawer.empty.message")}</span>
+                </p>
               </div>
-            ) : isExpired ? (
-              /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
-              <div className="lg:col-span-3 mb-4 flex flex-col items-center gap-3 sm:gap-4 px-4">
-                <div className="inline-block px-4 sm:px-6 py-3 sm:py-4 bg-red-100 border border-red-300 rounded-lg text-center w-full sm:w-auto">
-                  <p className="text-sm sm:text-base font-bold text-red-800 mb-2 flex flex-col sm:flex-row items-center justify-center gap-2">
-                    <span className="flex items-center gap-2 whitespace-nowrap">
-                      <AlarmClockMinus className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
-                      <span className="whitespace-nowrap">
-                        {t("cart.expired.title")}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {isExpired ? (
+                /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
+                <div className="lg:col-span-3 mb-4 flex flex-col items-center gap-3 sm:gap-4 px-4">
+                  <div className="inline-block px-4 sm:px-6 py-3 sm:py-4 bg-red-100 border border-red-300 rounded-lg text-center w-full sm:w-auto">
+                    <p className="text-sm sm:text-base font-bold text-red-800 mb-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+                      <span className="flex items-center gap-2 whitespace-nowrap">
+                        <AlarmClockMinus className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
+                        <span className="whitespace-nowrap">
+                          {t("cart.expired.title")}
+                        </span>
                       </span>
-                    </span>
-                  </p>
-                  <p className="text-xs sm:text-sm text-red-700 flex items-center justify-center gap-2">
-                    <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600 flex-shrink-0" />
-                    <span className="whitespace-nowrap">
-                      {t("cart.expired.message")}
-                    </span>
-                  </p>
+                    </p>
+                    <p className="text-xs sm:text-sm text-red-700 flex items-center justify-center gap-2">
+                      <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600 flex-shrink-0" />
+                      <span className="whitespace-nowrap">
+                        {t("cart.expired.message")}
+                      </span>
+                    </p>
+                  </div>
+                  <Link
+                    href="/"
+                    className="px-5 sm:px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap w-full sm:w-auto text-center"
+                  >
+                    بازگشت به محصولات
+                  </Link>
                 </div>
-                <Link
-                  href="/"
-                  className="px-5 sm:px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap w-full sm:w-auto text-center"
-                >
-                  بازگشت به محصولات
-                </Link>
-              </div>
-            ) : null}
-            {/* Shipping Form - Left Side */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Address Section */}
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-primary" />
+              ) : null}
+              {/* Shipping Form - Left Side */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Address Section */}
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-primary" />
+                      <h3 className="text-base font-bold text-gray-900">
+                        آدرس تحویل
+                      </h3>
+                    </div>
+                    <button
+                      onClick={handleAddNewAddress}
+                      disabled={isExpired && expiredFirstTime}
+                      className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors rounded ${
+                        isExpired && expiredFirstTime
+                          ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                          : "bg-primary hover:bg-primary/90 text-white"
+                      }`}
+                    >
+                      <span>+</span>
+                      <span>{t("address.addNew")}</span>
+                    </button>
+                  </div>
+
+                  {isLoadingAddresses ? (
+                    <p className="text-gray-500 text-center py-8 text-sm">
+                      در حال بارگذاری...
+                    </p>
+                  ) : addresses.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8 text-sm">
+                      {t("address.noAddress")}
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {addresses.map((addr) => (
+                        <div
+                          key={addr._id}
+                          className={`border rounded-lg p-4 transition-all ${
+                            selectedAddressId === addr._id
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-gray-300 hover:border-gray-400"
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Radio Button */}
+                            <div className="flex-shrink-0 pt-0.5">
+                              <input
+                                type="radio"
+                                name="address-selection"
+                                id={`address-${addr._id}`}
+                                checked={selectedAddressId === addr._id}
+                                onChange={() => setSelectedAddressId(addr._id)}
+                                className="w-4 h-4 text-primary focus:ring-primary border-gray-300 bg-white checked:bg-primary checked:border-primary cursor-pointer"
+                              />
+                            </div>
+
+                            {/* Address Content */}
+                            <div className="flex-1 min-w-0">
+                              <label
+                                htmlFor={`address-${addr._id}`}
+                                className="cursor-pointer"
+                              >
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h4 className="font-bold text-gray-900 text-base">
+                                    {addr.title}
+                                  </h4>
+                                  {addr.isDefault && (
+                                    <span className="bg-primary text-white text-xs px-2 py-0.5 rounded">
+                                      پیش‌فرض
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="space-y-1">
+                                  <p
+                                    className="text-sm text-gray-600 mb-1.5 truncate"
+                                    title={addr.address}
+                                  >
+                                    {addr.address}
+                                  </p>
+                                  <p className="text-sm text-gray-700 font-medium">
+                                    {addr.firstName} {addr.lastName}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {addr.mobile}
+                                  </p>
+                                </div>
+                              </label>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditAddress(addr);
+                                }}
+                                className="p-2 text-primary hover:bg-primary/10 transition-colors rounded border border-primary/30"
+                                aria-label={t("address.edit")}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteAddress(addr._id);
+                                }}
+                                className="p-2 text-red-600 hover:bg-red-50 transition-colors rounded border border-red-300"
+                                aria-label={t("address.delete")}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Divider */}
+                <div className="px-6">
+                  <div className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+                </div>
+
+                {/* Shipping Method Section */}
+                <div className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Truck className="w-5 h-5 text-primary" />
                     <h3 className="text-base font-bold text-gray-900">
-                      آدرس تحویل
+                      {t("address.shippingMethod")}
                     </h3>
                   </div>
-                  <button
-                    onClick={handleAddNewAddress}
-                    disabled={isExpired && expiredFirstTime}
-                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors rounded ${
-                      isExpired && expiredFirstTime
-                        ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                        : "bg-primary hover:bg-primary/90 text-white"
-                    }`}
-                  >
-                    <span>+</span>
-                    <span>{t("address.addNew")}</span>
-                  </button>
-                </div>
 
-                {isLoadingAddresses ? (
-                  <p className="text-gray-500 text-center py-8 text-sm">
-                    در حال بارگذاری...
-                  </p>
-                ) : addresses.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8 text-sm">
-                    {t("address.noAddress")}
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {addresses.map((addr) => (
-                      <div
-                        key={addr._id}
-                        className={`border rounded-lg p-4 transition-all ${
-                          selectedAddressId === addr._id
-                            ? "border-primary bg-primary/5 shadow-sm"
-                            : "border-gray-300 hover:border-gray-400"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          {/* Radio Button */}
-                          <div className="flex-shrink-0 pt-0.5">
+                  {/* ✅ Shipping Method Selection */}
+                  {isLoadingShippingMethods ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loading
+                        size="md"
+                        text="در حال دریافت روش‌های ارسال..."
+                      />
+                    </div>
+                  ) : shippingMethods.length === 0 ? (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm text-yellow-800">
+                        در حال حاضر روش ارسالی در دسترس نیست. لطفاً با پشتیبانی
+                        تماس بگیرید.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {shippingMethods.map((method) => (
+                        <div
+                          key={method._id}
+                          className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                            selectedShippingId === method._id
+                              ? "border-primary bg-primary/5"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                          onClick={() => {
+                            setSelectedShippingId(method._id);
+                            // ✅ محاسبه هزینه ارسال
+                            const price = calculateShippingPrice(
+                              method,
+                              cartTotal
+                            );
+                            setShippingCost(price);
+                          }}
+                        >
+                          <div className="flex items-center gap-3">
                             <input
                               type="radio"
-                              name="address-selection"
-                              id={`address-${addr._id}`}
-                              checked={selectedAddressId === addr._id}
-                              onChange={() => setSelectedAddressId(addr._id)}
+                              name="shipping-method"
+                              id={`shipping-${method._id}`}
+                              checked={selectedShippingId === method._id}
+                              onChange={() => {
+                                setSelectedShippingId(method._id);
+                                // ✅ محاسبه هزینه ارسال
+                                const price = calculateShippingPrice(
+                                  method,
+                                  cartTotal
+                                );
+                                setShippingCost(price);
+                              }}
                               className="w-4 h-4 text-primary focus:ring-primary border-gray-300 bg-white checked:bg-primary checked:border-primary cursor-pointer"
                             />
-                          </div>
-
-                          {/* Address Content */}
-                          <div className="flex-1 min-w-0">
                             <label
-                              htmlFor={`address-${addr._id}`}
-                              className="cursor-pointer"
+                              htmlFor={`shipping-${method._id}`}
+                              className="flex-1 cursor-pointer"
                             >
-                              <div className="flex items-center gap-2 mb-2">
-                                <h4 className="font-bold text-gray-900 text-base">
-                                  {addr.title}
-                                </h4>
-                                {addr.isDefault && (
-                                  <span className="bg-primary text-white text-xs px-2 py-0.5 rounded">
-                                    پیش‌فرض
-                                  </span>
-                                )}
-                              </div>
-                              <div className="space-y-1">
-                                <p
-                                  className="text-sm text-gray-600 mb-1.5 truncate"
-                                  title={addr.address}
-                                >
-                                  {addr.address}
-                                </p>
-                                <p className="text-sm text-gray-700 font-medium">
-                                  {addr.firstName} {addr.lastName}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  {addr.mobile}
-                                </p>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {method.name}
+                                  </p>
+                                  {method.description && (
+                                    <p className="text-sm text-gray-500">
+                                      {method.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-left">
+                                  <p className="font-bold text-primary">
+                                    {calculateShippingPrice(
+                                      method,
+                                      cartTotal
+                                    ) === 0 ? (
+                                      <span className="text-green-600">
+                                        رایگان
+                                      </span>
+                                    ) : (
+                                      `${calculateShippingPrice(
+                                        method,
+                                        cartTotal
+                                      ).toLocaleString("fa-IR")} تومان`
+                                    )}
+                                  </p>
+                                </div>
                               </div>
                             </label>
                           </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditAddress(addr);
-                              }}
-                              className="p-2 text-primary hover:bg-primary/10 transition-colors rounded border border-primary/30"
-                              aria-label={t("address.edit")}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteAddress(addr._id);
-                              }}
-                              className="p-2 text-red-600 hover:bg-red-50 transition-colors rounded border border-red-300"
-                              aria-label={t("address.delete")}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Divider */}
-              <div className="px-6">
-                <div className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
-              </div>
-
-              {/* Shipping Method Section */}
-              <div className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Truck className="w-5 h-5 text-primary" />
-                  <h3 className="text-base font-bold text-gray-900">
-                    {t("address.shippingMethod")}
-                  </h3>
-                </div>
-
-                {/* ✅ Shipping Method Selection */}
-                {isLoadingShippingMethods ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loading size="md" text="در حال دریافت روش‌های ارسال..." />
-                  </div>
-                ) : shippingMethods.length === 0 ? (
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-800">
-                      در حال حاضر روش ارسالی در دسترس نیست. لطفاً با پشتیبانی
-                      تماس بگیرید.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {shippingMethods.map((method) => (
-                      <div
-                        key={method._id}
-                        className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                          selectedShippingId === method._id
-                            ? "border-primary bg-primary/5"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}
-                        onClick={() => {
-                          setSelectedShippingId(method._id);
-                          // ✅ محاسبه هزینه ارسال
-                          const price = calculateShippingPrice(
-                            method,
-                            cartTotal
-                          );
-                          setShippingCost(price);
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="shipping-method"
-                            id={`shipping-${method._id}`}
-                            checked={selectedShippingId === method._id}
-                            onChange={() => {
-                              setSelectedShippingId(method._id);
-                              // ✅ محاسبه هزینه ارسال
-                              const price = calculateShippingPrice(
-                                method,
-                                cartTotal
-                              );
-                              setShippingCost(price);
-                            }}
-                            className="w-4 h-4 text-primary focus:ring-primary border-gray-300 bg-white checked:bg-primary checked:border-primary cursor-pointer"
-                          />
-                          <label
-                            htmlFor={`shipping-${method._id}`}
-                            className="flex-1 cursor-pointer"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {method.name}
-                                </p>
-                                {method.description && (
-                                  <p className="text-sm text-gray-500">
-                                    {method.description}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="text-left">
-                                <p className="font-bold text-primary">
-                                  {calculateShippingPrice(method, cartTotal) ===
-                                  0 ? (
-                                    <span className="text-green-600">
-                                      رایگان
-                                    </span>
-                                  ) : (
-                                    `${calculateShippingPrice(
-                                      method,
-                                      cartTotal
-                                    ).toLocaleString("fa-IR")} تومان`
-                                  )}
-                                </p>
-                              </div>
-                            </div>
-                          </label>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* ✅ Warning if no shipping method selected */}
-                {!selectedShippingId && (
-                  <p className="text-red-500 text-sm mt-3 text-center">
-                    لطفاً روش ارسال را انتخاب کنید
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Order Summary - Right Side */}
-            <div className="lg:col-span-1">
-              <div className="bg-primary p-5 border border-gray-300 rounded sticky top-[180px]">
-                {/* Timer Warning */}
-                <div className="mb-5 py-1.5 px-3 border border-white/30 rounded text-center">
-                  <div className="flex items-center justify-center gap-1.5 text-white">
-                    <AlarmClockMinus className="w-3.5 h-3.5" />
-                    <p className="text-[11px]">
-                      برای تکمیل خرید خود{" "}
-                      <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded inline-block text-center tabular-nums min-w-[3rem]">
-                        {formatTime(timeLeft)}
-                      </span>{" "}
-                      {t("cart.timeLeft")}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Products Summary */}
-                <div className="mb-5 space-y-3">
-                  {cartItems.map((item, index) => (
-                    <div key={item._id}>
-                      <div className="text-white space-y-0.5">
-                        <p className="font-medium text-sm line-clamp-1">
-                          {item.name}
-                        </p>
-                        <p className="text-xs text-white/80">{item.code}</p>
-                        <p className="text-xs text-white/80">
-                          وزن:{" "}
-                          {item.weight
-                            ? englishToPersian(item.weight)
-                            : t("cart.product.unknown")}
-                        </p>
-                        {/* برای سکه: سال ضرب، برای بقیه: سایز */}
-                        {item.productType === "coin" &&
-                        item.goldInfo?.mintYear ? (
-                          <p className="text-xs text-white/80">
-                            سال ضرب: {item.goldInfo.mintYear}
-                          </p>
-                        ) : item.size ? (
-                          <p className="text-xs text-white/80">
-                            سایز: {englishToPersian(item.size)}
-                          </p>
-                        ) : null}
-                      </div>
-
-                      {/* Divider between products */}
-                      {index < cartItems.length - 1 && (
-                        <div className="py-1.5">
-                          <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Divider before price details */}
-                <div className="py-2 mb-3">
-                  <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                </div>
-
-                {/* Price Details */}
-                <div className="space-y-3">
-                  {/* Subtotal */}
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-white">{t("cart.subtotal")}</span>
-                      <span className="text-xs text-white/80">
-                        ({totalItems.toLocaleString("fa-IR")} کالا)
-                      </span>
-                    </div>
-                    <span className="font-medium text-white">
-                      {cartSubtotal.toLocaleString("fa-IR")} تومان
-                    </span>
-                  </div>
-
-                  {/* Discount */}
-                  {totalDiscount > 0 && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-white">{t("cart.discount")}</span>
-                      <span className="font-medium text-red-300">
-                        {totalDiscount.toLocaleString("fa-IR")} تومان
-                      </span>
+                      ))}
                     </div>
                   )}
 
-                  {/* Wallet */}
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-white">{t("cart.wallet")}</span>
-                    <span className="font-medium text-white">
-                      {walletAmount.toLocaleString("fa-IR")} تومان
-                    </span>
-                  </div>
-
-                  {/* Shipping */}
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-white">{t("cart.shipping")}</span>
-                    {shippingCost === 0 ? (
-                      <span className="font-medium text-white">
-                        {t("cart.free")}
-                      </span>
-                    ) : (
-                      <span className="font-medium text-white">
-                        {shippingCost.toLocaleString("fa-IR")} تومان
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Divider */}
-                  <div className="py-2">
-                    <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                  </div>
-
-                  {/* Final Total */}
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-base font-bold text-white">
-                      مبلغ نهایی:
-                    </span>
-                    <span className="text-xl font-bold text-white">
-                      {finalTotal.toLocaleString("fa-IR")} تومان
-                    </span>
-                  </div>
-
-                  {/* Continue Button */}
-                  <button
-                    onClick={() => setActiveTab("payment")}
-                    disabled={isEmpty || isExpired || expiredFirstTime}
-                    className={`w-full py-2 text-sm font-medium transition-colors mt-3 rounded ${
-                      isEmpty || isExpired || expiredFirstTime
-                        ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                        : "bg-white hover:bg-white/90 text-primary"
-                    }`}
-                  >
-                    {isEmpty || isExpired || expiredFirstTime
-                      ? t("cart.expiredButton")
-                      : t("cart.continue")}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Payment Tab */}
-        {activeTab === "payment" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Empty Cart Message - اولویت اول */}
-            {isEmpty ? (
-              <div className="lg:col-span-3 mb-4 flex justify-center">
-                <div className="inline-block px-6 py-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                  <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2">
-                    <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                    {t("cart.empty")}
-                  </p>
-                </div>
-              </div>
-            ) : isExpired ? (
-              /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
-              <div className="lg:col-span-3 mb-4 flex flex-col items-center gap-3 sm:gap-4 px-4">
-                <div className="inline-block px-4 sm:px-6 py-3 sm:py-4 bg-red-100 border border-red-300 rounded-lg text-center w-full sm:w-auto">
-                  <p className="text-sm sm:text-base font-bold text-red-800 mb-2 flex flex-col sm:flex-row items-center justify-center gap-2">
-                    <span className="flex items-center gap-2 whitespace-nowrap">
-                      <AlarmClockMinus className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
-                      <span className="whitespace-nowrap">
-                        {t("cart.expired.title")}
-                      </span>
-                    </span>
-                  </p>
-                  <p className="text-xs sm:text-sm text-red-700 flex items-center justify-center gap-2">
-                    <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600 flex-shrink-0" />
-                    <span className="whitespace-nowrap">
-                      {t("cart.expired.message")}
-                    </span>
-                  </p>
-                </div>
-                <Link
-                  href="/"
-                  className="px-5 sm:px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap w-full sm:w-auto text-center"
-                >
-                  بازگشت به محصولات
-                </Link>
-              </div>
-            ) : null}
-            {/* Payment Form - Left Side */}
-            <div className="lg:col-span-2 space-y-4">
-              {/* Payment Gateway Selection */}
-              <div className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <CreditCard className="w-5 h-5 text-primary" />
-                  <h3 className="text-base font-bold text-gray-900">
-                    انتخاب درگاه پرداخت
-                  </h3>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div
-                    onClick={() => setSelectedGateway("saman")}
-                    className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 rounded ${
-                      selectedGateway === "saman"
-                        ? "border-primary"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="payment-gateway"
-                      value="saman"
-                      checked={selectedGateway === "saman"}
-                      onChange={() => setSelectedGateway("saman")}
-                      className="w-4 h-4 text-primary focus:ring-primary bg-white checked:bg-primary"
-                    />
-                    <div className="relative w-8 h-8 flex-shrink-0">
-                      <Image
-                        src="/images/logo/saman.png"
-                        alt={t("payment.gateways.saman")}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                    <span className="text-sm text-gray-900">
-                      {t("payment.saman")}
-                    </span>
-                  </div>
-                  <div
-                    onClick={() => setSelectedGateway("mellat")}
-                    className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 rounded ${
-                      selectedGateway === "mellat"
-                        ? "border-primary"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="payment-gateway"
-                      value="mellat"
-                      checked={selectedGateway === "mellat"}
-                      onChange={() => setSelectedGateway("mellat")}
-                      className="w-4 h-4 text-primary focus:ring-primary bg-white checked:bg-primary"
-                    />
-                    <div className="relative w-8 h-8 flex-shrink-0">
-                      <Image
-                        src="/images/logo/mellatbank.png"
-                        alt={t("payment.gateways.mellat")}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                    <span className="text-sm text-gray-900">
-                      {t("payment.mellat")}
-                    </span>
-                  </div>
-                  <div
-                    onClick={() => setSelectedGateway("zarinpal")}
-                    className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 rounded ${
-                      selectedGateway === "zarinpal"
-                        ? "border-primary"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="payment-gateway"
-                      value="zarinpal"
-                      checked={selectedGateway === "zarinpal"}
-                      onChange={() => setSelectedGateway("zarinpal")}
-                      className="w-4 h-4 text-primary focus:ring-primary bg-white checked:bg-primary"
-                    />
-                    <div className="relative w-8 h-8 flex-shrink-0 flex items-center justify-center">
-                      <span className="text-yellow-500 font-bold text-lg">
-                        Z
-                      </span>
-                    </div>
-                    <span className="text-sm text-gray-900">
-                      {t("payment.zarinpal")}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="w-full px-4">
-                <div className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
-              </div>
-
-              {/* Discount Code & Wallet - Side by Side */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-                {/* Discount Code */}
-                <div className="p-6 h-full flex flex-col">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Tag className="w-5 h-5 text-primary" />
-                    <h3 className="text-base font-bold text-gray-900">
-                      کد تخفیف
-                    </h3>
-                  </div>
-                  <div className="flex gap-3 flex-1 items-start">
-                    <input
-                      type="text"
-                      placeholder={t("form.discountCode.placeholder")}
-                      className="flex-1 px-4 py-2.5 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
-                    />
-                    <button className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium transition-colors whitespace-nowrap rounded">
-                      اعمال کد
-                    </button>
-                  </div>
-                </div>
-
-                {/* Wallet */}
-                <div className="p-6 h-full flex flex-col">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Wallet className="w-5 h-5 text-primary" />
-                    <h3 className="text-base font-bold text-gray-900">
-                      کیف پول
-                    </h3>
-                  </div>
-                  <div className="space-y-4 flex-1">
-                    <div className="flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200">
-                      <span className="text-sm text-gray-700">
-                        موجودی کیف پول:
-                      </span>
-                      <span className="text-base font-bold text-primary">
-                        {(2500000).toLocaleString("fa-IR")} تومان
-                      </span>
-                    </div>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 text-primary focus:ring-primary border-gray-300"
-                      />
-                      <span className="text-sm text-gray-900">
-                        استفاده از موجودی کیف پول
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Order Summary - Right Side */}
-            <div className="lg:col-span-1">
-              <div className="bg-primary text-white p-5 border border-gray-300 rounded">
-                {/* Timer */}
-                <div className="mb-5 py-1.5 px-3 border border-white/30 rounded text-center">
-                  <div className="flex items-center justify-center gap-1.5 text-white">
-                    <AlarmClockMinus className="w-3.5 h-3.5" />
-                    <p className="text-[11px]">
-                      برای تکمیل خرید خود{" "}
-                      <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded inline-block text-center tabular-nums min-w-[3rem]">
-                        {formatTime(timeLeft)}
-                      </span>{" "}
-                      {t("cart.timeLeft")}
+                  {/* ✅ Warning if no shipping method selected */}
+                  {!selectedShippingId && (
+                    <p className="text-red-500 text-sm mt-3 text-center">
+                      لطفاً روش ارسال را انتخاب کنید
                     </p>
-                  </div>
+                  )}
                 </div>
+              </div>
 
-                {/* Product Summary */}
-                <div className="space-y-3 mb-5">
-                  {cartItems.map((item, index) => (
-                    <div key={item._id}>
-                      <div className="py-2">
-                        <p className="text-sm font-medium mb-1">{item.name}</p>
-                        <div className="space-y-0.5 text-xs">
-                          <p className="text-white/80">{item.code}</p>
-                          <p className="text-white/80">
+              {/* Order Summary - Right Side */}
+              <div className="lg:col-span-1">
+                <div className="bg-primary p-5 border border-gray-300 rounded sticky top-[180px]">
+                  {/* Timer Warning */}
+                  <div className="mb-5 py-1.5 px-3 border border-white/30 rounded text-center">
+                    <div className="flex items-center justify-center gap-1.5 text-white">
+                      <AlarmClockMinus className="w-3.5 h-3.5" />
+                      <p className="text-[11px]">
+                        برای تکمیل خرید خود{" "}
+                        <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded inline-block text-center tabular-nums min-w-[3rem]">
+                          {formatTime(timeLeft)}
+                        </span>{" "}
+                        {t("cart.timeLeft")}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Products Summary */}
+                  <div className="mb-5 space-y-3">
+                    {cartItems.map((item, index) => (
+                      <div key={item._id}>
+                        <div className="text-white space-y-0.5">
+                          <p className="font-medium text-sm line-clamp-1">
+                            {item.name}
+                          </p>
+                          <p className="text-xs text-white/80">{item.code}</p>
+                          <p className="text-xs text-white/80">
                             وزن:{" "}
                             {item.weight
                               ? englishToPersian(item.weight)
@@ -1919,113 +1560,454 @@ function CheckoutPage() {
                           {/* برای سکه: سال ضرب، برای بقیه: سایز */}
                           {item.productType === "coin" &&
                           item.goldInfo?.mintYear ? (
-                            <p className="text-white/80">
+                            <p className="text-xs text-white/80">
                               سال ضرب: {item.goldInfo.mintYear}
                             </p>
                           ) : item.size ? (
-                            <p className="text-white/80">
+                            <p className="text-xs text-white/80">
                               سایز: {englishToPersian(item.size)}
                             </p>
                           ) : null}
                         </div>
+
+                        {/* Divider between products */}
+                        {index < cartItems.length - 1 && (
+                          <div className="py-1.5">
+                            <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                          </div>
+                        )}
                       </div>
-                      {index < cartItems.length - 1 && (
-                        <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Divider */}
-                <div className="py-2">
-                  <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                </div>
-
-                {/* Price Summary */}
-                <div className="space-y-3 mb-5">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>{t("cart.totalItems")}</span>
-                    <span className="font-medium">
-                      {cartSubtotal.toLocaleString("fa-IR")} تومان
-                    </span>
+                    ))}
                   </div>
-                  {totalDiscount > 0 && (
+
+                  {/* Divider before price details */}
+                  <div className="py-2 mb-3">
+                    <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                  </div>
+
+                  {/* Price Details */}
+                  <div className="space-y-3">
+                    {/* Subtotal */}
                     <div className="flex items-center justify-between text-sm">
-                      <span>{t("cart.totalDiscount")}</span>
-                      <span className="font-medium text-red-300">
-                        {totalDiscount.toLocaleString("fa-IR")} تومان
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-white">{t("cart.subtotal")}</span>
+                        <span className="text-xs text-white/80">
+                          ({totalItems.toLocaleString("fa-IR")} کالا)
+                        </span>
+                      </div>
+                      <span className="font-medium text-white">
+                        {cartSubtotal.toLocaleString("fa-IR")} تومان
                       </span>
                     </div>
-                  )}
-                  <div className="flex items-center justify-between text-sm">
-                    <span>{t("cart.walletLabel")}</span>
-                    <span className="font-medium">
-                      {walletAmount.toLocaleString("fa-IR")} تومان
-                    </span>
+
+                    {/* Discount */}
+                    {totalDiscount > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-white">{t("cart.discount")}</span>
+                        <span className="font-medium text-red-300">
+                          {totalDiscount.toLocaleString("fa-IR")} تومان
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Wallet */}
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white">{t("cart.wallet")}</span>
+                      <span className="font-medium text-white">
+                        {walletAmount.toLocaleString("fa-IR")} تومان
+                      </span>
+                    </div>
+
+                    {/* Shipping */}
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white">{t("cart.shipping")}</span>
+                      {shippingCost === 0 ? (
+                        <span className="font-medium text-white">
+                          {t("cart.free")}
+                        </span>
+                      ) : (
+                        <span className="font-medium text-white">
+                          {shippingCost.toLocaleString("fa-IR")} تومان
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Divider */}
+                    <div className="py-2">
+                      <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                    </div>
+
+                    {/* Final Total */}
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-base font-bold text-white">
+                        مبلغ نهایی:
+                      </span>
+                      <span className="text-xl font-bold text-white">
+                        {finalTotal.toLocaleString("fa-IR")} تومان
+                      </span>
+                    </div>
+
+                    {/* Continue Button */}
+                    <button
+                      onClick={() => setActiveTab("payment")}
+                      disabled={isEmpty || isExpired || expiredFirstTime}
+                      className={`w-full py-2 text-sm font-medium transition-colors mt-3 rounded ${
+                        isEmpty || isExpired || expiredFirstTime
+                          ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                          : "bg-white hover:bg-white/90 text-primary"
+                      }`}
+                    >
+                      {isEmpty || isExpired || expiredFirstTime
+                        ? t("cart.expiredButton")
+                        : t("cart.continue")}
+                    </button>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>{t("cart.shippingLabel")}</span>
-                    <span className="font-medium">
-                      {shippingCost.toLocaleString("fa-IR")} تومان
-                    </span>
+                </div>
+              </div>
+            </div>
+          ))}
+
+        {/* Payment Tab */}
+        {activeTab === "payment" &&
+          (isEmpty ? (
+            /* Empty Cart Message - وقتی سبد خالی است (بعد از refresh) */
+            <div className="flex flex-col items-center justify-center min-h-[400px] py-12 px-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg px-6 py-4 text-center">
+                <p className="text-base font-bold text-gray-800 flex items-center justify-center gap-2 mb-2">
+                  <ShoppingCart className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                  <span>{t("cart.empty")}</span>
+                </p>
+                <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
+                  <Info className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                  <span>{t("cart.drawer.empty.message")}</span>
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {isExpired ? (
+                /* Expired Message - اولویت دوم (فقط در اولین بار expired) */
+                <div className="lg:col-span-3 mb-4 flex flex-col items-center gap-3 sm:gap-4 px-4">
+                  <div className="inline-block px-4 sm:px-6 py-3 sm:py-4 bg-red-100 border border-red-300 rounded-lg text-center w-full sm:w-auto">
+                    <p className="text-sm sm:text-base font-bold text-red-800 mb-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+                      <span className="flex items-center gap-2 whitespace-nowrap">
+                        <AlarmClockMinus className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
+                        <span className="whitespace-nowrap">
+                          {t("cart.expired.title")}
+                        </span>
+                      </span>
+                    </p>
+                    <p className="text-xs sm:text-sm text-red-700 flex items-center justify-center gap-2">
+                      <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600 flex-shrink-0" />
+                      <span className="whitespace-nowrap">
+                        {t("cart.expired.message")}
+                      </span>
+                    </p>
+                  </div>
+                  <Link
+                    href="/"
+                    className="px-5 sm:px-6 py-2 bg-primary text-white hover:bg-primary/90 transition-colors text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap w-full sm:w-auto text-center"
+                  >
+                    بازگشت به محصولات
+                  </Link>
+                </div>
+              ) : null}
+              {/* Payment Form - Left Side */}
+              <div className="lg:col-span-2 space-y-4">
+                {/* Payment Gateway Selection */}
+                <div className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                    <h3 className="text-base font-bold text-gray-900">
+                      انتخاب درگاه پرداخت
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div
+                      onClick={() => setSelectedGateway("saman")}
+                      className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 rounded ${
+                        selectedGateway === "saman"
+                          ? "border-primary"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment-gateway"
+                        value="saman"
+                        checked={selectedGateway === "saman"}
+                        onChange={() => setSelectedGateway("saman")}
+                        className="w-4 h-4 text-primary focus:ring-primary bg-white checked:bg-primary"
+                      />
+                      <div className="relative w-8 h-8 flex-shrink-0">
+                        <Image
+                          src="/images/logo/saman.png"
+                          alt={t("payment.gateways.saman")}
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                      <span className="text-sm text-gray-900">
+                        {t("payment.saman")}
+                      </span>
+                    </div>
+                    <div
+                      onClick={() => setSelectedGateway("mellat")}
+                      className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 rounded ${
+                        selectedGateway === "mellat"
+                          ? "border-primary"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment-gateway"
+                        value="mellat"
+                        checked={selectedGateway === "mellat"}
+                        onChange={() => setSelectedGateway("mellat")}
+                        className="w-4 h-4 text-primary focus:ring-primary bg-white checked:bg-primary"
+                      />
+                      <div className="relative w-8 h-8 flex-shrink-0">
+                        <Image
+                          src="/images/logo/mellatbank.png"
+                          alt={t("payment.gateways.mellat")}
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                      <span className="text-sm text-gray-900">
+                        {t("payment.mellat")}
+                      </span>
+                    </div>
+                    <div
+                      onClick={() => setSelectedGateway("zarinpal")}
+                      className={`flex items-center gap-3 p-4 hover:bg-primary/5 transition-all cursor-pointer border-2 rounded ${
+                        selectedGateway === "zarinpal"
+                          ? "border-primary"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment-gateway"
+                        value="zarinpal"
+                        checked={selectedGateway === "zarinpal"}
+                        onChange={() => setSelectedGateway("zarinpal")}
+                        className="w-4 h-4 text-primary focus:ring-primary bg-white checked:bg-primary"
+                      />
+                      <div className="relative w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                        <span className="text-yellow-500 font-bold text-lg">
+                          Z
+                        </span>
+                      </div>
+                      <span className="text-sm text-gray-900">
+                        {t("payment.zarinpal")}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Divider */}
-                <div className="py-2">
-                  <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                <div className="w-full px-4">
+                  <div className="h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
                 </div>
 
-                {/* Final Amount */}
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-base font-bold">مبلغ نهایی:</span>
-                  <span className="text-xl font-bold">
-                    {finalTotal.toLocaleString("fa-IR")} تومان
-                  </span>
+                {/* Discount Code & Wallet - Side by Side */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+                  {/* Discount Code */}
+                  <div className="p-6 h-full flex flex-col">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Tag className="w-5 h-5 text-primary" />
+                      <h3 className="text-base font-bold text-gray-900">
+                        کد تخفیف
+                      </h3>
+                    </div>
+                    <div className="flex gap-3 flex-1 items-start">
+                      <input
+                        type="text"
+                        placeholder={t("form.discountCode.placeholder")}
+                        className="flex-1 px-4 py-2.5 border border-gray-300 bg-white focus:border-primary focus:outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-colors rounded"
+                      />
+                      <button className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium transition-colors whitespace-nowrap rounded">
+                        اعمال کد
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Wallet */}
+                  <div className="p-6 h-full flex flex-col">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Wallet className="w-5 h-5 text-primary" />
+                      <h3 className="text-base font-bold text-gray-900">
+                        کیف پول
+                      </h3>
+                    </div>
+                    <div className="space-y-4 flex-1">
+                      <div className="flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200">
+                        <span className="text-sm text-gray-700">
+                          موجودی کیف پول:
+                        </span>
+                        <span className="text-base font-bold text-primary">
+                          {(2500000).toLocaleString("fa-IR")} تومان
+                        </span>
+                      </div>
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 text-primary focus:ring-primary border-gray-300"
+                        />
+                        <span className="text-sm text-gray-900">
+                          استفاده از موجودی کیف پول
+                        </span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
+              </div>
 
-                {/* Terms Checkbox */}
-                <label className="flex items-start gap-3 mt-3 mb-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 mt-0.5 text-primary focus:ring-primary border-gray-300 bg-white"
-                  />
-                  <span className="text-sm text-white">
-                    با قوانین و مقررات سایت موافق هستم
-                  </span>
-                </label>
+              {/* Order Summary - Right Side */}
+              <div className="lg:col-span-1">
+                <div className="bg-primary text-white p-5 border border-gray-300 rounded">
+                  {/* Timer */}
+                  <div className="mb-5 py-1.5 px-3 border border-white/30 rounded text-center">
+                    <div className="flex items-center justify-center gap-1.5 text-white">
+                      <AlarmClockMinus className="w-3.5 h-3.5" />
+                      <p className="text-[11px]">
+                        برای تکمیل خرید خود{" "}
+                        <span className="font-bold text-xs mx-1 bg-red-500 px-1.5 py-0.5 rounded inline-block text-center tabular-nums min-w-[3rem]">
+                          {formatTime(timeLeft)}
+                        </span>{" "}
+                        {t("cart.timeLeft")}
+                      </p>
+                    </div>
+                  </div>
 
-                {/* Action Button */}
-                <button
-                  disabled={
-                    isEmpty ||
-                    isExpired ||
-                    expiredFirstTime ||
-                    isProcessingPayment ||
-                    !selectedAddressId
-                  }
-                  onClick={handlePayment}
-                  className={`w-full py-2 text-sm font-medium transition-colors rounded ${
-                    isEmpty ||
-                    isExpired ||
-                    expiredFirstTime ||
-                    !selectedAddressId
-                      ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                      : "bg-white text-primary hover:bg-gray-100"
-                  }`}
-                >
-                  {isEmpty || isExpired || expiredFirstTime
-                    ? t("cart.expiredButton")
-                    : isProcessingPayment
-                    ? tCommon("loading")
-                    : !selectedAddressId
-                    ? t("error.selectAddress")
-                    : t("payment.online")}
-                </button>
+                  {/* Product Summary */}
+                  <div className="space-y-3 mb-5">
+                    {cartItems.map((item, index) => (
+                      <div key={item._id}>
+                        <div className="py-2">
+                          <p className="text-sm font-medium mb-1">
+                            {item.name}
+                          </p>
+                          <div className="space-y-0.5 text-xs">
+                            <p className="text-white/80">{item.code}</p>
+                            <p className="text-white/80">
+                              وزن:{" "}
+                              {item.weight
+                                ? englishToPersian(item.weight)
+                                : t("cart.product.unknown")}
+                            </p>
+                            {/* برای سکه: سال ضرب، برای بقیه: سایز */}
+                            {item.productType === "coin" &&
+                            item.goldInfo?.mintYear ? (
+                              <p className="text-white/80">
+                                سال ضرب: {item.goldInfo.mintYear}
+                              </p>
+                            ) : item.size ? (
+                              <p className="text-white/80">
+                                سایز: {englishToPersian(item.size)}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                        {index < cartItems.length - 1 && (
+                          <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="py-2">
+                    <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                  </div>
+
+                  {/* Price Summary */}
+                  <div className="space-y-3 mb-5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{t("cart.totalItems")}</span>
+                      <span className="font-medium">
+                        {cartSubtotal.toLocaleString("fa-IR")} تومان
+                      </span>
+                    </div>
+                    {totalDiscount > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span>{t("cart.totalDiscount")}</span>
+                        <span className="font-medium text-red-300">
+                          {totalDiscount.toLocaleString("fa-IR")} تومان
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{t("cart.walletLabel")}</span>
+                      <span className="font-medium">
+                        {walletAmount.toLocaleString("fa-IR")} تومان
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{t("cart.shippingLabel")}</span>
+                      <span className="font-medium">
+                        {shippingCost.toLocaleString("fa-IR")} تومان
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="py-2">
+                    <div className="h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                  </div>
+
+                  {/* Final Amount */}
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-base font-bold">مبلغ نهایی:</span>
+                    <span className="text-xl font-bold">
+                      {finalTotal.toLocaleString("fa-IR")} تومان
+                    </span>
+                  </div>
+
+                  {/* Terms Checkbox */}
+                  <label className="flex items-start gap-3 mt-3 mb-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 mt-0.5 text-primary focus:ring-primary border-gray-300 bg-white"
+                    />
+                    <span className="text-sm text-white">
+                      با قوانین و مقررات سایت موافق هستم
+                    </span>
+                  </label>
+
+                  {/* Action Button */}
+                  <button
+                    disabled={
+                      isEmpty ||
+                      isExpired ||
+                      expiredFirstTime ||
+                      isProcessingPayment ||
+                      !selectedAddressId
+                    }
+                    onClick={handlePayment}
+                    className={`w-full py-2 text-sm font-medium transition-colors rounded ${
+                      isEmpty ||
+                      isExpired ||
+                      expiredFirstTime ||
+                      !selectedAddressId
+                        ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                        : "bg-white text-primary hover:bg-gray-100"
+                    }`}
+                  >
+                    {isEmpty || isExpired || expiredFirstTime
+                      ? t("cart.expiredButton")
+                      : isProcessingPayment
+                      ? tCommon("loading")
+                      : !selectedAddressId
+                      ? t("error.selectAddress")
+                      : t("payment.online")}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          ))}
       </div>
 
       {/* Address Modal */}
