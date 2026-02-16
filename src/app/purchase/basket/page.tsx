@@ -549,10 +549,44 @@ function CheckoutPage() {
     }
   };
 
+  // ✅ تابع helper برای validation آدرس قبل از ادامه
+  const validateAddressBeforeContinue = (): boolean => {
+    if (addresses.length === 0) {
+      toast.error(
+        "برای ادامه خرید باید آدرس خود را ثبت کنید. لطفاً ابتدا آدرس جدید اضافه کنید.",
+        { duration: 5000 }
+      );
+      return false;
+    }
+    if (!selectedAddressId) {
+      toast.error("لطفاً یک آدرس را انتخاب کنید", { duration: 4000 });
+      return false;
+    }
+    return true;
+  };
+
   // ✅ Handler برای پرداخت - با error handling برای cart expired
   const handlePayment = async () => {
-    if (!cart?.cart?._id || !selectedAddressId) {
-      alert(t("error.selectAddress"));
+    // ✅ بررسی اولیه سبد خرید
+    if (!cart?.cart?._id) {
+      toast.error("سبد خرید یافت نشد");
+      return;
+    }
+
+    // ✅ بررسی وجود آدرس
+    if (addresses.length === 0) {
+      toast.error(
+        "برای ادامه خرید باید آدرس خود را ثبت کنید. لطفاً ابتدا آدرس جدید اضافه کنید.",
+        { duration: 5000 }
+      );
+      setActiveTab("shipping"); // برگرداندن به تب shipping
+      return;
+    }
+
+    // ✅ بررسی انتخاب آدرس
+    if (!selectedAddressId) {
+      toast.error("لطفاً یک آدرس را انتخاب کنید", { duration: 4000 });
+      setActiveTab("shipping");
       return;
     }
 
@@ -649,6 +683,7 @@ function CheckoutPage() {
         code?: string;
         isCartExpired?: boolean;
         message?: string;
+        field?: string;
       };
       if (
         errorWithDetails.statusCode === 400 &&
@@ -658,8 +693,53 @@ function CheckoutPage() {
       ) {
         // ✅ Cart از database حذف شده است
         clearCart();
-        alert(t("error.cartExpired"));
+        // ✅ اگر timer expiration نبود (یعنی از createOrder آمده)، alert نمایش بده
+        // اگر timer expiration بود، UI خودش پیام را نمایش می‌دهد
+        if (!timerExpiredRef.current && !expiredFirstTimeState) {
+          alert(t("error.cartExpired"));
+        }
         router.push("/products");
+        return;
+      }
+
+      // ✅ بررسی خطاهای مربوط به آدرس (بر اساس error code از Backend)
+      const addressErrorCodes = [
+        "ADDRESS_REQUIRED",
+        "INVALID_ADDRESS_ID",
+        "ADDRESS_NOT_FOUND",
+        "ADDRESS_ACCESS_DENIED",
+        "INCOMPLETE_ADDRESS",
+      ];
+
+      if (errorWithDetails.code && addressErrorCodes.includes(errorWithDetails.code)) {
+        // ✅ نمایش پیام خطا
+        const errorMessage =
+          errorWithDetails.message ||
+          "خطا در آدرس تحویل. لطفاً آدرس خود را بررسی کنید.";
+        toast.error(errorMessage, { duration: 5000 });
+
+        // ✅ برگرداندن به تب shipping
+        setActiveTab("shipping");
+
+        // ✅ برای ADDRESS_NOT_FOUND یا ADDRESS_ACCESS_DENIED: refresh لیست آدرس‌ها
+        if (
+          errorWithDetails.code === "ADDRESS_NOT_FOUND" ||
+          errorWithDetails.code === "ADDRESS_ACCESS_DENIED"
+        ) {
+          // ✅ پاک کردن انتخاب آدرس
+          setSelectedAddressId(null);
+          // ✅ refresh لیست آدرس‌ها
+          loadAddresses();
+        }
+
+        // ✅ برای INCOMPLETE_ADDRESS: اگر field مشخص شده، می‌توان روی آن تاکید کرد
+        if (errorWithDetails.code === "INCOMPLETE_ADDRESS" && errorWithDetails.field) {
+          // ✅ می‌توان کاربر را به ویرایش آدرس هدایت کرد
+          // یا روی فیلد خاص تاکید کرد
+          console.log(`Field ${errorWithDetails.field} is incomplete in address`);
+        }
+
+        setIsProcessingPayment(false);
         return;
       }
 
@@ -1006,16 +1086,19 @@ function CheckoutPage() {
     <div className="min-h-screen bg-gray-50 pt-[180px] pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back to Home Link */}
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-3 group"
-        >
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          <span className="text-sm">{t("cart.backToHome")}</span>
-        </Link>
+        {!(isExpired && expiredFirstTime) && (
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-3 group"
+          >
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <span className="text-sm">{t("cart.backToHome")}</span>
+          </Link>
+        )}
 
         {/* Tabs */}
-        <div className="flex justify-center gap-2 sm:gap-4 mb-8 border-b border-gray-200 overflow-x-auto">
+        {!(isExpired && expiredFirstTime) && (
+          <div className="flex justify-center gap-2 sm:gap-4 mb-8 border-b border-gray-200 overflow-x-auto">
           <button
             onClick={() =>
               !isEmpty &&
@@ -1089,6 +1172,7 @@ function CheckoutPage() {
               )}
           </button>
         </div>
+        )}
 
         {/* Content */}
         {activeTab === "cart" && (
@@ -1767,7 +1851,22 @@ function CheckoutPage() {
 
                     {/* Continue Button */}
                     <button
-                      onClick={() => setActiveTab("payment")}
+                      onClick={() => {
+                        // ✅ بررسی آدرس قبل از ادامه
+                        if (!validateAddressBeforeContinue()) {
+                          return; // جلوگیری از تغییر تب
+                        }
+                        // ✅ بررسی shipping method
+                        if (!selectedShippingId) {
+                          toast.error(
+                            t("error.selectShipping") ||
+                              "لطفاً روش ارسال را انتخاب کنید",
+                            { duration: 4000 }
+                          );
+                          return;
+                        }
+                        setActiveTab("payment");
+                      }}
                       disabled={isEmpty || isExpired || expiredFirstTime}
                       className={`w-full py-2 text-sm font-medium transition-colors mt-3 rounded ${
                         isEmpty || isExpired || expiredFirstTime

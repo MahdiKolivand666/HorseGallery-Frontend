@@ -140,6 +140,31 @@ export async function createOrder(
         throw new Error(errorMessage);
       }
 
+      // ✅ بررسی خطاهای مربوط به آدرس (بر اساس error code از Backend)
+      const addressErrorCodes = [
+        "ADDRESS_REQUIRED",
+        "INVALID_ADDRESS_ID",
+        "ADDRESS_NOT_FOUND",
+        "ADDRESS_ACCESS_DENIED",
+        "INCOMPLETE_ADDRESS",
+      ];
+
+      if (error.code && addressErrorCodes.includes(error.code)) {
+        // ✅ ایجاد error object با تمام اطلاعات لازم
+        const addressError = new Error(errorMessage) as Error & {
+          statusCode: number;
+          code: string;
+          field?: string;
+        };
+        addressError.statusCode = res.status;
+        addressError.code = error.code;
+        // ✅ اگر INCOMPLETE_ADDRESS است، field را هم اضافه کن
+        if (error.code === "INCOMPLETE_ADDRESS" && error.field) {
+          addressError.field = error.field;
+        }
+        throw addressError;
+      }
+
       // ✅ بررسی خطای authority code (36 characters)
       if (
         res.status === 400 &&
