@@ -1535,49 +1535,46 @@ const AuthModal = ({
                       {isLoading ? t("register.registering") : t("register.submit")}
                     </button>
 
-                    {/* دکمه ارسال مجدد کد */}
-                    <button
-                      type="button"
-                      onClick={handleResendOtp}
-                      disabled={resendTimer > 0 || isLoading || rateLimitCooldown > 0}
-                      className="w-full text-sm text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {rateLimitCooldown > 0 ? (
-                        <>
-                          <span className="text-red-600">{t("otp.resend.label")}</span> (
-                          <span className="text-red-600 font-semibold">
-                            {englishToPersian(
-                              Math.floor(rateLimitCooldown / 60)
-                                .toString()
-                                .padStart(2, "0")
-                            )}
-                            :
-                            {englishToPersian(
-                              (rateLimitCooldown % 60).toString().padStart(2, "0")
-                            )}
-                          </span>
-                          )
-                        </>
-                      ) : resendTimer > 0 ? (
-                        <>
-                          <span className="text-red-600">{t("otp.resend.label")}</span> (
-                          <span className="text-red-600 font-semibold">
-                            {englishToPersian(
-                              Math.floor(resendTimer / 60)
-                                .toString()
-                                .padStart(2, "0")
-                            )}
-                            :
-                            {englishToPersian(
-                              (resendTimer % 60).toString().padStart(2, "0")
-                            )}
-                          </span>
-                          )
-                        </>
-                      ) : (
-                        <span className="text-red-600">ارسال مجدد کد</span>
-                      )}
-                    </button>
+                    {/* نمایش timer یا دکمه ارسال مجدد کد */}
+                    {resendTimer > 0 ? (
+                      // ✅ فقط timer را به صورت متن ساده نشان بده (بدون دکمه)
+                      <div className="text-center text-sm text-red-600 mt-2">
+                        <span>زمان باقی‌مانده: </span>
+                        <span className="font-semibold text-red-600">
+                          {englishToPersian(
+                            Math.floor(resendTimer / 60).toString().padStart(2, "0")
+                          )}
+                          :
+                          {englishToPersian(
+                            (resendTimer % 60).toString().padStart(2, "0")
+                          )}
+                        </span>
+                      </div>
+                    ) : rateLimitCooldown > 0 ? (
+                      // ✅ اگر rate limit فعال است، timer را نشان بده
+                      <div className="text-center text-sm text-gray-600 mt-2">
+                        <span>لطفاً صبر کنید: </span>
+                        <span className="font-semibold text-primary">
+                          {englishToPersian(
+                            Math.floor(rateLimitCooldown / 60).toString().padStart(2, "0")
+                          )}
+                          :
+                          {englishToPersian(
+                            (rateLimitCooldown % 60).toString().padStart(2, "0")
+                          )}
+                        </span>
+                      </div>
+                    ) : (
+                      // ✅ فقط وقتی timer تمام شده، دکمه ارسال مجدد را نشان بده
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        disabled={isLoading || rateLimitCooldown > 0}
+                        className="w-full text-sm text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                      >
+                        {t("otp.resend.label")}
+                      </button>
+                    )}
                   </form>
                 ) : (
                   <form onSubmit={handleOtpSubmit} className="space-y-4">
