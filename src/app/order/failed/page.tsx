@@ -8,7 +8,7 @@ import { XCircle, Home, RefreshCw, ArrowRight } from "lucide-react";
  * صفحه خطای پرداخت
  * 
  * این صفحه بعد از پرداخت ناموفق یا لغو شده نمایش داده می‌شود.
- * Query Parameter: id (orderId) - اختیاری
+ * Query Parameter: id (orderId) - Order ID قابل خواندن (فرمت: ORD-YYYYMMDD-HHMMSS-RANDOM) - اختیاری
  */
 export default function OrderFailedPage() {
   const searchParams = useSearchParams();
@@ -55,7 +55,7 @@ export default function OrderFailedPage() {
             <div className="bg-gray-50 rounded-lg p-4 mb-6 text-right">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">شماره سفارش:</span>
-                <span className="font-bold text-gray-900">{orderId}</span>
+                <span className="font-bold text-gray-900 font-mono">{orderId}</span>
               </div>
             </div>
           )}

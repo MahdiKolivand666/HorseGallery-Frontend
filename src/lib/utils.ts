@@ -65,3 +65,43 @@ export function isPersianOnly(str: string): boolean {
   // ✅ فقط حروف فارسی، فاصله و کاراکترهای خاص فارسی (مثل اعراب)
   return /^[\u0600-\u06FF\s\u200C\u200D]+$/.test(str);
 }
+
+/**
+ * بررسی اینکه آیا orderId فرمت معتبر دارد
+ * فرمت: ORD-YYYYMMDD-HHMMSS-RANDOM
+ * مثال: ORD-20260108-151916-1234
+ */
+export function isValidOrderId(orderId: string): boolean {
+  if (!orderId || typeof orderId !== "string") {
+    return false;
+  }
+  // ✅ فرمت: ORD-YYYYMMDD-HHMMSS-RANDOM
+  const orderIdRegex = /^ORD-\d{8}-\d{6}-\d{4}$/;
+  return orderIdRegex.test(orderId);
+}
+
+/**
+ * بررسی اینکه آیا authority code فرمت معتبر دارد
+ * فرمت: A + 35 کاراکتر alphanumeric (0-9, a-z)
+ * طول: دقیقاً 36 کاراکتر
+ * مثال: A1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6
+ */
+export function isValidAuthority(authority: string): boolean {
+  if (!authority || typeof authority !== "string") {
+    return false;
+  }
+  
+  // ✅ باید دقیقاً 36 کاراکتر باشد
+  if (authority.length !== 36) {
+    return false;
+  }
+  
+  // ✅ باید با 'A' شروع شود
+  if (!authority.startsWith("A")) {
+    return false;
+  }
+  
+  // ✅ 35 کاراکتر بعدی باید alphanumeric باشند (0-9, a-z)
+  const alphanumericRegex = /^[0-9a-z]{35}$/;
+  return alphanumericRegex.test(authority.substring(1));
+}

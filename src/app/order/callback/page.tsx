@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loading } from "@/components/ui/Loading";
+import { isValidAuthority } from "@/lib/utils";
 
 /**
  * صفحه Callback پرداخت زرین‌پال
@@ -23,12 +24,25 @@ export default function PaymentCallbackPage() {
     const authority = searchParams.get("Authority");
     const status = searchParams.get("Status");
 
+    // ✅ Validation authority code (اگر موجود باشد)
+    if (authority && !isValidAuthority(authority)) {
+      console.warn(
+        `⚠️ Invalid authority code length: ${authority.length} (expected: 36)`
+      );
+      // ادامه می‌دهیم چون ممکن است backend درست کار کند
+    }
+
     // ✅ بررسی Status
     if (status === "OK" && authority) {
       // ✅ پرداخت موفق - Backend خودش verify می‌کند
       // فقط منتظر redirect از Backend بمانید
       // Backend به /order/success یا /order/failed redirect می‌کند
       setLoading(true);
+
+      // ✅ ذخیره authority برای استفاده بعدی (اگر نیاز باشد)
+      if (authority && typeof window !== "undefined") {
+        localStorage.setItem("paymentAuthority", authority);
+      }
 
       // ✅ اگر بعد از 5 ثانیه redirect نشد، به صفحه failed برو
       const timeout = setTimeout(() => {

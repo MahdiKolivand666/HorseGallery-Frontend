@@ -15,8 +15,8 @@ export interface CreateOrderDto {
 
 export interface OrderResponse {
   success: boolean;
-  refId: string; // ✅ Authority code از زرین‌پال
-  orderId: string; // ✅ ID سفارش
+  refId: string; // ✅ Authority code از زرین‌پال (دقیقاً 36 کاراکتر - فرمت: A + 35 کاراکتر alphanumeric)
+  orderId: string; // ✅ ID سفارش قابل خواندن (فرمت: ORD-YYYYMMDD-HHMMSS-RANDOM)
   message: string; // ✅ پیام موفقیت
   paymentUrl: string | null; // ✅ URL پرداخت (می‌تواند null باشد در Mock Payment)
   finalPrice: number; // ✅ قیمت نهایی
@@ -97,6 +97,59 @@ export async function createOrder(
           errorMessage.includes("1,000"))
       ) {
         throw new Error(errorMessage);
+      }
+
+      // ✅ بررسی خطای discount نامعتبر
+      if (
+        res.status === 400 &&
+        (errorMessage.includes("درصد تخفیف") ||
+          errorMessage.includes("تخفیف باید بین 0 تا 100") ||
+          errorMessage.includes("discount"))
+      ) {
+        throw new Error(errorMessage);
+      }
+
+      // ✅ بررسی خطای موجودی ناکافی
+      if (
+        res.status === 400 &&
+        (errorMessage.includes("موجودی") ||
+          errorMessage.includes("کافی نیست") ||
+          errorMessage.includes("stock"))
+      ) {
+        throw new Error(errorMessage);
+      }
+
+      // ✅ بررسی خطای سبد خرید خالی
+      if (
+        res.status === 400 &&
+        (errorMessage.includes("سبد خرید خالی") ||
+          errorMessage.includes("cart is empty") ||
+          errorMessage.includes("cart empty"))
+      ) {
+        throw new Error(errorMessage);
+      }
+
+      // ✅ بررسی خطای روش ارسال نامعتبر
+      if (
+        res.status === 400 &&
+        (errorMessage.includes("روش ارسال") ||
+          errorMessage.includes("shipping") ||
+          errorMessage.includes("shipping method") ||
+          errorMessage.includes("shippingId"))
+      ) {
+        throw new Error(errorMessage);
+      }
+
+      // ✅ بررسی خطای authority code (36 characters)
+      if (
+        res.status === 400 &&
+        (errorMessage.includes("authority must be 36 characters") ||
+          errorMessage.includes("The authority must be 36 characters") ||
+          errorMessage.includes("authority") && errorMessage.includes("36"))
+      ) {
+        throw new Error(
+          "خطا در تولید کد پرداخت. لطفاً با پشتیبانی تماس بگیرید."
+        );
       }
 
       // ✅ بررسی خطاهای درگاه بانکی (422)

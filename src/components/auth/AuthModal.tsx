@@ -1686,20 +1686,6 @@ const AuthModal = ({
                       </button>
                     </div>
 
-                    <AnimatePresence>
-                      {error && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ duration: 0.3 }}
-                          className="text-sm text-red-600 text-right mb-2"
-                        >
-                          {error}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
                     <button
                       type="submit"
                       disabled={

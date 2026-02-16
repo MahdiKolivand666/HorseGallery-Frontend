@@ -7,8 +7,8 @@ import { CheckCircle, Home, ShoppingBag } from "lucide-react";
 import { Loading } from "@/components/ui/Loading";
 
 interface OrderDetails {
-  orderId: string;
-  orderNumber?: string;
+  orderId: string; // ✅ Order ID قابل خواندن (فرمت: ORD-YYYYMMDD-HHMMSS-RANDOM)
+  orderNumber?: string; // برای سازگاری با backend (اختیاری)
   finalPrice?: number;
   createdAt?: string;
 }
@@ -17,7 +17,7 @@ interface OrderDetails {
  * صفحه موفقیت پرداخت
  *
  * این صفحه بعد از پرداخت موفق نمایش داده می‌شود.
- * Query Parameter: id (orderId)
+ * Query Parameter: id (orderId) - Order ID قابل خواندن (فرمت: ORD-YYYYMMDD-HHMMSS-RANDOM)
  */
 export default function OrderSuccessPage() {
   const searchParams = useSearchParams();
@@ -70,7 +70,7 @@ export default function OrderSuccessPage() {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">شماره سفارش:</span>
-                  <span className="font-bold text-gray-900">
+                  <span className="font-bold text-gray-900 font-mono">
                     {order.orderNumber || order.orderId}
                   </span>
                 </div>

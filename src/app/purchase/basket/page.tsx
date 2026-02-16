@@ -46,6 +46,7 @@ import {
   englishToPersian,
   isPersianOnly,
 } from "@/lib/utils/persianNumber";
+import { isValidAuthority } from "@/lib/utils";
 import { ErrorHandler } from "@/lib/utils/errorHandler";
 import { type ErrorResponse } from "@/types/errors";
 import {
@@ -103,6 +104,8 @@ function CheckoutPage() {
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null); // ✅ برای edit mode
   const [selectedGateway, setSelectedGateway] = useState("saman");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  // ✅ State برای checkbox قوانین و مقررات
+  const [termsAgreed, setTermsAgreed] = useState(false);
   // ✅ State برای نگه‌داری expiredFirstTime تا دفعه بعدی که صفحه باز می‌شود
   const [expiredFirstTimeState, setExpiredFirstTimeState] = useState(false);
   // ✅ Ref برای نگه‌داری flag که نشان می‌دهد timer به 0 رسیده و state باید نگه داشته شود
@@ -562,6 +565,14 @@ function CheckoutPage() {
       return;
     }
 
+    // ✅ بررسی اینکه کاربر با قوانین و مقررات موافق باشد
+    if (!termsAgreed) {
+      toast.error("لطفاً با قوانین و مقررات سایت موافق باشید", {
+        duration: 4000,
+      });
+      return;
+    }
+
     // ✅ Validation: بررسی اینکه shippingId معتبر است
     if (!/^[0-9a-fA-F]{24}$/.test(selectedShippingId)) {
       toast.error("روش ارسال انتخاب شده معتبر نیست");
@@ -587,15 +598,49 @@ function CheckoutPage() {
         shippingId: selectedShippingId,
       });
 
+      // ✅ Validation authority code (refId)
+      // Backend حالا authority را دقیقاً 36 کاراکتر تولید می‌کند، اما validation برای اطمینان انجام می‌شود
+      if (order.refId) {
+        // ✅ Logging برای debugging (فقط در development)
+        if (process.env.NODE_ENV !== "production") {
+          console.log(
+            `✅ Authority code received: length=${order.refId.length}, value="${order.refId}"`
+          );
+        }
+
+        // ✅ Validation
+        if (!isValidAuthority(order.refId)) {
+          console.error(
+            `❌ Invalid authority code from backend: length=${order.refId.length}, value="${order.refId}"`
+          );
+          toast.error(
+            `خطا در کد پرداخت: طول authority code نامعتبر است (${order.refId.length} به جای 36). لطفاً با پشتیبانی تماس بگیرید.`,
+            { duration: 8000 }
+          );
+          throw new Error(
+            `Invalid authority code length: ${order.refId.length} (expected: 36)`
+          );
+        }
+      }
+
+      // ✅ ذخیره refId برای استفاده در callback
+      if (order.refId && typeof window !== "undefined") {
+        localStorage.setItem("paymentAuthority", order.refId);
+      }
+
       // ✅ Success - redirect to payment
       if (order.paymentUrl) {
         // ✅ Redirect به درگاه پرداخت زرین‌پال
         window.location.href = order.paymentUrl;
-      } else {
+      } else if (order.refId) {
         // ✅ Mock Payment - در development
+        // می‌توانید خودتان payment URL بسازید یا فقط به success بروید
         toast.success(t("success.orderCreated") || "سفارش با موفقیت ثبت شد");
         // Redirect به صفحه success
         router.push(`/order/success?id=${order.orderId}`);
+      } else {
+        // ✅ اگر هیچکدام نبود، خطا
+        toast.error("خطا در دریافت اطلاعات پرداخت");
       }
     } catch (error: unknown) {
       // ✅ بررسی cart expired error
@@ -632,6 +677,67 @@ function CheckoutPage() {
             "fa-IR"
           )} تومان باشد`,
           { duration: 5000 }
+        );
+        return;
+      }
+
+      // ✅ بررسی خطای discount نامعتبر
+      if (
+        errorMessage.includes("درصد تخفیف") ||
+        errorMessage.includes("تخفیف باید بین 0 تا 100") ||
+        errorMessage.includes("discount")
+      ) {
+        toast.error(errorMessage, { duration: 5000 });
+        // هدایت به صفحه cart برای به‌روزرسانی
+        router.push("/products");
+        return;
+      }
+
+      // ✅ بررسی خطای موجودی ناکافی
+      if (
+        errorMessage.includes("موجودی") ||
+        errorMessage.includes("کافی نیست") ||
+        errorMessage.includes("stock")
+      ) {
+        toast.error(errorMessage, { duration: 5000 });
+        // هدایت به صفحه cart برای به‌روزرسانی
+        router.push("/products");
+        return;
+      }
+
+      // ✅ بررسی خطای سبد خرید خالی
+      if (
+        errorMessage.includes("سبد خرید خالی") ||
+        errorMessage.includes("cart is empty") ||
+        errorMessage.includes("cart empty")
+      ) {
+        toast.error(errorMessage, { duration: 5000 });
+        clearCart();
+        router.push("/products");
+        return;
+      }
+
+      // ✅ بررسی خطای روش ارسال نامعتبر
+      if (
+        errorMessage.includes("روش ارسال") ||
+        errorMessage.includes("shipping") ||
+        errorMessage.includes("shipping method") ||
+        errorMessage.includes("shippingId")
+      ) {
+        toast.error(errorMessage, { duration: 5000 });
+        setActiveTab("shipping");
+        return;
+      }
+
+      // ✅ بررسی خطای authority code (36 characters) از Zarinpal
+      if (
+        errorMessage.includes("authority must be 36 characters") ||
+        errorMessage.includes("The authority must be 36 characters") ||
+        (errorMessage.includes("authority") && errorMessage.includes("36"))
+      ) {
+        toast.error(
+          "خطا در کد پرداخت: طول authority code نامعتبر است. لطفاً با پشتیبانی تماس بگیرید.",
+          { duration: 8000 }
         );
         return;
       }
@@ -1988,6 +2094,8 @@ function CheckoutPage() {
                   <label className="flex items-start gap-3 mt-3 mb-3 cursor-pointer">
                     <input
                       type="checkbox"
+                      checked={termsAgreed}
+                      onChange={(e) => setTermsAgreed(e.target.checked)}
                       className="w-4 h-4 mt-0.5 text-primary focus:ring-primary border-gray-300 bg-white"
                     />
                     <span className="text-sm text-white">
@@ -2002,14 +2110,16 @@ function CheckoutPage() {
                       isExpired ||
                       expiredFirstTime ||
                       isProcessingPayment ||
-                      !selectedAddressId
+                      !selectedAddressId ||
+                      !termsAgreed
                     }
                     onClick={handlePayment}
                     className={`w-full py-2 text-sm font-medium transition-colors rounded ${
                       isEmpty ||
                       isExpired ||
                       expiredFirstTime ||
-                      !selectedAddressId
+                      !selectedAddressId ||
+                      !termsAgreed
                         ? "bg-gray-400 text-gray-600 cursor-not-allowed"
                         : "bg-white text-primary hover:bg-gray-100"
                     }`}
