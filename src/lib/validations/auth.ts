@@ -57,14 +57,16 @@ export const registerFormSchema = z.object({
         if (!val || val.trim() === "") {
           return true;
         }
-        // ✅ بررسی اینکه فقط کاراکترهای انگلیسی دارد
-        const englishOnlyRegex = /^[a-zA-Z0-9._-]+$/;
-        if (!englishOnlyRegex.test(val)) {
+        // ✅ trim کردن مقدار برای بررسی
+        const trimmedVal = val.trim();
+        // ✅ بررسی اینکه فقط کاراکترهای انگلیسی دارد (شامل @)
+        const englishOnlyRegex = /^[a-zA-Z0-9@._-]+$/;
+        if (!englishOnlyRegex.test(trimmedVal)) {
           return false;
         }
         // ✅ بررسی فرمت ایمیل
         const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        return emailRegex.test(val);
+        return emailRegex.test(trimmedVal);
       },
       {
         message: "ایمیل باید به انگلیسی وارد شود و فرمت صحیح داشته باشد",

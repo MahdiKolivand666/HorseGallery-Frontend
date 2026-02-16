@@ -31,7 +31,7 @@ import {
   isPersianOnly,
 } from "@/lib/utils";
 import { ErrorHandler } from "@/lib/utils/errorHandler";
-import { isOtpExpiredError, isOtpInvalidError } from "@/types/errors";
+import type { ErrorResponse } from "@/types/errors";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -199,6 +199,7 @@ const AuthModal = ({
     return () => {
       document.body.style.overflow = "unset";
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isOpen,
     initialPhoneNumber,
@@ -304,6 +305,7 @@ const AuthModal = ({
 
       return () => clearInterval(interval);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expiresAt, step]);
 
   // ✅ Countdown timer برای rate limit cooldown (2 دقیقه)
@@ -525,22 +527,21 @@ const AuthModal = ({
     } catch (err) {
       // ✅ استفاده از ErrorHandler
       const handledError = ErrorHandler.handle(
-        err as Error & { data?: any; statusCode?: number; code?: string }
+        err as Error & { data?: ErrorResponse; statusCode?: number; code?: string; requestId?: string }
       );
 
       // ✅ Handle کردن بر اساس type
       switch (handledError.type) {
         case "otp_expired":
           // ✅ نمایش پیام و فعال کردن دکمه ارسال مجدد
-          setError(handledError.message);
-          setShowResendButton(true);
+          setError(handledError.message || t("otp.expired"));
           setIsExpired(true);
           setResendTimer(0);
           break;
 
         case "otp_invalid":
           // ✅ نمایش پیام با تعداد تلاش باقی‌مانده
-          setError(handledError.message);
+          setError(handledError.message || t("otp.error.verify"));
           if (handledError.remainingAttempts !== null && handledError.remainingAttempts !== undefined) {
             // می‌توانید state برای نمایش تعداد تلاش باقی‌مانده اضافه کنید
             // setRemainingAttempts(handledError.remainingAttempts);
@@ -553,7 +554,15 @@ const AuthModal = ({
           // ✅ نمایش error برای سایر موارد
           const errorMessage =
             err instanceof Error ? err.message : t("otp.error.verify");
-          setError(handledError.message || errorMessage);
+          // ✅ بررسی اینکه آیا handledError message دارد یا نه
+          if ("message" in handledError && handledError.message) {
+            const message = Array.isArray(handledError.message)
+              ? handledError.message[0] || errorMessage
+              : handledError.message;
+            setError(message);
+          } else {
+            setError(errorMessage);
+          }
       }
     } finally {
       setIsLoading(false);
@@ -614,7 +623,7 @@ const AuthModal = ({
           firstName: registerForm.firstName,
           lastName: registerForm.lastName,
           nationalId: englishNationalId,
-          email: registerForm.email || undefined,
+          email: registerForm.email?.trim() || undefined,
         });
 
         setIsLoading(true);
@@ -846,7 +855,7 @@ const AuthModal = ({
         firstName: registerForm.firstName,
         lastName: registerForm.lastName,
         nationalId: englishNationalId,
-        email: registerForm.email || undefined,
+        email: registerForm.email?.trim() || undefined,
       });
 
       setIsLoading(true);
@@ -1730,13 +1739,13 @@ const AuthModal = ({
               <div className="px-6 pb-6">
                 <p className="text-xs text-gray-500 text-center leading-relaxed">
                   {t.rich("register.footer.terms", {
-                    termsLink: (
+                    termsLink: (chunks) => (
                       <Link
                         key="terms-link"
                         href="/terms"
                         className="text-primary hover:underline"
                       >
-                        {t("register.footer.termsLink")}
+                        {chunks}
                       </Link>
                     ),
                   })}
